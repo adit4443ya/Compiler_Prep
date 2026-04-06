@@ -2173,8 +2173,142 @@ int partition(vector<int>& nums, int l, int r) {
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-//  C++ DEEP DIVE CONCEPTS  (10 entries)
+//  NVIDIA BONUS PROBLEMS  (ids 77–81) — Compiler Verification Focus
 // ═══════════════════════════════════════════════════════════════════
+// Append these to PROBLEMS at runtime to keep IDs sequential.
+export const NVIDIA_PROBLEMS = [
+  {
+    id: 77, section: "Tree", title: "Lowest Common Ancestor of a Binary Tree",
+    difficulty: "Medium", leetcode: 236, company: "NVIDIA / Google / Amazon",
+    pattern: "Recursive post-order DFS — bubble up found nodes",
+    intuition: "DFS returns p or q if found. If left AND right are non-null, current node is LCA. Otherwise return whichever side is non-null.",
+    keyInsight: "The recursion bubbles up the first match. If both children return a node, the current root is the split point — and thus the LCA.",
+    approach: "Base: null or p or q → return node. Recurse left + right. If both non-null → return root. Else return non-null child.",
+    complexity: "Time: O(N) | Space: O(H) recursion",
+    tabCode: `TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+    if (!root || root == p || root == q) return root;
+    TreeNode* left  = lowestCommonAncestor(root->left,  p, q);
+    TreeNode* right = lowestCommonAncestor(root->right, p, q);
+    if (left && right) return root; // split point — this IS the LCA
+    return left ? left : right;     // propagate the found node upward
+}`
+  },
+  {
+    id: 78, section: "Tree", title: "Binary Tree Level Order Traversal",
+    difficulty: "Easy", leetcode: 102, company: "NVIDIA / Apple / Amazon",
+    pattern: "BFS with queue — level-by-level processing",
+    intuition: "Use a queue. On each 'round', iterate exactly queue.size() elements (current level) before processing next level. Record each element in a temp vector.",
+    keyInsight: "Snapshot queue size AT THE START of each level-loop to know exactly how many nodes belong to the current level.",
+    approach: "1) Queue with root. 2) While queue: snap size. 3) Pop size nodes, push children, record vals. 4) Add level to result.",
+    complexity: "Time: O(N) | Space: O(W) — W = max width",
+    tabCode: `vector<vector<int>> levelOrder(TreeNode* root) {
+    if (!root) return {};
+    vector<vector<int>> res;
+    queue<TreeNode*> q;
+    q.push(root);
+    while (!q.empty()) {
+        int sz = q.size();
+        vector<int> level;
+        for (int i = 0; i < sz; i++) {
+            TreeNode* n = q.front(); q.pop();
+            level.push_back(n->val);
+            if (n->left)  q.push(n->left);
+            if (n->right) q.push(n->right);
+        }
+        res.push_back(level);
+    }
+    return res;
+}`
+  },
+  {
+    id: 79, section: "Tree", title: "Diameter of Binary Tree",
+    difficulty: "Easy", leetcode: 543, company: "NVIDIA / Google / Meta",
+    pattern: "Post-order DFS — track global max through function return",
+    intuition: "Diameter through a node = height(left) + height(right). Track global max as we compute heights bottom-up.",
+    keyInsight: "The function returns height (for parent to use), but updates a global diameter as a side effect. Two pointers trick for trees.",
+    approach: "dfs(node) → max(left,right)+1. Update ans = max(ans, left+right) at each node.",
+    complexity: "Time: O(N) | Space: O(H)",
+    tabCode: `int ans = 0;
+int diameterOfBinaryTree(TreeNode* root) {
+    dfs(root);
+    return ans;
+}
+int dfs(TreeNode* node) {
+    if (!node) return 0;
+    int left = dfs(node->left), right = dfs(node->right);
+    ans = max(ans, left + right); // diameter through this node
+    return max(left, right) + 1; // height for parent
+}`
+  },
+  {
+    id: 80, section: "Graph", title: "Cycle Detection in Directed Graph",
+    difficulty: "Medium", leetcode: 207, company: "NVIDIA / Qualcomm / Google",
+    pattern: "DFS with 3-color marking (White/Gray/Black)",
+    intuition: "Track 3 states: 0=unvisited, 1=in current path (gray), 2=done (black). If we reach a gray node → back edge → cycle!",
+    keyInsight: "Gray nodes are on the current recursive path. A gray→gray edge is a back edge (cycle). This is how compilers detect circular dependencies.",
+    approach: "DFS: if state[v]==1 → return true (cycle). Set state[v]=1 → recurse → set state[v]=2.",
+    complexity: "Time: O(V+E) | Space: O(V)",
+    tabCode: `bool canFinish(int numCourses, vector<vector<int>>& prerequisites) {
+    vector<vector<int>> adj(numCourses);
+    for (auto& e : prerequisites) adj[e[1]].push_back(e[0]);
+    vector<int> state(numCourses, 0); // 0=unvisited 1=visiting 2=done
+    function<bool(int)> dfs = [&](int u) -> bool {
+        if (state[u] == 1) return true;  // back edge → cycle
+        if (state[u] == 2) return false; // already processed
+        state[u] = 1;                    // mark as 'in path'
+        for (int v : adj[u]) if (dfs(v)) return true;
+        state[u] = 2;                    // mark as done
+        return false;
+    };
+    for (int i = 0; i < numCourses; i++) if (dfs(i)) return false;
+    return true;
+}`
+  },
+  {
+    id: 81, section: "Linked List", title: "Binary Tree to Doubly Linked List",
+    difficulty: "Medium", leetcode: 426, company: "NVIDIA / Apple / Qualcomm",
+    pattern: "In-order DFS with thread weaving — NVIDIA's actual coding round problem!",
+    intuition: "In-order traversal of BST gives sorted order. As we visit each node in-order, weave it into a DLL by linking prev->right=cur and cur->left=prev. Track head and prev pointers.",
+    keyInsight: "This was literally the exact problem given in NVIDIA's compiler intern coding round. Pointer manipulation bugs are what they test. Key: handle head initialization (first in-order node), and circular linking at the end.",
+    approach: "1) In-order recursion. 2) At each node: link prev and cur. 3) After traversal: link head and tail circularly.",
+    complexity: "Time: O(N) | Space: O(H) recursion",
+    memoCode: `// The BUG-LADEN version NVIDIA gives you to fix:
+// BUG 1: treeToDoublyList called by VALUE, not reference for head/prev
+// BUG 2: Missing null check before dereferencing prev
+// BUG 3: Circular link not established at the end
+void treeToDoublyList_BUGGY(Node* root, Node* head, Node* prev) { // BUG: pass by value!
+    if (!root) return;
+    treeToDoublyList_BUGGY(root->left, head, prev);
+    if (prev) prev->right = root;   // BUG: crashes if prev is null
+    root->left = prev;
+    prev = root;                    // BUG: doesn't update caller's prev
+    treeToDoublyList_BUGGY(root->right, head, prev);
+    // BUG: no circular link-up of head<->tail
+}`,
+    tabCode: `Node* treeToDoublyList(Node* root) {
+    if (!root) return nullptr;
+    Node *head = nullptr, *prev = nullptr;
+    function<void(Node*)> inorder = [&](Node* cur) {
+        if (!cur) return;
+        inorder(cur->left);
+        if (prev) {
+            prev->right = cur;   // weave: prev → cur
+            cur->left  = prev;   // weave: prev ← cur
+        } else {
+            head = cur;          // first in-order node = head
+        }
+        prev = cur;
+        inorder(cur->right);
+    };
+    inorder(root);
+    // Circular: link head <-> tail
+    head->left  = prev;
+    prev->right = head;
+    return head;
+}`
+  },
+];
+
 export const CPP_CONCEPTS = [
   {
     id: 1,
@@ -2842,3 +2976,382 @@ export const TIPS = [
     ]
   }
 ];
+
+// ═══════════════════════════════════════════════════════════════════
+//  NVIDIA BUG HUNT — Code Reading & Bug-Finding Exercises
+//  (Based on actual NVIDIA compiler verification interview format)
+// ═══════════════════════════════════════════════════════════════════
+export const NVIDIA_BUG_HUNT = [
+  {
+    id: 1, title: "Dangling Pointer — Return Address of Local",
+    category: "Memory Safety", difficulty: "High Probability",
+    buggyCode: `char* getGreeting() {
+    char msg[] = "Hello NVIDIA";  // local array on stack!
+    return msg;                   // BUG: dangling pointer after return
+}
+int main() {
+    char* s = getGreeting();
+    printf("%s\\n", s);          // UB: stack frame is gone
+}`,
+    bugs: [
+      "msg[] is stack-allocated — destroyed when getGreeting() returns",
+      "Returning address of local variable → dangling pointer",
+      "UB: accessing freed stack memory. Compiles fine, crashes at runtime"
+    ],
+    fixedCode: `// Fix 1: static storage duration (lives forever)
+char* getGreeting() {
+    static char msg[] = "Hello NVIDIA";
+    return msg;
+}
+// Fix 2: heap allocation (caller must free)
+char* getGreeting() {
+    char* msg = (char*)malloc(13);
+    strcpy(msg, "Hello NVIDIA");
+    return msg;
+}
+// Fix 3 (C++): std::string — RAII, no manual memory
+std::string getGreeting() { return "Hello NVIDIA"; }`,
+    whatToSay: "getGreeting() returns a pointer to a local char array. Once the function returns, the stack frame is destroyed — dangling pointer. Fix: static storage, heap allocation, or std::string."
+  },
+  {
+    id: 2, title: "Off-by-One in Loop + Array Bounds",
+    category: "Bounds & Indexing", difficulty: "High Probability",
+    buggyCode: `int sumArray(int* arr, int n) {
+    int sum = 0;
+    for (int i = 0; i <= n; i++) {  // BUG: should be i < n
+        sum += arr[i];               // arr[n] is out of bounds!
+    }
+    return sum;
+}`,
+    bugs: [
+      "i <= n causes arr[n] access — one past the end, UB",
+      "Fix: use strict less-than: i < n"
+    ],
+    fixedCode: `int sumArray(int* arr, int n) {
+    int sum = 0;
+    for (int i = 0; i < n; i++) { // FIXED
+        sum += arr[i];
+    }
+    return sum;
+}`,
+    whatToSay: "Classic off-by-one. i <= n causes arr[n] access — OOB UB. Should be i < n."
+  },
+  {
+    id: 3, title: "Stack — Missing Overflow/Underflow Checks",
+    category: "Data Structure Safety", difficulty: "High Probability",
+    buggyCode: `struct Stack {
+    int data[100]; int top = -1;
+    void push(int val) { data[++top] = val; }  // BUG: no overflow check
+    int  pop()         { return data[top--]; }  // BUG: no underflow check
+    int  peek()        { return data[top];   }  // BUG: crashes if empty
+};`,
+    bugs: [
+      "push(): top can exceed 99 → out-of-bounds write (OOB)",
+      "pop(): top can go below -1 → data[-1] UB",
+      "peek(): top == -1 on empty stack → data[-1] UB"
+    ],
+    fixedCode: `struct Stack {
+    int data[100]; int top = -1;
+    bool push(int v) { if(top>=99) return false; data[++top]=v; return true; }
+    bool pop(int& v) { if(top<0)   return false; v=data[top--]; return true; }
+    bool peek(int& v){ if(top<0)   return false; v=data[top];   return true; }
+};`,
+    whatToSay: "Three bugs: no overflow check in push (top > 99), no underflow check in pop (top < 0), same for peek. All three need boundary guards."
+  },
+  {
+    id: 4, title: "Call by Value vs. Reference — Swap Bug",
+    category: "Function Semantics", difficulty: "High Probability",
+    buggyCode: `void swapNodes(Node* a, Node* b) {  // BUG: by value!
+    Node* temp = a; a = b; b = temp;  // swaps LOCAL copies only
+}
+// p and q unchanged after the call!`,
+    bugs: [
+      "Pointers passed by value — a and b are copies of p and q",
+      "Modifying a/b only changes local vars inside swapNodes"
+    ],
+    fixedCode: `// Fix 1: references to pointers
+void swapNodes(Node*& a, Node*& b) {
+    Node* temp = a; a = b; b = temp;
+}
+// Fix 2: pointer to pointer (C style)
+void swapNodes(Node** a, Node** b) {
+    Node* temp = *a; *a = *b; *b = temp;
+}`,
+    whatToSay: "Classical pass-by-value pointer bug. Swapping pointer copies doesn't affect the caller. Need Node*& or Node** to modify the actual pointer variables."
+  },
+  {
+    id: 5, title: "Precision Loss — Integer Division Before Cast",
+    category: "Type Safety", difficulty: "Medium Probability",
+    buggyCode: `double divide(int a, int b) {
+    return a / b;  // BUG: integer division! 7/2 = 3, not 3.5
+}`,
+    bugs: [
+      "a/b is integer division — truncates BEFORE assigning to double",
+      "divide(7,2) returns 3.0, not 3.5"
+    ],
+    fixedCode: `double divide(int a, int b) {
+    return (double)a / b;  // FIXED: cast before division
+}`,
+    whatToSay: "Integer division truncates before the implicit cast to double. Must cast one operand first: (double)a / b."
+  },
+  {
+    id: 6, title: "Memory Leak — malloc Without free on All Paths",
+    category: "Memory Management", difficulty: "Medium Probability",
+    buggyCode: `char* processInput(const char* input) {
+    char* buf = (char*)malloc(strlen(input) + 1);
+    strcpy(buf, input);
+    if (strlen(buf) == 0) return NULL;  // BUG: buf leaked!
+    return buf;
+}`,
+    bugs: [
+      "Early return on empty string leaks buf — free() not called before return NULL"
+    ],
+    fixedCode: `char* processInput(const char* input) {
+    char* buf = (char*)malloc(strlen(input) + 1);
+    strcpy(buf, input);
+    if (strlen(buf) == 0) { free(buf); return NULL; }  // FIXED
+    return buf;
+}`,
+    whatToSay: "The early return path forgets to free buf. Every malloc must have a corresponding free on ALL exit paths."
+  },
+  {
+    id: 7, title: "= Instead of == (Assignment in Condition)",
+    category: "Logic Error", difficulty: "Medium Probability",
+    buggyCode: `if (user->role = ADMIN) { ... }  // BUG: always true!
+if (code = 0)            { ... }  // BUG: always false!`,
+    bugs: [
+      "= assigns and evaluates to assigned value — ADMIN is truthy, so always true",
+      "code = 0 always false (0 is falsy) — success branch never runs"
+    ],
+    fixedCode: `if (user->role == ADMIN) { ... }  // FIXED
+if (code == 0)            { ... }  // FIXED
+// Prevention: Yoda condition — if (ADMIN == user->role)`,
+    whatToSay: "= is assignment, == is comparison. Classic logic bug. Use Yoda conditions (constant on left) to get compiler error on accidental =."
+  },
+  {
+    id: 8, title: "NULL Pointer Dereference Without Check",
+    category: "Memory Safety", difficulty: "High Probability",
+    buggyCode: `int getLength(char* str) {
+    return strlen(str);        // BUG: segfault if str is NULL
+}
+Node* find(Node* head, int v) {
+    while (head->val != v) {   // BUG: segfault if head is NULL
+        head = head->next;
+    }
+    return head;
+}`,
+    bugs: [
+      "strlen(NULL) → undefined behavior / segfault",
+      "head->val when head==NULL → segfault"
+    ],
+    fixedCode: `int getLength(char* str) {
+    if (!str) return 0;
+    return strlen(str);
+}
+Node* find(Node* head, int v) {
+    while (head && head->val != v) head = head->next;
+    return head; // NULL if not found
+}`,
+    whatToSay: "Always null-check before dereferencing. strlen(NULL) is UB. Loop condition needs head != NULL before accessing head->val."
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+//  NVIDIA OUTPUT QUIZ — Tricky C++ Output Questions
+// ═══════════════════════════════════════════════════════════════════
+export const NVIDIA_OUTPUT_QUIZ = [
+  {
+    id: 1, title: "Pre/Post Increment in Expression",
+    category: "Operator Semantics",
+    code: `int x = 5;
+cout << x++ << " " << ++x << endl;`,
+    correctAnswer: "Undefined Behavior — compiler-dependent",
+    explanation: "Modifying x and reading it in the same expression without sequencing = UB in C++ (pre-C++17) / unspecified evaluation order. Don't rely on this. In an interview, say 'This is UB — the result is compiler-dependent.'",
+    keyInsight: "Pre-increment: ++x returns new value. Post-increment: x++ returns old value, increments after. But in a single expression modifying x twice → UB."
+  },
+  {
+    id: 2, title: "Constructor/Destructor Order in Inheritance",
+    category: "OOP Lifecycle",
+    code: `struct A { A(){cout<<"A() ";} ~A(){cout<<"~A() ";} };
+struct B:A { B(){cout<<"B() ";} ~B(){cout<<"~B() ";} };
+int main() { B b; }`,
+    correctAnswer: "A() B() ~B() ~A()",
+    explanation: "Construction: base first, then derived (bottom-up). Destruction: derived first, then base (top-down, LIFO). This is fundamental C++ object model.",
+    keyInsight: "Base ALWAYS constructed before derived. Derived ALWAYS destroyed before base. If ~A() is not virtual and you delete via Base*, ~B() is never called — UB!"
+  },
+  {
+    id: 3, title: "Virtual Dispatch vs Non-Virtual",
+    category: "Polymorphism",
+    code: `struct Base {
+    virtual void foo() { cout << "Base::foo "; }
+    void bar()         { cout << "Base::bar "; }
+};
+struct Derived : Base {
+    void foo() override { cout << "Derived::foo "; }
+    void bar()          { cout << "Derived::bar "; }
+};
+int main() {
+    Base* b = new Derived();
+    b->foo(); b->bar();
+}`,
+    correctAnswer: "Derived::foo Base::bar",
+    explanation: "foo() is virtual → runtime dispatch via vtable → calls Derived::foo(). bar() is non-virtual → compile-time dispatch based on static type (Base*) → calls Base::bar().",
+    keyInsight: "Virtual = late binding (runtime). Non-virtual = early binding (compile-time, based on declared type of pointer)."
+  },
+  {
+    id: 4, title: "Static Local Variable",
+    category: "Storage Duration",
+    code: `int counter() { static int c = 0; return ++c; }
+int main() { cout << counter() << " " << counter() << " " << counter(); }`,
+    correctAnswer: "1 2 3",
+    explanation: "Static local variables are initialized exactly once and persist across calls. c is NOT reset to 0 on each call — it retains its value.",
+    keyInsight: "static local = 'function-scoped global'. Initialized once on first call, lives until program ends. C++11: thread-safe initialization guaranteed."
+  },
+  {
+    id: 5, title: "Signed/Unsigned Comparison Trap",
+    category: "Type System — Implicit Conversion",
+    code: `unsigned int u = 0;
+int i = -1;
+if (i < u) cout << "i < u";
+else        cout << "i >= u";`,
+    correctAnswer: "i >= u",
+    explanation: "Comparing signed and unsigned: signed value is implicitly converted to unsigned. -1 becomes UINT_MAX (4294967295). UINT_MAX < 0 is false → else branch runs.",
+    keyInsight: "This is a famous C++ pitfall. Enable -Wsign-compare to catch it. Always explicitly cast: (int)u or (unsigned)i before comparison."
+  },
+  {
+    id: 6, title: "sizeof Array vs Pointer",
+    category: "Memory & Types",
+    code: `int arr[10];
+int* p = arr;
+cout << sizeof(arr) << " " << sizeof(p) << " " << sizeof(*p);`,
+    correctAnswer: "40 8 4  (64-bit: ptr=8bytes, int=4bytes)",
+    explanation: "sizeof(arr)=10*4=40. sizeof(p)=pointer size=8 on 64-bit (NOT array size). sizeof(*p)=sizeof(int)=4.",
+    keyInsight: "When array decays to pointer (e.g. passed to function), sizeof only gives pointer size. Always pass array size explicitly or use std::array."
+  },
+  {
+    id: 7, title: "Missing virtual Destructor — UB on Delete",
+    category: "OOP Safety",
+    code: `struct Base   { ~Base()   {cout<<"~Base ";} };  // BUG: not virtual!
+struct Derived: Base { ~Derived(){cout<<"~Derived ";} };
+int main() { Base* b = new Derived(); delete b; }`,
+    correctAnswer: "~Base  (Derived destructor NEVER called — UB / resource leak)",
+    explanation: "delete via base pointer without virtual destructor → only ~Base() called. ~Derived() and any resources it owns are leaked. UB per C++ standard.",
+    keyInsight: "Rule: If a class is designed to be deleted polymorphically, its destructor MUST be virtual. This is one of the most critical C++ interview points."
+  },
+  {
+    id: 8, title: "Integer Division Before Cast",
+    category: "Implicit Conversion",
+    code: `double result = 7 / 2;
+cout << result;`,
+    correctAnswer: "3",
+    explanation: "7 and 2 are int literals. 7/2 = 3 (integer division, truncates) BEFORE being stored in double. result = 3.0. Use 7.0/2 or (double)7/2 for 3.5.",
+    keyInsight: "Division type is determined by operands, not the destination type. Both operands int → integer division → then widened to double."
+  },
+  {
+    id: 9, title: "Reference is an Alias",
+    category: "Value vs Reference Semantics",
+    code: `int x = 10;
+int& ref = x;
+int  copy = x;
+ref = 20; copy = 30;
+cout << x << " " << ref << " " << copy;`,
+    correctAnswer: "20 20 30",
+    explanation: "ref is an alias for x — same memory location. Modifying ref modifies x. copy is independent — modifying copy has no effect on x.",
+    keyInsight: "References cannot be reseated (always refer to the same object). This is different from a pointer. ref = 20 is NOT the same as ref = &something_else."
+  },
+  {
+    id: 10, title: "Lambda Capture and Dangling Reference",
+    category: "Lambda & Closures",
+    code: `function<int()> make_adder(int x) {
+    return [&]() { return x + 1; };  // BUG: captures x by ref!
+}
+int main() {
+    auto f = make_adder(5);
+    cout << f();  // x is destroyed — UB!
+}`,
+    correctAnswer: "UB — dangling reference to destroyed local variable",
+    explanation: "[&] captures x by reference. When make_adder returns, x is destroyed (local var). Calling f() after that dereferences a dangling reference — UB.",
+    keyInsight: "Never capture local variables by reference in lambdas that outlive the scope. Use [=] (capture by value) or init-capture [x=x] for safety."
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════════
+//  NVIDIA COMPILER VERIFICATION — Interview Tips
+// ═══════════════════════════════════════════════════════════════════
+export const NVIDIA_TIPS = [
+  {
+    title: "🐛 Bug-Reading Framework (5-Step Process)",
+    tips: [
+      "STEP 1 — Understand intent: Read comments + function names. Form mental model of what code SHOULD do.",
+      "STEP 2 — Check boundaries: Every loop → question condition (< vs <=). Every array → check index range. Every pointer → check NULL before deref.",
+      "STEP 3 — Trace memory: Follow every malloc/new → is there a matching free/delete on ALL exit paths including early returns?",
+      "STEP 4 — Check signatures: Are pointers passed by value when they should be by reference? Are outputs being written back to caller?",
+      "STEP 5 — Look for type mismatches: = vs ==. Signed/unsigned comparison. Integer division before float cast. Wrong typecast."
+    ]
+  },
+  {
+    title: "🔴 Red Flag Patterns — Memorize All 10",
+    tips: [
+      "return local_arr; or return &local_var; → dangling pointer/reference",
+      "for(i=0; i<=n; i++) arr[i] → off-by-one, arr[n] is OOB",
+      "if(a = b) → assignment not comparison, always evaluates to b",
+      "fn(Node* p) modifying p → doesn't affect caller, need Node*& or Node**",
+      "malloc() ... if(err) return; → memory leak on error path",
+      "push()/pop() with no capacity/underflow check → OOB UB",
+      "~Base() not virtual + delete via Base* → ~Derived() never called, UB",
+      "return (double)(a/b) → int division truncates BEFORE cast, use (double)a/b",
+      "int* p = new int; ... <exception> ... delete p → leak if exception thrown",
+      "unsigned u; int i = -1; if(i < u) → -1 becomes UINT_MAX, condition flips"
+    ]
+  },
+  {
+    title: "🎯 NVIDIA Round 1 — What You'll Actually Face",
+    tips: [
+      "Code Reading (HIGH): 100-300 lines C/C++. Understand in 5-10 mins, find bugs, fix them.",
+      "Bug Types (HIGH): Dangling ptrs, off-by-one, null deref, memory leaks, value-vs-reference, type errors",
+      "DSA Problem (HIGH): One medium LeetCode — linked list, tree, or graph (cycle detection, LCA, level order)",
+      "C++ Output (HIGH): Snippet shown, predict output — virtual dispatch, ctors/dtors, static vars, increment",
+      "Compiler Phases (MEDIUM 40%): Lexing, parsing, semantic analysis, IR, codegen, linking",
+      "Memory Model (MEDIUM): Stack vs heap, virtual destructor, object layout with vtable"
+    ]
+  },
+  {
+    title: "📢 Talk Out Loud — Narration Strategy",
+    tips: [
+      "Reading code: 'This function takes an int array and seems to compute... I see a loop from 0 to n...'",
+      "Bug spotted: 'Wait — this uses i <= n but valid indices are 0 to n-1. That's an off-by-one, arr[n] is OOB.'",
+      "Before fix: 'To fix this I'd change ≤ to <... and I'd also add a null check here...'",
+      "Edge cases: 'I'd also check what happens if the array is null, or n = 0.'",
+      "Interviewer WILL hint if you're on the right track — talking enables this guidance."
+    ]
+  },
+  {
+    title: "💡 Compiler Compilation Phases — Quick Reference",
+    tips: [
+      "1. Lexer: Source text → tokens (keywords, identifiers, literals, operators)",
+      "2. Parser: Tokens → AST (Abstract Syntax Tree) — validates grammar",
+      "3. Semantic Analysis: AST → type checking, scoping, symbol table",
+      "4. IR Generation: AST → Intermediate Representation (e.g., LLVM IR)",
+      "5. Optimization: IR → optimized IR (DCE, inlining, loop hoisting, LICM)",
+      "6. Code Generation: IR → target machine code / assembly",
+      "7. Linking: Object files + libraries → final executable",
+      "UB from compiler perspective: Compilers assume UB never occurs → can eliminate 'impossible' branches as dead code."
+    ]
+  },
+  {
+    title: "⚡ The Night-Before Checklist",
+    tips: [
+      "Dangling pointer: return addr of local, or use-after-free → always segfault",
+      "Double free: delete same pointer twice → heap corruption → use nullptr after delete",
+      "Memory leak: malloc/new with no matching free/delete on all paths",
+      "NULL dereference: *p without checking p != nullptr — segfault",
+      "Off-by-one: i <= n should be i < n for 0-indexed arrays",
+      "Integer overflow: INT_MAX + 1 = UB (signed) — cast to long long EARLY",
+      "Signed/unsigned compare: -1 vs 0u → -1 becomes UINT_MAX → wrong result",
+      "Virtual destructor: forget virtual → base dtor only → resource leak UB",
+      "Array decay: sizeof passes pointer size, not array size — always pass n separately",
+      "Value vs reference: fn(T* p) vs fn(T*& p) — know the difference cold"
+    ]
+  }
+];
+

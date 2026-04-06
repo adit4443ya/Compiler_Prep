@@ -2,7 +2,10 @@ import { useState, useMemo } from "react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { tk, Card, B, P, G } from "./App.jsx";
-import { PROBLEMS, CHEATSHEET, TIPS, CPP_CONCEPTS } from "./dsaData";
+import { PROBLEMS, CHEATSHEET, TIPS, CPP_CONCEPTS, NVIDIA_PROBLEMS, NVIDIA_BUG_HUNT, NVIDIA_OUTPUT_QUIZ, NVIDIA_TIPS } from "./dsaData";
+
+// Merge NVIDIA_PROBLEMS into the full set
+const ALL_PROBLEMS = [...PROBLEMS, ...NVIDIA_PROBLEMS];
 
 // ── Difficulty colors ──────────────────────────────────────────────
 const DC = { Easy: "#22c55e", Medium: "#eab308", Hard: "#ef4444" };
@@ -58,7 +61,9 @@ const CodeBlock = ({ code, label, color = tk.accent }) => (
 //  MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────
 const DsaGuideComponent = ({ setMode }) => {
-  const [selectedProblem, setSelectedProblem] = useState(PROBLEMS[0]);
+  const [selectedProblem, setSelectedProblem] = useState(ALL_PROBLEMS[0]);
+  const [expandedBug, setExpandedBug] = useState(null);
+  const [expandedQuiz, setExpandedQuiz] = useState(null);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("problems");
   const [viewMode, setViewMode] = useState("sidebar");
@@ -67,14 +72,14 @@ const DsaGuideComponent = ({ setMode }) => {
 
   const categories = useMemo(() => {
     const cats = {};
-    PROBLEMS.forEach(p => {
+    ALL_PROBLEMS.forEach(p => {
       if (!cats[p.section]) cats[p.section] = [];
       cats[p.section].push(p);
     });
     return cats;
   }, []);
 
-  const filteredProblems = useMemo(() => PROBLEMS.filter(p =>
+  const filteredProblems = useMemo(() => ALL_PROBLEMS.filter(p =>
     p.title.toLowerCase().includes(search.toLowerCase()) ||
     p.section.toLowerCase().includes(search.toLowerCase()) ||
     (p.company && p.company.toLowerCase().includes(search.toLowerCase())) ||
@@ -82,10 +87,13 @@ const DsaGuideComponent = ({ setMode }) => {
   ), [search]);
 
   const TABS = [
-    { key: "problems",  label: "Problems",      count: PROBLEMS.length },
+    { key: "problems",  label: "Problems",      count: ALL_PROBLEMS.length },
     { key: "patterns",  label: "Patterns",       count: CHEATSHEET.length },
     { key: "cpp",       label: "C++ Deep Dive",  count: CPP_CONCEPTS.length },
     { key: "tips",      label: "Tips",           count: null },
+    { key: "bughunt",   label: "🐛 Bug Hunt",     count: NVIDIA_BUG_HUNT.length },
+    { key: "cppquiz",   label: "⚡ C++ Quiz",     count: NVIDIA_OUTPUT_QUIZ.length },
+    { key: "nvidiatips",label: "🎯 NVIDIA Tips",  count: null },
   ];
 
   return (
@@ -107,7 +115,7 @@ const DsaGuideComponent = ({ setMode }) => {
             <Badge color={tk.accent + "33"} textColor={tk.accent}>Elite Edition</Badge>
           </div>
           <P style={{ opacity: 0.55, fontSize: 14, margin: 0 }}>
-            {PROBLEMS.length} Problems · {CHEATSHEET.length} Patterns · 10 C++ Deep Dive Concepts | Apple · Nvidia · Qualcomm · AMD
+            {ALL_PROBLEMS.length} Problems · {CHEATSHEET.length} Patterns · 10 C++ Concepts · {NVIDIA_BUG_HUNT.length} Bug Exercises · {NVIDIA_OUTPUT_QUIZ.length} Quiz | <span style={{color:'#ef4444',fontWeight:900}}>NVIDIA Round 1 Ready</span>
           </P>
         </div>
 
@@ -529,6 +537,195 @@ Subarray condition → Sliding Window / Prefix+HashMap  |  Sorted → Binary Sea
           </div>
         </div>
       )}
+
+      {/* ══════════════ 🐛 BUG HUNT TAB ══════════════ */}
+      {activeTab === "bughunt" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          <div>
+            <h2 style={{ color: tk.textBright, fontSize: 20, margin: "0 0 4px", fontWeight: 900 }}>
+              🐛 Bug Hunt — <span style={{ color: "#ef4444" }}>NVIDIA Code Reading Exercises</span>
+            </h2>
+            <P style={{ opacity: 0.55, fontSize: 13, margin: 0 }}>
+              Based on real NVIDIA compiler verification interview format. Read code → identify bugs → explain → fix. Talk out loud!
+            </P>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {NVIDIA_BUG_HUNT.map((exercise) => (
+              <div key={exercise.id} style={{
+                background: tk.bg2, borderRadius: 14, border: `1px solid ${tk.border}`,
+                borderLeft: `4px solid #ef4444`, overflow: "hidden"
+              }}>
+                {/* Header */}
+                <div
+                  style={{ padding: "18px 22px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                  onClick={() => setExpandedBug(expandedBug === exercise.id ? null : exercise.id)}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ color: "#ef4444", fontFamily: tk.mono, fontWeight: 900, fontSize: 13 }}>#{exercise.id.toString().padStart(2,"0")}</span>
+                    <div>
+                      <div style={{ color: tk.textBright, fontWeight: 800, fontSize: 15 }}>{exercise.title}</div>
+                      <div style={{ color: tk.textDim, fontSize: 11, marginTop: 2 }}>{exercise.category}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{
+                      fontSize: 10, padding: "3px 9px", borderRadius: 4, fontWeight: 800,
+                      background: exercise.difficulty === "High Probability" ? "#ef444433" : "#f59e0b33",
+                      color: exercise.difficulty === "High Probability" ? "#ef4444" : "#f59e0b",
+                    }}>{exercise.difficulty}</span>
+                    <span style={{ color: tk.textDim, fontSize: 18, lineHeight: 1 }}>{expandedBug === exercise.id ? "−" : "+"}</span>
+                  </div>
+                </div>
+
+                {/* Expanded content */}
+                {expandedBug === exercise.id && (
+                  <div style={{ padding: "0 22px 22px", display: "flex", flexDirection: "column", gap: 16 }}>
+                    {/* Buggy Code */}
+                    <div>
+                      <div style={{ fontSize: 10, color: "#ef4444", fontWeight: 800, fontFamily: tk.mono, marginBottom: 6, letterSpacing: 1 }}>▸ BUGGY CODE — FIND THE BUGS</div>
+                      <div style={{ borderRadius: 8, overflow: "hidden", border: `1px solid #ef444444` }}>
+                        <SyntaxHighlighter language="cpp" style={vscDarkPlus}
+                          customStyle={{ margin: 0, padding: "18px", fontSize: "0.82rem", background: "#1a0d0d", lineHeight: 1.65 }}>
+                          {exercise.buggyCode}
+                        </SyntaxHighlighter>
+                      </div>
+                    </div>
+
+                    {/* Bug List */}
+                    <div style={{ background: "#1f0a0a", borderRadius: 8, padding: "14px 18px", border: `1px solid #ef444422` }}>
+                      <div style={{ fontSize: 10, color: "#ef4444", fontWeight: 800, fontFamily: tk.mono, marginBottom: 8, letterSpacing: 1 }}>▸ BUGS FOUND</div>
+                      {exercise.bugs.map((bug, i) => (
+                        <div key={i} style={{ display: "flex", gap: 10, fontSize: 13, lineHeight: 1.6, color: "#fca5a5", marginBottom: 4 }}>
+                          <span style={{ color: "#ef4444", flexShrink: 0 }}>⚠</span>
+                          <span>{bug}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Fixed Code */}
+                    <div>
+                      <div style={{ fontSize: 10, color: "#22c55e", fontWeight: 800, fontFamily: tk.mono, marginBottom: 6, letterSpacing: 1 }}>▸ FIXED CODE</div>
+                      <div style={{ borderRadius: 8, overflow: "hidden", border: `1px solid #22c55e44` }}>
+                        <SyntaxHighlighter language="cpp" style={vscDarkPlus}
+                          customStyle={{ margin: 0, padding: "18px", fontSize: "0.82rem", background: "#0a1a0d", lineHeight: 1.65 }}>
+                          {exercise.fixedCode}
+                        </SyntaxHighlighter>
+                      </div>
+                    </div>
+
+                    {/* What to say */}
+                    <div style={{ background: tk.bg3, borderRadius: 8, padding: "14px 18px", borderLeft: `3px solid ${tk.accent}` }}>
+                      <div style={{ fontSize: 10, color: tk.accent, fontWeight: 800, fontFamily: tk.mono, marginBottom: 6, letterSpacing: 1 }}>▸ WHAT TO SAY OUT LOUD</div>
+                      <P style={{ fontSize: 13, lineHeight: 1.65, margin: 0, color: tk.textDim }}>{exercise.whatToSay}</P>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════ ⚡ C++ OUTPUT QUIZ TAB ══════════════ */}
+      {activeTab === "cppquiz" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          <div>
+            <h2 style={{ color: tk.textBright, fontSize: 20, margin: "0 0 4px", fontWeight: 900 }}>
+              ⚡ C++ Output Quiz — <span style={{ color: tk.accent }}>Tricky Snippets</span>
+            </h2>
+            <P style={{ opacity: 0.55, fontSize: 13, margin: 0 }}>
+              Real patterns from NVIDIA LLVM compiler rounds. Read snippet → predict output → check your answer.
+            </P>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(480px, 1fr))", gap: 20 }}>
+            {NVIDIA_OUTPUT_QUIZ.map((quiz) => (
+              <div key={quiz.id} style={{
+                background: tk.bg2, borderRadius: 14, border: `1px solid ${tk.border}`,
+                borderTop: `3px solid ${tk.accent}`, overflow: "hidden"
+              }}>
+                {/* Header */}
+                <div
+                  style={{ padding: "16px 20px", cursor: "pointer" }}
+                  onClick={() => setExpandedQuiz(expandedQuiz === quiz.id ? null : quiz.id)}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div>
+                      <span style={{ fontSize: 10, color: tk.accent, fontFamily: tk.mono, fontWeight: 800 }}>Q{quiz.id.toString().padStart(2,"0")} · {quiz.category}</span>
+                      <div style={{ color: tk.textBright, fontWeight: 800, fontSize: 14, marginTop: 3 }}>{quiz.title}</div>
+                    </div>
+                    <span style={{ color: tk.textDim, fontSize: 18 }}>{expandedQuiz === quiz.id ? "−" : "+"}</span>
+                  </div>
+
+                  {/* Always show code snippet */}
+                  <div style={{ borderRadius: 8, overflow: "hidden", border: `1px solid ${tk.border}`, marginTop: 12 }}>
+                    <SyntaxHighlighter language="cpp" style={vscDarkPlus}
+                      customStyle={{ margin: 0, padding: "14px", fontSize: "0.79rem", background: tk.bg3, lineHeight: 1.6 }}>
+                      {quiz.code}
+                    </SyntaxHighlighter>
+                  </div>
+                </div>
+
+                {/* Answer */}
+                {expandedQuiz === quiz.id && (
+                  <div style={{ padding: "0 20px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+                    <div style={{ background: "#0d1f0d", borderRadius: 8, padding: "12px 16px", border: `1px solid #22c55e44` }}>
+                      <div style={{ fontSize: 10, color: "#22c55e", fontWeight: 800, fontFamily: tk.mono, marginBottom: 4 }}>▸ CORRECT OUTPUT</div>
+                      <P style={{ fontSize: 14, fontWeight: 700, color: "#86efac", margin: 0, fontFamily: tk.mono }}>{quiz.correctAnswer}</P>
+                    </div>
+                    <div style={{ background: tk.bg3, borderRadius: 8, padding: "12px 16px", borderLeft: `3px solid ${tk.violet}` }}>
+                      <div style={{ fontSize: 10, color: tk.violet, fontWeight: 800, fontFamily: tk.mono, marginBottom: 6 }}>▸ EXPLANATION</div>
+                      <P style={{ fontSize: 13, lineHeight: 1.65, margin: 0, color: tk.textDim }}>{quiz.explanation}</P>
+                    </div>
+                    <div style={{ background: tk.bg3, borderRadius: 8, padding: "12px 16px", borderLeft: `3px solid ${tk.accent}` }}>
+                      <div style={{ fontSize: 10, color: tk.accent, fontWeight: 800, fontFamily: tk.mono, marginBottom: 6 }}>▸ KEY INSIGHT</div>
+                      <P style={{ fontSize: 13, lineHeight: 1.65, margin: 0, color: tk.textDim }}>{quiz.keyInsight}</P>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════ 🎯 NVIDIA TIPS TAB ══════════════ */}
+      {activeTab === "nvidiatips" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          <div>
+            <h2 style={{ color: tk.textBright, fontSize: 20, margin: "0 0 4px", fontWeight: 900 }}>
+              🎯 NVIDIA Compiler Verification — <span style={{ color: "#ef4444" }}>Interview Strategy</span>
+            </h2>
+            <P style={{ opacity: 0.55, fontSize: 13, margin: 0 }}>
+              Role-specific preparation for the NVIDIA Compiler Verification Associate Engineer round. Real format, real bugs, real strategy.
+            </P>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(440px, 1fr))", gap: 20 }}>
+            {NVIDIA_TIPS.map((section, idx) => {
+              const accent = ["#ef4444", "#f59e0b", "#22c55e", "#38bdf8", "#a855f7", "#06d6a0"][idx % 6];
+              return (
+                <div key={idx} style={{
+                  background: tk.bg2, borderRadius: 12, padding: 20,
+                  border: `1px solid ${tk.border}`, borderTop: `3px solid ${accent}`
+                }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 800, color: accent, margin: "0 0 14px" }}>{section.title}</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {section.tips.map((tip, tidx) => (
+                      <div key={tidx} style={{ display: "flex", gap: 10, fontSize: 12.5, lineHeight: 1.65, color: tk.textDim }}>
+                        <span style={{ color: accent, fontWeight: 700, flexShrink: 0 }}>▹</span>
+                        <span>{tip}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
