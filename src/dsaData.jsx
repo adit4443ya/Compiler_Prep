@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 //  DSA FORGE — Complete Data File
-//  61 problems | 10 C++ deep-dive concepts | 15 patterns | 6 tip sets
+//  76 problems | 10 C++ deep-dive concepts | 15 patterns | 6 tip sets
 // ═══════════════════════════════════════════════════════════════════
 
 export const PROBLEMS = [
@@ -1867,6 +1867,309 @@ string longestPalindrome(string s) {
     return w;
 }`,
   },
+  {
+    id: 62, section: "HashMap", title: "Group Anagrams",
+    difficulty: "Medium", leetcode: 49, company: "Amazon / Google / Facebook",
+    pattern: "Sort string as key",
+    intuition: "Anagrams have identical sorted strings. Use sorted string as map key. O(NK log K) where K is max word length.",
+    keyInsight: "Character counting (freq array) is O(NK) but sorting is often cleaner and fast enough for interview constraints.",
+    approach: "Map<string, vector<string>>. Loop through, sort word, push to map bucket.",
+    complexity: "Time: O(N * K log K) | Space: O(NK)",
+    tabCode: `vector<vector<string>> groupAnagrams(vector<string>& strs) {
+    unordered_map<string, vector<string>> m;
+    for (string s : strs) {
+        string t = s; sort(t.begin(), t.end());
+        m[t].push_back(s);
+    }
+    vector<vector<string>> res;
+    for (auto& p : m) res.push_back(p.second);
+    return res;
+}`
+  },
+  {
+    id: 63, section: "HashMap", title: "Top K Frequent Elements",
+    difficulty: "Medium", leetcode: 347, company: "Amazon / Google / Microsoft",
+    pattern: "Frequency map + Bucket Sort",
+    intuition: "O(N log K) with heap, but O(N) with bucket sort by using frequencies as indices. Frequencies are bounded by N.",
+    keyInsight: "When range of counters is known and bounded (like counts in array of size N), bucket sort always beats heaps.",
+    approach: "1) Count freq. 2) bucket[freq] = list of nums. 3) Iterate buckets from end.",
+    complexity: "Time: O(N) | Space: O(N)",
+    tabCode: `vector<int> topKFrequent(vector<int>& nums, int k) {
+    unordered_map<int, int> count;
+    for (int n : nums) count[n]++;
+    vector<vector<int>> bucket(nums.size() + 1);
+    for (auto& p : count) bucket[p.second].push_back(p.first);
+    vector<int> res;
+    for (int i = bucket.size() - 1; i >= 0 && res.size() < k; i--)
+        for (int n : bucket[i]) { res.push_back(n); if (res.size() == k) break; }
+    return res;
+}`
+  },
+  {
+    id: 64, section: "Array", title: "Find All Duplicates in an Array",
+    difficulty: "Medium", leetcode: 442, company: "Apple / Amazon / Adobe",
+    pattern: "Cyclic sort logic / Negation marking",
+    intuition: "Numbers are 1 to n. Use current array as hash table by negating values at index abs(val)-1. If already negative, it's a duplicate.",
+    keyInsight: "The nums[abs(n)-1] trick is the most efficient way to detect duplicates in [1,n] range with O(1) space.",
+    approach: "1) result list. 2) for each n: idx = abs(n)-1. 3) if nums[idx] < 0, add abs(n) to res. else nums[idx] *= -1.",
+    complexity: "Time: O(N) | Space: O(1) extra",
+    tabCode: `vector<int> findDuplicates(vector<int>& nums) {
+    vector<int> res;
+    for (int n : nums) {
+        int idx = abs(n) - 1;
+        if (nums[idx] < 0) res.push_back(abs(n));
+        else nums[idx] *= -1;
+    }
+    return res;
+}`
+  },
+  {
+    id: 65, section: "HashMap", title: "Valid Sudoku",
+    difficulty: "Medium", leetcode: 36, company: "Apple / Amazon / Uber",
+    pattern: "Hashing row/col/box constraints",
+    intuition: "Track used digits in rows, cols, and 3x3 boxes simultaneously. Box index = (r/3)*3 + (c/3). One pass validation.",
+    keyInsight: "Bitmasking can reduce space for 1-9 checks to single integers, but hashsets/arrays are more readable for interviews.",
+    approach: "1) row[9], col[9], box[9] tracking sets. 2) Iterate (r,c), check if already exists. 3) add to sets.",
+    complexity: "Time: O(1) - fixed 9x9 | Space: O(1)",
+    tabCode: `bool isValidSudoku(vector<vector<char>>& board) {
+    int row[9][9] = {0}, col[9][9] = {0}, box[9][9] = {0};
+    for (int r = 0; r < 9; r++) {
+        for (int c = 0; c < 9; c++) {
+            if (board[r][c] == '.') continue;
+            int n = board[r][c] - '1', b = (r/3)*3 + (c/3);
+            if (row[r][n] || col[c][n] || box[b][n]) return false;
+            row[r][n] = col[c][n] = box[b][n] = 1;
+        }
+    }
+    return true;
+}`
+},
+{
+  id: 66, section: "Sliding Window", title: "At Most K Distinct Characters",
+  difficulty: "Hard", leetcode: 340, company: "Google / Amazon / Apple",
+  pattern: "Variable window + freq map",
+  intuition: "Expand right. If distinct chars > k, shrink left while decrementing freq map. Remove char from map when freq reaches 0. Maximize window size.",
+  keyInsight: "Use a hashmap to store the frequency of characters in the current window. The number of distinct characters is simply the size of the map.",
+  approach: "1) map<char, int> 2) Expand R, map[s[R]]++ 3) while map.size() > k: map[s[L]]--, if map[s[L]]==0 map.erase(s[L]), L++ 4) ans = max(ans, R-L+1).",
+  complexity: "Time: O(N) | Space: O(K)",
+  tabCode: `int lengthOfLongestSubstringKDistinct(string s, int k) {
+    if (k == 0) return 0;
+    unordered_map<char, int> m;
+    int l = 0, res = 0;
+    for (int r = 0; r < s.size(); r++) {
+        m[s[r]]++;
+        while (m.size() > k) {
+            if (--m[s[l]] == 0) m.erase(s[l]);
+            l++;
+        }
+        res = max(res, r - l + 1);
+    }
+    return res;
+}`
+},
+{
+  id: 67, section: "Sliding Window", title: "Max Consecutive Ones III",
+  difficulty: "Medium", leetcode: 1004, company: "Apple / Google / Meta",
+  pattern: "Sliding window 'k-zeroes' limit",
+  intuition: "Find longest subarray with at most k zeroes. Expand R. If nums[R]==0, zeroes++. While zeroes > k, if nums[L]==0 zeroes--, L++.",
+  keyInsight: "Standard variable window. Can be optimized into a 'non-shrinking' window (O(N) with just R-L total).",
+  approach: "Expand R, track zeroes. If > k, move L until zeroes <= k.",
+  complexity: "Time: O(N) | Space: O(1)",
+  tabCode: `int longestOnes(vector<int>& nums, int k) {
+    int l = 0, zeroes = 0, res = 0;
+    for (int r = 0; r < nums.size(); r++) {
+        if (nums[r] == 0) zeroes++;
+        while (zeroes > k) {
+            if (nums[l++] == 0) zeroes--;
+        }
+        res = max(res, r - l + 1);
+    }
+    return res;
+}`
+},
+{
+  id: 68, section: "Two Pointers", title: "Container With Most Water",
+  difficulty: "Medium", leetcode: 11, company: "Nvidia / Apple / Qualcomm",
+  pattern: "Two pointers — converging from ends",
+  intuition: "Area = min(h[L], h[R]) * (R-L). To potentially find a larger area, we must move the pointer with the SMALLER height, as it is the bottleneck.",
+  keyInsight: "Proof: Moving the larger height can only decrease width and won't increase the bottlenecking height. Thus, moving smaller is the only way to improve.",
+  approach: "L=0, R=n-1. While L<R: calculate area, move min(h[L], h[R]).",
+  complexity: "Time: O(N) | Space: O(1)",
+  tabCode: `int maxArea(vector<int>& height) {
+    int l = 0, r = height.size() - 1, res = 0;
+    while (l < r) {
+        res = max(res, min(height[l], height[r]) * (r - l));
+        if (height[l] < height[r]) l++;
+        else r--;
+    }
+    return res;
+}`
+},
+{
+  id: 69, section: "Greedy", title: "Gas Station",
+  difficulty: "Medium", leetcode: 134, company: "Amazon / Google / Apple",
+  pattern: "Single pass — surplus tracking",
+  intuition: "If total gas < total cost, impossible. Else, a solution exists. If we run out of gas between A and B, any station between A and B cannot be the start. Restart from station B+1.",
+  keyInsight: "The 'if sum < 0, start = i+1' logic works because we know a solution exists if totalSum >= 0. Any station that results in a negative tank cannot be the start or part of the starting path.",
+  approach: "1) Track totalSum and curSum. 2) If curSum < 0: curSum=0, start=i+1. 3) Return (totalSum<0 ? -1 : start).",
+  complexity: "Time: O(N) | Space: O(1)",
+  tabCode: `int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {
+    int total = 0, current = 0, start = 0;
+    for(int i=0; i<gas.size(); i++) {
+        int diff = gas[i] - cost[i];
+        total += diff; current += diff;
+        if(current < 0) { start = i + 1; current = 0; }
+    }
+    return total < 0 ? -1 : start;
+}`
+},
+{
+  id: 70, section: "Greedy", title: "Hand of Straights",
+  difficulty: "Medium", leetcode: 846, company: "Google / Amazon / Apple",
+  pattern: "Frequency map + Sorted keys",
+  intuition: "Must start with the smallest card available to form a group. Count frequencies, sort keys. For each card, try to form a group of size 'groupSize' starting from it.",
+  keyInsight: "Always pick the smallest card first. If we can't form a group starting from the smallest, we can't form it at all.",
+  approach: "1) Map frequencies. 2) Sorted keys or MinHeap. 3) While cards remain: take smallest, check if smallest+1...smallest+size-1 exist.",
+  complexity: "Time: O(N log N) | Space: O(N)",
+  tabCode: `bool isNStraightHand(vector<int>& hand, int groupSize) {
+    if(hand.size() % groupSize != 0) return false;
+    map<int, int> count;
+    for(int x : hand) count[x]++;
+    while(!count.empty()) {
+        int start = count.begin()->first;
+        for(int i=0; i<groupSize; i++) {
+            if(count[start + i] == 0) return false;
+            if(--count[start + i] == 0) count.erase(start + i);
+        }
+    }
+    return true;
+}`
+},
+{
+  id: 71, section: "Stack", title: "Daily Temperatures",
+  difficulty: "Medium", leetcode: 739, company: "Apple / Amazon / Google",
+  pattern: "Monotonic Stack (Decreasing)",
+  intuition: "Find next greater element. Use stack to store indices of 'unresolved' days. When we find a warmer day, pop from stack and calculate distance.",
+  keyInsight: "The stack elements are always in descending order of temperature. New warmer temperature 'unlocks' all colder days on top of stack.",
+  approach: "1) stack<int> indices. 2) for each i: while T[i] > T[st.top()]: res[top] = i - top, pop. 3) push i.",
+  complexity: "Time: O(N) | Space: O(N)",
+  tabCode: `vector<int> dailyTemperatures(vector<int>& T) {
+    vector<int> res(T.size(), 0);
+    stack<int> st;
+    for(int i=0; i<T.size(); i++) {
+        while(!st.empty() && T[i] > T[st.top()]) {
+            int prev = st.top(); st.pop();
+            res[prev] = i - prev;
+        }
+        st.push(i);
+    }
+    return res;
+}`
+},
+{
+  id: 72, section: "Stack", title: "Decode String",
+  difficulty: "Medium", leetcode: 394, company: "Google / Apple / Amazon",
+  pattern: "Dual stacks (Multiplier + String)",
+  intuition: "nested structures 'k[string]'. Use a stack to save the current string and the multiplier when encountering '['. Pop and repeat when encountering ']'.",
+  keyInsight: "Handle numbers digit-by-digit. When '[': push current state and reset. When ']': pop multiplier and previous string, append repeat.",
+  approach: "1) stack<int> counts, stack<string> strStack. 2) if digit: update k. 3) if '[': push k, push res, reset. 4) if ']': pop and repeat.",
+  complexity: "Time: O(N) | Space: O(N)",
+  tabCode: `string decodeString(string s) {
+    stack<int> counts; stack<string> strs;
+    string res = ""; int k = 0;
+    for(char c : s) {
+        if(isdigit(c)) k = k * 10 + (c - '0');
+        else if(c == '[') { counts.push(k); strs.push(res); k = 0; res = ""; }
+        else if(c == ']') {
+            string tmp = res; res = strs.top(); strs.pop();
+            int repeat = counts.top(); counts.pop();
+            while(repeat--) res += tmp;
+        } else res += c;
+    }
+    return res;
+}`
+},
+{
+  id: 73, section: "Sorting", title: "Kth Largest Element",
+  difficulty: "Medium", leetcode: 215, company: "Apple / Nvidia / Google",
+  pattern: "QuickSelect or Max-Heap",
+  intuition: "Max-Heap: O(N log K). QuickSelect: O(N) average. QuickSelect partitions the array around a pivot until the pivot is at index n-k.",
+  keyInsight: "QuickSelect is the standard follow-up for large N. Randomize pivot to avoid O(N²) worst case.",
+  approach: "Partition(l, r, pivot). If pivotIdx == n-k return. Else recurse left or right.",
+  complexity: "Time: O(N) avg, O(N²) worst | Space: O(log N) recursion",
+  tabCode: `int findKthLargest(vector<int>& nums, int k) {
+    int n = nums.size(), target = n - k;
+    int l = 0, r = n - 1;
+    while (l <= r) {
+        int p = partition(nums, l, r);
+        if (p == target) return nums[p];
+        if (p < target) l = p + 1;
+        else r = p - 1;
+    }
+    return -1;
+}
+int partition(vector<int>& nums, int l, int r) {
+    int pivot = nums[r], i = l;
+    for (int j = l; j < r; j++)
+        if (nums[j] <= pivot) swap(nums[i++], nums[j]);
+    swap(nums[i], nums[r]);
+    return i;
+}`
+},
+{
+  id: 74, section: "Binary Search", title: "Koko Eating Bananas",
+  difficulty: "Medium", leetcode: 875, company: "Google / Amazon / Apple",
+  pattern: "Binary search on solution space",
+  intuition: "Range of speed is [1, max(piles)]. For a speed K, calculate total hours. If hours <= H, try smaller K. If hours > H, must increase K.",
+  keyInsight: "Monotonicity: If she can finish at speed S, she can finish at any speed > S. Binary search finds the 'tipping point' (minimum S).",
+  approach: "1) low=1, high=max(piles). 2) mid = speed. 3) sum(ceil(p/mid)). 4) update range.",
+  complexity: "Time: O(N log(MaxP)) | Space: O(1)",
+  tabCode: `int minEatingSpeed(vector<int>& piles, int h) {
+    int l = 1, r = *max_element(piles.begin(), piles.end());
+    while (l < r) {
+        int mid = l + (r - l) / 2, hours = 0;
+        for (int p : piles) hours += (p + mid - 1) / mid;
+        if (hours <= h) r = mid;
+        else l = mid + 1;
+    }
+    return l;
+}`
+},
+{
+  id: 75, section: "Greedy", title: "Jump Game II",
+  difficulty: "Medium", leetcode: 45, company: "Amazon / Google / Apple",
+  pattern: "Greedy — BFS layered approach",
+  intuition: "Find minimum jumps. At each jump, calculate the furthest point reachable from the current jump range. When we reach the end of current jump range, perform another jump.",
+  keyInsight: "One-pass greedy: 'curEnd' tracks how far we can go with 'jumps', 'curFarthest' tracks the max reach for the NEXT jump.",
+  approach: "1) curEnd=0, farthest=0, jumps=0. 2) Iterate i to n-1: farthest=max(farthest, i+nums[i]). 3) if i==curEnd: jumps++, curEnd=farthest.",
+  complexity: "Time: O(N) | Space: O(1)",
+  tabCode: `int jump(vector<int>& nums) {
+    int jumps = 0, curEnd = 0, farthest = 0;
+    for (int i = 0; i < (int)nums.size() - 1; i++) {
+        farthest = max(farthest, i + nums[i]);
+        if (i == curEnd) { jumps++; curEnd = farthest; }
+    }
+    return jumps;
+}`
+},
+{
+  id: 76, section: "Greedy", title: "Non-overlapping Intervals",
+  difficulty: "Medium", leetcode: 435, company: "Amazon / Google / Facebook",
+  pattern: "Interval scheduling",
+  intuition: "To minimize removals, maximize kept intervals. Sort by END TIME. Pick first, skip any that overlap with current end. Re-update end to new end.",
+  keyInsight: "Sorting by end time is greedy-optimal because it leaves the most room for subsequent intervals.",
+  approach: "1) Sort by end time. 2) Track end of last kept interval. 3) If start < lastEnd, increment removals. Else update lastEnd.",
+  complexity: "Time: O(N log N) | Space: O(1)",
+  tabCode: `int eraseOverlapIntervals(vector<vector<int>>& intervals) {
+    sort(intervals.begin(), intervals.end(), [](auto& a, auto& b){ return a[1] < b[1]; });
+    int count = 0, lastEnd = INT_MIN;
+    for(auto& i : intervals) {
+        if(i[0] >= lastEnd) lastEnd = i[1];
+        else count++;
+    }
+    return count;
+}`
+},
 ];
 
 // ═══════════════════════════════════════════════════════════════════
