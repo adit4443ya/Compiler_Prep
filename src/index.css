@@ -1,0 +1,30 @@
+/* Cyberpunk dark scrollbar styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f0f11; 
+  border-left: 1px solid #1a1a1f; /* tk.border slightly darker */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a35; /* tk.bg3 but visible */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00f0ff; /* tk.cyan */
+}
+
+::-webkit-scrollbar-corner {
+  background: #0f0f11;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0f0f11;
+  color: #e0e0e0;
+}

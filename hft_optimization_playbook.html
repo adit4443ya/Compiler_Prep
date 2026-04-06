@@ -1,0 +1,403 @@
+<style>
+.cat{margin:0 0 1rem;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden}
+.cat-hdr{padding:12px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:var(--color-background-secondary);user-select:none}
+.cat-hdr:hover{background:var(--color-background-tertiary)}
+.cat-title{font-size:16px;font-weight:500;color:var(--color-text-primary)}
+.cat-badge{font-size:12px;padding:2px 10px;border-radius:var(--border-radius-md)}
+.cat-body{display:none;padding:0}
+.cat.open .cat-body{display:block}
+.cat.open .chevron{transform:rotate(180deg)}
+.chevron{transition:transform .2s;color:var(--color-text-tertiary)}
+.trick{padding:16px;border-top:0.5px solid var(--color-border-tertiary)}
+.trick-name{font-size:14px;font-weight:500;color:var(--color-text-primary);margin:0 0 4px}
+.trick-row{display:flex;gap:12px;margin:6px 0;font-size:13px;line-height:1.5}
+.trick-label{min-width:72px;color:var(--color-text-tertiary);flex-shrink:0}
+.trick-val{color:var(--color-text-secondary)}
+pre{margin:8px 0 0;padding:10px 12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:12px;font-family:var(--font-mono);color:var(--color-text-primary);overflow-x:auto;line-height:1.5;white-space:pre}
+.drill-btn{margin:8px 0 0;font-size:12px;padding:4px 12px;cursor:pointer}
+</style>
+
+<div style="padding:0.5rem 0">
+<p style="font-size:14px;color:var(--color-text-secondary);margin:0 0 1rem">Click each category. For every technique: what you see in the profile, what you do, and the code pattern. 7 categories, 22 techniques total.</p>
+
+<div class="cat open" id="c1">
+<div class="cat-hdr" onclick="toggle('c1')"><span class="cat-title">1. Branch prediction</span><span class="cat-badge" style="background:#FAEEDA;color:#854F0B">4 techniques</span><span class="chevron">▼</span></div>
+<div class="cat-body">
+
+<div class="trick">
+<p class="trick-name">__builtin_expect — hint the likely path</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">perf stat shows high branch-misses on an if-else in a tight loop</span></div>
+<div class="trick-row"><span class="trick-label">Why</span><span class="trick-val">CPU prefetches the likely branch. If your error-check is rarely true, tell the compiler.</span></div>
+<pre>// SLOW: CPU guesses 50/50
+if (order.price <= 0) { handle_error(); }
+
+// FAST: tell compiler this is rare
+if (__builtin_expect(order.price <= 0, 0)) { handle_error(); }
+
+// C++20: even cleaner
+if (order.price <= 0) [[unlikely]] { handle_error(); }</pre>
+<button class="drill-btn" onclick="sendPrompt('Give me 5 practice exercises for __builtin_expect in HFT contexts')">Practice this ↗</button>
+</div>
+
+<div class="trick">
+<p class="trick-name">Branchless conditional — eliminate the branch entirely</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Branch on random/unpredictable data (incoming market prices). No amount of hinting helps.</span></div>
+<div class="trick-row"><span class="trick-label">Why</span><span class="trick-val">If data is truly random, the predictor WILL be wrong ~50%. Remove the branch.</span></div>
+<pre>// SLOW: branch on every tick
+int best = (a < b) ? a : b;
+
+// FAST: branchless min via arithmetic
+int diff = a - b;
+int best = b + (diff & (diff >> 31));
+
+// ALSO: use cmov via std::min (compiler usually emits cmov)
+int best = std::min(a, b); // check godbolt!</pre>
+<button class="drill-btn" onclick="sendPrompt('Show me 5 branchless coding patterns used in HFT with assembly comparison')">Practice this ↗</button>
+</div>
+
+<div class="trick">
+<p class="trick-name">Lookup table — replace if-else chain with array index</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Switch/if-else over message types, order types, or state machines</span></div>
+<div class="trick-row"><span class="trick-label">Why</span><span class="trick-val">Array lookup is one load. Switch is N compares. For small enums, table wins.</span></div>
+<pre>// SLOW: switch on message type
+switch(msg.type) {
+  case ADD: handle_add(msg); break;
+  case MODIFY: handle_mod(msg); break;
+  case DELETE: handle_del(msg); break;
+}
+
+// FAST: function pointer table (no branches)
+using Handler = void(*)(const Msg&);
+static constexpr Handler table[] = {handle_add, handle_mod, handle_del};
+table[msg.type](msg); // single indirect call</pre>
+</div>
+
+<div class="trick">
+<p class="trick-name">Sort-and-process — help the predictor learn the pattern</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Processing unsorted array with conditional: branch-misses ~45%</span></div>
+<div class="trick-row"><span class="trick-label">Why</span><span class="trick-val">Sorted data makes branches predictable. Classic interview question.</span></div>
+<pre>// After sorting, the branch predictor sees:
+// false false false ... true true true
+// It learns the transition point. Mispredict count drops to ~1.</pre>
+</div>
+
+</div></div>
+
+<div class="cat" id="c2">
+<div class="cat-hdr" onclick="toggle('c2')"><span class="cat-title">2. Cache & memory layout</span><span class="cat-badge" style="background:#E1F5EE;color:#0F6E56">5 techniques</span><span class="chevron">▼</span></div>
+<div class="cat-body">
+
+<div class="trick">
+<p class="trick-name">SoA vs AoS — structure of arrays for hot fields</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">L1 cache miss rate high when iterating over objects but only touching 1-2 fields</span></div>
+<div class="trick-row"><span class="trick-label">Why</span><span class="trick-val">AoS loads entire struct per cache line. If you only need price, 90% of the line is waste.</span></div>
+<pre>// AoS — BAD for scanning prices only
+struct Order { uint64_t id; double price; int qty; char side; /*padding*/ };
+// sizeof = 32 bytes. Cache line = 64B = only 2 orders per line.
+
+// SoA — GOOD: prices are contiguous
+struct OrderBook {
+  std::vector&lt;double&gt; prices;   // 8 prices per cache line!
+  std::vector&lt;int&gt;    qtys;
+  std::vector&lt;char&gt;   sides;
+};</pre>
+<button class="drill-btn" onclick="sendPrompt('Teach me SoA order book design with benchmarking — full implementation')">Practice this ↗</button>
+</div>
+
+<div class="trick">
+<p class="trick-name">Cache-line padding — kill false sharing</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Two threads, independent data, but perf c2c shows cache line bouncing</span></div>
+<div class="trick-row"><span class="trick-label">Why</span><span class="trick-val">Two variables on the same 64B line = coherency traffic even if logically independent.</span></div>
+<pre>// FALSE SHARING: head and tail on same cache line
+struct Queue {
+  alignas(64) std::atomic&lt;size_t&gt; head; // producer writes
+  alignas(64) std::atomic&lt;size_t&gt; tail; // consumer writes
+  // Now on separate cache lines. No bouncing.
+};</pre>
+</div>
+
+<div class="trick">
+<p class="trick-name">Prefetch — tell the CPU what you'll need next</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Sequential access but with pointer chasing (linked list, tree traversal)</span></div>
+<pre>// Prefetch next node while processing current
+Node* cur = head;
+while (cur) {
+  __builtin_prefetch(cur->next, 0, 1); // read, low locality
+  process(cur);
+  cur = cur->next;
+}</pre>
+</div>
+
+<div class="trick">
+<p class="trick-name">Struct packing — fit hot data in fewer cache lines</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">sizeof(YourStruct) is surprisingly large due to padding</span></div>
+<pre>// BAD: compiler adds padding (40 bytes with alignment)
+struct Tick { char type; double price; int qty; int64_t ts; };
+
+// GOOD: reorder by descending alignment (24 bytes)
+struct Tick { double price; int64_t ts; int qty; char type; };
+// Use static_assert(sizeof(Tick) == 24);</pre>
+</div>
+
+<div class="trick">
+<p class="trick-name">Flat arrays over node-based containers</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Using std::map or std::list in hot path — random pointer chasing</span></div>
+<pre>// NEVER in hot path: std::map (red-black tree, pointer per node)
+// NEVER in hot path: std::list (scattered allocations)
+// NEVER in hot path: std::unordered_map (hash + chain = 2 indirections)
+
+// USE: flat sorted array + binary search, or open-addressing hash
+// USE: boost::flat_map, or hand-rolled price-level array</pre>
+</div>
+
+</div></div>
+
+<div class="cat" id="c3">
+<div class="cat-hdr" onclick="toggle('c3')"><span class="cat-title">3. Allocation elimination</span><span class="cat-badge" style="background:#FAECE7;color:#993C1D">3 techniques</span><span class="chevron">▼</span></div>
+<div class="cat-body">
+
+<div class="trick">
+<p class="trick-name">Arena / pool allocator — pre-allocate everything</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">malloc/new appearing in perf flamegraph inside hot path</span></div>
+<div class="trick-row"><span class="trick-label">Why</span><span class="trick-val">malloc takes ~50-100ns. Your entire tick-to-order budget is 500ns. You can't afford it.</span></div>
+<pre>template&lt;typename T, size_t N&gt;
+class Pool {
+  alignas(T) char buf[sizeof(T) * N];
+  T* free_list[N];
+  size_t top = N;
+public:
+  Pool() { for (size_t i = 0; i &lt; N; ++i) free_list[i] = reinterpret_cast&lt;T*&gt;(buf + i*sizeof(T)); }
+  T* alloc() { return top ? free_list[--top] : nullptr; }
+  void dealloc(T* p) { free_list[top++] = p; }
+}; // O(1) alloc, O(1) dealloc, zero syscalls</pre>
+<button class="drill-btn" onclick="sendPrompt('Walk me through building a production-grade arena allocator for an order book')">Practice this ↗</button>
+</div>
+
+<div class="trick">
+<p class="trick-name">Stack allocation for small buffers</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">std::vector or std::string in hot path for small, bounded data</span></div>
+<pre>// BAD: heap allocation for 4 bytes
+std::vector&lt;int&gt; temp; temp.push_back(x);
+
+// GOOD: stack array or std::array
+std::array&lt;int, 16&gt; temp;
+// Or: boost::small_vector&lt;int, 16&gt; — stack first, heap fallback</pre>
+</div>
+
+<div class="trick">
+<p class="trick-name">Placement new — construct in pre-allocated memory</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Need object construction but memory is already allocated (from pool/arena)</span></div>
+<pre>void* mem = pool.alloc();
+Order* o = new (mem) Order{id, price, qty}; // no malloc
+// ... use o ...
+o->~Order();         // explicit destructor
+pool.dealloc(mem);   // return to pool</pre>
+</div>
+
+</div></div>
+
+<div class="cat" id="c4">
+<div class="cat-hdr" onclick="toggle('c4')"><span class="cat-title">4. Eliminate dynamic dispatch</span><span class="cat-badge" style="background:#EEEDFE;color:#534AB7">3 techniques</span><span class="chevron">▼</span></div>
+<div class="cat-body">
+
+<div class="trick">
+<p class="trick-name">CRTP — static polymorphism via templates</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Virtual function call in hot path. Indirect jump = pipeline stall + icache miss.</span></div>
+<pre>// SLOW: virtual dispatch (~5-25ns overhead per call)
+struct Strategy { virtual void on_tick(Tick&) = 0; };
+
+// FAST: CRTP — resolved at compile time, zero overhead
+template&lt;typename Derived&gt;
+struct Strategy {
+  void on_tick(Tick& t) {
+    static_cast&lt;Derived*&gt;(this)->on_tick_impl(t);
+  }
+};
+struct MyStrat : Strategy&lt;MyStrat&gt; {
+  void on_tick_impl(Tick& t) { /* ... */ }
+};</pre>
+<button class="drill-btn" onclick="sendPrompt('Show me CRTP pattern for a complete trading strategy interface with benchmark vs virtual')">Practice this ↗</button>
+</div>
+
+<div class="trick">
+<p class="trick-name">std::variant + std::visit — type-safe static dispatch</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Runtime polymorphism over a fixed set of types (message types, order types)</span></div>
+<pre>using Message = std::variant&lt;AddOrder, ModifyOrder, DeleteOrder&gt;;
+
+// Compiler generates a jump table — no vtable indirection
+std::visit([](auto&& msg) { process(msg); }, message);</pre>
+</div>
+
+<div class="trick">
+<p class="trick-name">if-constexpr — compile-time branching</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Template code with runtime checks that could be resolved at compile time</span></div>
+<pre>template&lt;bool IS_BUY&gt;
+void process_order(Order& o) {
+  if constexpr (IS_BUY) {
+    match_against_asks(o);  // only this branch is compiled
+  } else {
+    match_against_bids(o);  // dead code eliminated
+  }
+}</pre>
+</div>
+
+</div></div>
+
+<div class="cat" id="c5">
+<div class="cat-hdr" onclick="toggle('c5')"><span class="cat-title">5. Lock-free & atomics</span><span class="cat-badge" style="background:#E6F1FB;color:#185FA5">3 techniques</span><span class="chevron">▼</span></div>
+<div class="cat-body">
+
+<div class="trick">
+<p class="trick-name">SPSC ring buffer — the workhorse of HFT</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">std::mutex-guarded queue between threads — lock contention shows in perf</span></div>
+<pre>template&lt;typename T, size_t N&gt;
+class SPSCQueue {
+  static_assert((N & (N-1)) == 0, "N must be power of 2");
+  alignas(64) std::atomic&lt;size_t&gt; head_{0};
+  alignas(64) std::atomic&lt;size_t&gt; tail_{0};
+  T buf_[N];
+public:
+  bool push(const T& val) {
+    size_t h = head_.load(std::memory_order_relaxed);
+    size_t next = (h + 1) & (N - 1);
+    if (next == tail_.load(std::memory_order_acquire)) return false;
+    buf_[h] = val;
+    head_.store(next, std::memory_order_release);
+    return true;
+  }
+  bool pop(T& val) {
+    size_t t = tail_.load(std::memory_order_relaxed);
+    if (t == head_.load(std::memory_order_acquire)) return false;
+    val = buf_[t];
+    tail_.store((t + 1) & (N - 1), std::memory_order_release);
+    return true;
+  }
+};</pre>
+<button class="drill-btn" onclick="sendPrompt('Deep dive into SPSC queue: memory ordering, why acquire/release, and benchmark it vs mutex')">Practice this ↗</button>
+</div>
+
+<div class="trick">
+<p class="trick-name">Acquire/release vs seq_cst — know the cost</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">All atomics using default memory_order_seq_cst — emits MFENCE on x86</span></div>
+<pre>// SLOW: seq_cst (default) — full memory fence, ~20ns
+x.store(42); // implicitly seq_cst
+
+// FAST: release on store, acquire on load — just compiler fence on x86
+x.store(42, std::memory_order_release); // ~0ns on x86 (just MOV)
+int v = x.load(std::memory_order_acquire); // ~0ns on x86 (just MOV)</pre>
+</div>
+
+<div class="trick">
+<p class="trick-name">Seqlock — readers never block, even during writes</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Shared data read by many, written by one (e.g., top-of-book quote)</span></div>
+<pre>struct SeqLock {
+  std::atomic&lt;uint32_t&gt; seq{0};
+  TopOfBook data;
+  void write(const TopOfBook& d) {
+    seq.store(seq.load(std::memory_order_relaxed) + 1, std::memory_order_release);
+    data = d;
+    seq.store(seq.load(std::memory_order_relaxed) + 1, std::memory_order_release);
+  }
+  TopOfBook read() {
+    TopOfBook copy;
+    uint32_t s;
+    do {
+      s = seq.load(std::memory_order_acquire);
+      if (s & 1) continue; // write in progress
+      copy = data;
+    } while (seq.load(std::memory_order_acquire) != s);
+    return copy;
+  }
+};</pre>
+</div>
+
+</div></div>
+
+<div class="cat" id="c6">
+<div class="cat-hdr" onclick="toggle('c6')"><span class="cat-title">6. Compiler & instruction level</span><span class="cat-badge" style="background:#EAF3DE;color:#3B6D11">2 techniques</span><span class="chevron">▼</span></div>
+<div class="cat-body">
+
+<div class="trick">
+<p class="trick-name">Force inline + restrict — help the optimizer</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Compiler not inlining a small function in hot path (check Godbolt)</span></div>
+<pre>// Force inline critical functions
+__attribute__((always_inline)) inline
+void process_tick(const Tick& t) { /* ... */ }
+
+// Restrict: promise no pointer aliasing
+void update(double* __restrict__ prices,
+            const int* __restrict__ qtys, int n) {
+  // Compiler can now vectorize without alias checks
+}</pre>
+</div>
+
+<div class="trick">
+<p class="trick-name">Compile flags that matter</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Code not auto-vectorizing, missing CPU-specific instructions</span></div>
+<pre># The HFT compile line:
+g++ -O3 -march=native -mtune=native \
+    -fno-exceptions -fno-rtti \
+    -flto -fomit-frame-pointer \
+    -DNDEBUG main.cpp
+
+# -fno-exceptions: eliminates EH table overhead
+# -fno-rtti: eliminates typeid/dynamic_cast overhead
+# -march=native: uses AVX2, BMI2, all your CPU has
+# -flto: link-time optimization across translation units</pre>
+</div>
+
+</div></div>
+
+<div class="cat" id="c7">
+<div class="cat-hdr" onclick="toggle('c7')"><span class="cat-title">7. Measurement & profiling</span><span class="cat-badge" style="background:#F1EFE8;color:#5F5E5A">2 techniques</span><span class="chevron">▼</span></div>
+<div class="cat-body">
+
+<div class="trick">
+<p class="trick-name">rdtsc nano-timer — measure without syscalls</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Need per-message latency, but clock_gettime adds 20-50ns</span></div>
+<pre>inline uint64_t rdtsc() {
+  uint32_t lo, hi;
+  asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
+  return (uint64_t)hi &lt;&lt; 32 | lo;
+}
+// Calibrate: tsc_freq = measure cycles over known time
+// Then: nanoseconds = (end - start) * 1e9 / tsc_freq
+
+uint64_t t0 = rdtsc();
+process_tick(tick);
+uint64_t t1 = rdtsc();
+latency_histogram.record(t1 - t0);</pre>
+</div>
+
+<div class="trick">
+<p class="trick-name">Latency histogram — p50/p99/p99.9 is what matters</p>
+<div class="trick-row"><span class="trick-label">You see</span><span class="trick-val">Average looks fine but occasional spikes. Average hides jitter.</span></div>
+<pre>struct Histogram {
+  std::array&lt;uint64_t, 10000&gt; buckets{}; // 1ns resolution
+  void record(uint64_t ns) {
+    if (ns &lt; buckets.size()) ++buckets[ns];
+  }
+  uint64_t percentile(double p) {
+    uint64_t total = 0;
+    for (auto b : buckets) total += b;
+    uint64_t target = total * p;
+    uint64_t cum = 0;
+    for (size_t i = 0; i &lt; buckets.size(); ++i) {
+      cum += buckets[i];
+      if (cum >= target) return i;
+    }
+    return buckets.size();
+  }
+}; // report: p50, p99, p99.9, max</pre>
+<button class="drill-btn" onclick="sendPrompt('Help me build a complete benchmarking framework with rdtsc histograms for my HFT projects')">Practice this ↗</button>
+</div>
+
+</div></div>
+
+</div>
+
+<script>
+function toggle(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+</script>
