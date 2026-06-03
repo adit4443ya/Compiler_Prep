@@ -97,13 +97,13 @@ const DsaGuideComponent = ({ setMode }) => {
   ];
 
   return (
-    <div style={{
+    <div className="dsa-container" style={{
       display: "flex", flexDirection: "column", gap: "24px",
       color: tk.text, fontFamily: tk.sans, minHeight: "100vh",
       background: tk.bg, padding: "24px 32px"
     }}>
       {/* ── Header ── */}
-      <div style={{
+      <div className="dsa-header-flex" style={{
         display: "flex", justifyContent: "space-between", alignItems: "flex-end",
         borderBottom: `1px solid ${tk.border}`, paddingBottom: "20px",
       }}>
@@ -134,7 +134,7 @@ const DsaGuideComponent = ({ setMode }) => {
           </button>
 
           {/* Tab Bar */}
-          <div style={{ display: "flex", background: tk.bg2, padding: 3, borderRadius: 8, border: `1px solid ${tk.border}`, gap: 2 }}>
+          <div className="dsa-tabs-scroll" style={{ display: "flex", background: tk.bg2, padding: 3, borderRadius: 8, border: `1px solid ${tk.border}`, gap: 2 }}>
             {TABS.map(t => (
               <button
                 key={t.key}
@@ -164,7 +164,7 @@ const DsaGuideComponent = ({ setMode }) => {
 
       {/* ══════════════ PROBLEMS TAB ══════════════ */}
       {activeTab === "problems" && (
-        <div style={{ display: "grid", gridTemplateColumns: viewMode === "sidebar" ? "300px 1fr" : "1fr", gap: "28px" }}>
+        <div className="dsa-main-grid" style={{ display: "grid", gridTemplateColumns: viewMode === "sidebar" ? "300px 1fr" : "1fr", gap: "28px" }}>
           {/* Sidebar / controls */}
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div style={{ display: "flex", gap: 8 }}>

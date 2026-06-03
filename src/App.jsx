@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import DsaGuide from "./DsaGuide.jsx";
+import LibrarySource from "./LibrarySource.jsx";
 
 /* ══════════════════════════════════════════════════════════════════════════
    COMPILER INTERVIEW FORGE v5.0 — Aditya Trivedi → Qualcomm
@@ -1876,22 +1877,32 @@ export default function App(){
   const[mode,setMode]=useState("compiler");
   const[active,setActive]=useState("assess");
   const[collapsed,setCollapsed]=useState({});
+  const[appSidebarOpen, setAppSidebarOpen]=useState(false);
 
   const toggle=(g)=>setCollapsed(p=>({...p,[g]:!p[g]}));
   const Fn=content[active];
 
   return(
-    <div style={{display:"flex",height:"100vh",background:tk.bg,color:tk.text,fontFamily:tk.sans}}>
+    <div className="library-layout" style={{background:tk.bg,color:tk.text,fontFamily:tk.sans}}>
       {/* ─── SIDEBAR ─── */}
       {mode === "compiler" && (
-        <nav style={{width:260,minWidth:260,background:tk.bg2,borderRight:`1px solid ${tk.border}`,overflowY:"auto",flexShrink:0}}>
+        <>
+        <button className="mobile-menu-btn" onClick={() => setAppSidebarOpen(!appSidebarOpen)}>
+          {appSidebarOpen ? '✕ CLOSE' : '☰ MENU'}
+        </button>
+        <div 
+          className={`mobile-overlay ${appSidebarOpen ? 'open' : ''}`} 
+          onClick={() => setAppSidebarOpen(false)}
+        />
+        <nav className={`library-sidebar ${appSidebarOpen ? 'open' : ''}`}>
           <div style={{padding:"20px 16px 12px",borderBottom:`1px solid ${tk.border}`}}>
             <div style={{fontFamily:tk.mono,color:tk.accent,fontSize:11,letterSpacing:".12em",fontWeight:800}}>COMPILER FORGE</div>
             <div style={{color:tk.textDim,fontSize:10,fontFamily:tk.mono,marginTop:3, marginBottom:16}}>v5.0 · 29 modules · 120+ Q&A</div>
             
             <div style={{display:"flex", background:tk.bg, borderRadius:6, padding:2, border:`1px solid ${tk.border}`}}>
-              <div onClick={()=>setMode("compiler")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:11, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="compiler"?tk.accentDim:"transparent", color:mode==="compiler"?tk.accent:tk.textDim, fontWeight:mode==="compiler"?800:400}}>PREP</div>
-              <div onClick={()=>setMode("dsa")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:11, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="dsa"?tk.violet+"22":"transparent", color:mode==="dsa"?tk.violet:tk.textDim, fontWeight:mode==="dsa"?800:400}}>DSA</div>
+              <div onClick={()=>setMode("compiler")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:10, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="compiler"?tk.accentDim:"transparent", color:mode==="compiler"?tk.accent:tk.textDim, fontWeight:mode==="compiler"?800:400}}>PREP</div>
+              <div onClick={()=>setMode("dsa")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:10, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="dsa"?tk.violet+"22":"transparent", color:mode==="dsa"?tk.violet:tk.textDim, fontWeight:mode==="dsa"?800:400}}>DSA</div>
+              <div onClick={()=>setMode("library")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:10, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="library"?"#10b98122":"transparent", color:mode==="library"?"#10b981":tk.textDim, fontWeight:mode==="library"?800:400}}>LIBRARY</div>
             </div>
           </div>
           {GROUPS.map(g=>(
@@ -1901,7 +1912,7 @@ export default function App(){
                 <span style={{color:tk.textDim,fontSize:10,fontFamily:tk.mono,transform:collapsed[g.label]?"rotate(-90deg)":"none",transition:"transform .15s"}}>▾</span>
               </div>
               {!collapsed[g.label]&&g.items.map(it=>(
-                <div key={it.id} onClick={()=>setActive(it.id)}
+                <div key={it.id} onClick={()=>{setActive(it.id); setAppSidebarOpen(false);}}
                   style={{padding:"7px 16px 7px 20px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,
                     background:active===it.id?tk.accent+"12":"transparent",
                     borderLeft:active===it.id?`2px solid ${tk.accent}`:"2px solid transparent",
@@ -1913,20 +1924,21 @@ export default function App(){
             </div>
           ))}
         </nav>
+        </>
       )}
 
       {/* ─── CONTENT ─── */}
-      <main style={{
-        flex:1,
-        overflowY:"auto",
+      <main className="library-main app-main-content" style={{
         padding:mode==="compiler" ? "28px 36px 60px" : "0",
         maxWidth:mode==="compiler" ? 880 : "100%",
         margin:mode==="compiler" ? "0 auto" : "0"
       }}>
         {mode === "compiler" ? (
             Fn ? <Fn/> : <div style={{color:tk.textDim,fontFamily:tk.mono,padding:40}}>Select a topic from the sidebar.</div>
-        ) : (
+        ) : mode === "dsa" ? (
             <DsaGuide setMode={setMode} />
+        ) : (
+            <LibrarySource setMode={setMode} />
         )}
       </main>
     </div>

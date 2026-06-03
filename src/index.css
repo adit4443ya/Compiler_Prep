@@ -28,3 +28,264 @@ body {
   background-color: #0f0f11;
   color: #e0e0e0;
 }
+
+/* Markdown Body Styles (Rentry.co / Premium aesthetic) */
+.markdown-body {
+  color: #ededed;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.75;
+  font-size: 1.05rem;
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+  color: #ffffff;
+  font-weight: 800;
+  margin-top: 2em;
+  margin-bottom: 1em;
+  line-height: 1.25;
+}
+
+.markdown-body h1 { font-size: 2.25em; border-bottom: 1px solid #333; padding-bottom: 0.3em; }
+.markdown-body h2 { font-size: 1.75em; border-bottom: 1px solid #333; padding-bottom: 0.3em; color: #10b981; }
+.markdown-body h3 { font-size: 1.5em; }
+.markdown-body h4 { font-size: 1.25em; }
+
+.markdown-body p {
+  margin-top: 0;
+  margin-bottom: 1.25em;
+  color: #a1a1aa;
+}
+
+.markdown-body a {
+  color: #10b981;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.markdown-body a:hover {
+  color: #34d399;
+  text-decoration: underline;
+}
+
+.markdown-body strong {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.markdown-body blockquote {
+  margin: 1.5em 0;
+  padding: 1em 1.5em;
+  color: #a1a1aa;
+  background: #111111;
+  border-left: 4px solid #10b981;
+  border-radius: 4px 8px 8px 4px;
+}
+
+.markdown-body blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body ul, .markdown-body ol {
+  margin-top: 0;
+  margin-bottom: 1.25em;
+  padding-left: 2em;
+  color: #a1a1aa;
+}
+
+.markdown-body li {
+  margin-bottom: 0.5em;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0;
+  margin-bottom: 1.5em;
+  font-size: 0.95em;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.markdown-body table th {
+  background: #111111;
+  color: #ffffff;
+  font-weight: 700;
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid #333;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.markdown-body table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #333;
+  background: #0f0f11;
+  color: #a1a1aa;
+}
+
+.markdown-body table tr:last-child td {
+  border-bottom: none;
+}
+
+.markdown-body table tr:nth-child(even) td {
+  background: #0a0a0a;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.markdown-body hr {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #10b981, transparent);
+  border: none;
+  margin: 3em 0;
+  opacity: 0.5;
+}
+
+/* GitHub Alert Styles */
+.gh-alert {
+  margin: 1.5em 0;
+  padding: 1em 1.5em;
+  color: #a1a1aa;
+  background: #111111;
+  border-radius: 4px 8px 8px 4px;
+  border-left: 4px solid #10b981;
+}
+
+.gh-alert .gh-alert-title {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 0.85em;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5em;
+}
+
+.gh-alert p:last-child {
+  margin-bottom: 0;
+}
+
+.gh-alert-note { border-left-color: #3b82f6; }
+.gh-alert-note .gh-alert-title { color: #3b82f6; }
+
+.gh-alert-tip { border-left-color: #10b981; }
+.gh-alert-tip .gh-alert-title { color: #10b981; }
+
+.gh-alert-important { border-left-color: #8b5cf6; }
+.gh-alert-important .gh-alert-title { color: #8b5cf6; }
+
+.gh-alert-warning { border-left-color: #eab308; }
+.gh-alert-warning .gh-alert-title { color: #eab308; }
+
+.gh-alert-caution { border-left-color: #ef4444; }
+.gh-alert-caution .gh-alert-title { color: #ef4444; }
+
+/* Responsive Library Layout */
+.library-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.library-sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: #111111;
+  border-right: 1px solid #333333;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+}
+
+.library-main {
+  flex: 1;
+  overflow-y: auto;
+  background: #0a0a0a;
+  position: relative;
+}
+
+.library-content {
+  flex: 1;
+  padding: 40px 60px;
+  min-width: 0;
+  animation: fadeIn 0.3s ease;
+}
+
+.library-toc {
+  width: 260px;
+  flex-shrink: 0;
+  padding: 40px 20px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  border-left: 1px solid #333333;
+}
+
+.mobile-menu-btn {
+  display: none;
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 20;
+  background: #111111;
+  color: #10b981;
+  border: 1px solid #333333;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.mobile-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 5;
+  backdrop-filter: blur(2px);
+}
+
+@media (max-width: 1024px) {
+  .library-toc {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: block;
+  }
+  
+  .library-sidebar {
+    position: absolute;
+    height: 100%;
+    transform: translateX(-100%);
+  }
+
+  .library-sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .mobile-overlay.open {
+    display: block;
+  }
+
+  .library-content {
+    padding: 70px 20px 30px 20px; /* Space for fixed menu button */
+  }
+  
+  .markdown-body h1 {
+    font-size: 1.8rem;
+  }
+}
