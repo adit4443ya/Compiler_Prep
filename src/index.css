@@ -200,8 +200,19 @@ body {
   border-right: 1px solid #333333;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.25s;
   z-index: 10;
+  overflow: hidden;
+}
+
+/* Desktop collapse */
+.library-sidebar.collapsed {
+  width: 0;
+  min-width: 0;
+  border-right-color: transparent;
 }
 
 .library-main {
@@ -213,15 +224,15 @@ body {
 
 .library-content {
   flex: 1;
-  padding: 40px 60px;
+  padding: 40px 48px;
   min-width: 0;
   animation: fadeIn 0.3s ease;
 }
 
 .library-toc {
-  width: 260px;
+  width: 220px;
   flex-shrink: 0;
-  padding: 40px 20px;
+  padding: 40px 16px;
   position: sticky;
   top: 0;
   height: 100vh;
