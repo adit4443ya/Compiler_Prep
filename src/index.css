@@ -194,8 +194,8 @@ body {
 }
 
 .library-sidebar {
-  width: 280px;
-  min-width: 280px;
+  width: 268px;
+  min-width: 268px;
   background: #111111;
   border-right: 1px solid #333333;
   display: flex;
@@ -220,24 +220,25 @@ body {
   overflow-y: auto;
   background: #0a0a0a;
   position: relative;
+  min-width: 0;
 }
 
 .library-content {
   flex: 1;
-  padding: 40px 48px;
+  padding: 44px 52px 80px;
   min-width: 0;
   animation: fadeIn 0.3s ease;
 }
 
 .library-toc {
-  width: 220px;
+  width: 210px;
   flex-shrink: 0;
-  padding: 40px 16px;
+  padding: 44px 14px 40px;
   position: sticky;
   top: 0;
   height: 100vh;
   overflow-y: auto;
-  border-left: 1px solid #333333;
+  border-left: 1px solid #1e1e1e;
 }
 
 .mobile-menu-btn {
