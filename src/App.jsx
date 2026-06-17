@@ -1895,16 +1895,17 @@ export default function App(){
           onClick={() => setAppSidebarOpen(false)}
         />
         <nav className={`library-sidebar ${appSidebarOpen ? 'open' : ''}`}>
-          <div style={{padding:"20px 16px 12px",borderBottom:`1px solid ${tk.border}`}}>
+          <div style={{padding:"20px 16px 12px",borderBottom:`1px solid ${tk.border}`,flexShrink:0}}>
             <div style={{fontFamily:tk.mono,color:tk.accent,fontSize:11,letterSpacing:".12em",fontWeight:800}}>COMPILER FORGE</div>
             <div style={{color:tk.textDim,fontSize:10,fontFamily:tk.mono,marginTop:3, marginBottom:16}}>v5.0 · 29 modules · 120+ Q&A</div>
-            
+
             <div style={{display:"flex", background:tk.bg, borderRadius:6, padding:2, border:`1px solid ${tk.border}`}}>
               <div onClick={()=>setMode("compiler")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:10, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="compiler"?tk.accentDim:"transparent", color:mode==="compiler"?tk.accent:tk.textDim, fontWeight:mode==="compiler"?800:400}}>PREP</div>
               <div onClick={()=>setMode("dsa")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:10, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="dsa"?tk.violet+"22":"transparent", color:mode==="dsa"?tk.violet:tk.textDim, fontWeight:mode==="dsa"?800:400}}>DSA</div>
               <div onClick={()=>setMode("library")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:10, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="library"?"#10b98122":"transparent", color:mode==="library"?"#10b981":tk.textDim, fontWeight:mode==="library"?800:400}}>LIBRARY</div>
             </div>
           </div>
+          <div style={{flex:1, overflowY:"auto", minHeight:0}}>
           {GROUPS.map(g=>(
             <div key={g.label} style={{borderBottom:`1px solid ${tk.border}08`}}>
               <div onClick={()=>toggle(g.label)} style={{padding:"10px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -1923,6 +1924,7 @@ export default function App(){
               ))}
             </div>
           ))}
+          </div>
         </nav>
         </>
       )}
@@ -1931,7 +1933,8 @@ export default function App(){
       <main className="library-main app-main-content" style={{
         padding:mode==="compiler" ? "28px 36px 60px" : "0",
         maxWidth:mode==="compiler" ? 880 : "100%",
-        margin:mode==="compiler" ? "0 auto" : "0"
+        margin:mode==="compiler" ? "0 auto" : "0",
+        overflow:mode==="library" ? "hidden" : "auto"
       }}>
         {mode === "compiler" ? (
             Fn ? <Fn/> : <div style={{color:tk.textDim,fontFamily:tk.mono,padding:40}}>Select a topic from the sidebar.</div>

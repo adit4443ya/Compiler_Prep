@@ -53,7 +53,9 @@ function preprocessMarkdown(content) {
     anchorToHeadingId[anchorId] = headingId;
   }
   // Strip all bare anchor tags (with or without closing tag variations)
-  const processed = content.replace(/<a\s+id="[^"]+"\s*(?:\/>|><\/a>)/g, '');
+  let processed = content.replace(/<a\s+id="[^"]+"\s*(?:\/>|><\/a>)/g, '');
+  // Drop the leading H1 — the file header already renders the title (avoids a duplicate).
+  processed = processed.replace(/^\s*#\s+.+(?:\r?\n)+/, '');
   return { processed, anchorToHeadingId };
 }
 

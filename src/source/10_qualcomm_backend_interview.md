@@ -1,11 +1,146 @@
 <!--
 category: Interview Prep & Tooling
-tags: Qualcomm, Backend, TableGen, Register Allocation, Scheduling, RISC-V, XQCI
+tags: Qualcomm, SSA, Dominance, LICM, GVN, SCCP, Alias Analysis, Backend, TableGen, Register Allocation, Scheduling, RISC-V, XQCI
 difficulty: Advanced
-readTime: 20 min
+readTime: 35 min
 -->
 
-# Qualcomm Backend Systems Interview Q&A
+# Qualcomm Compiler Systems Interview: Deep Dive Preparation
+
+This document contains highly detailed, production-grade answers to deep compiler backend and middle-end engineering questions, explicitly tailored for a Qualcomm technical interview panel (specifically involving back-end/RISC-V and LLVM Pass engineers).
+
+---
+
+## Part 1: Middle-End (SSA & Dominance)
+
+### 1. Walk me through Cytron's algorithm step by step on a CFG.
+**Answer:**
+Cytron's algorithm produces Minimal SSA form in two phases: **φ-insertion** and **Variable Renaming**.
+1. **Compute Dominator Tree & Dominance Frontiers (DF):** We first find the CFG's dominator tree. The DF of block `X` is the set of blocks where `X`'s dominance "stops" (i.e., `X` dominates a predecessor of `Y`, but does *not* strictly dominate `Y`).
+2. **φ-Insertion Phase (Iterated Dominance Frontier - IDF):**
+   - For a variable `v` defined in block `B`, any block in `DF(B)` needs a φ-function for `v`, because `DF(B)` is the first place where a path from `B` merges with a path from somewhere else.
+   - We place a φ-function at `DF(B)`. But wait: adding a φ-function *is* a new definition of `v`! So, we must now compute the DF of the block where we just added the φ-function, and place more φ-functions there if needed. This recursive closure is the **Iterated Dominance Frontier (IDF)**.
+   - We use a worklist initialized with all blocks defining `v`. We pop `B`, place φ for `v` in all `Y ∈ DF(B)`, and push `Y` to the worklist if it hasn't been processed.
+3. **Variable Renaming Phase:**
+   - We do a Depth-First Search (DFS) traversal over the **Dominator Tree** (not the CFG).
+   - We maintain a counter and a stack for each variable `v` (e.g., `stack[v]`).
+   - When we process `A = ...`, we push a new version (e.g., `A_1`) onto `stack[A]`. Uses of `A` are replaced by `top(stack[A])`.
+   - We then visit all CFG successors of the block and fill in the corresponding arguments in their φ-functions.
+   - We recurse to dominator tree children.
+   - After returning from the DFS call for a block, we pop the definitions made in that block from the stacks.
+
+### 2. Why does a loop header always appear in its own dominance frontier?
+**Answer:**
+A loop header `H` has at least two incoming edges: one from outside the loop (the pre-header) and one from inside the loop (the backedge from a latch block `L`).
+Because `H` dominates `L`, and `L` has an edge to `H`, `H` dominates a predecessor of `H` (which is `L`). But `H` does *not* strictly dominate itself (by definition, strict dominance requires `A != B`). Thus, `H` satisfies the exact definition of being in `DF(H)`.
+This fundamental property is why loop variables (induction variables) elegantly and automatically get φ-functions placed exactly at the loop header in SSA form.
+
+### 3. What is the iterated dominance frontier and why do we need iteration?
+**Answer:**
+The Iterated Dominance Frontier (IDF) accounts for the fact that a φ-function acts as a *new definition*. 
+If block `A` defines `x`, we place a φ-function in `B ∈ DF(A)`. Block `B` now defines `x` (via the φ-function). If there's another join point `C ∈ DF(B)`, `C` needs a φ-function bridging the value from `B` and some other path. The standard DF only calculates the immediate frontier. The IDF takes the transitive closure `IDF(S) = DF(S ∪ DF(S))`, ensuring φ-functions propagate through chains of control-flow merges.
+
+### 4. How does `mem2reg` work in LLVM? What does it actually do to alloca instructions?
+**Answer:**
+`mem2reg` is the LLVM pass that promotes memory allocations (`alloca`) to SSA registers.
+Front-ends (like Clang) emit `alloca` for all local variables, generating loads and stores. This avoids complex SSA construction in the front-end. 
+`mem2reg` looks for `alloca` instructions that meet specific criteria (only accessed via direct `load` and `store`, address never taken/escaped). 
+1. It analyzes where the `alloca` is stored to (defining blocks).
+2. It uses Cytron's algorithm to compute the IDF for those def blocks and inserts φ-functions for the `alloca`'d value.
+3. It crawls the basic blocks, tracking the "current" values of each `alloca` based on the sequence of stores and φ-functions, and replaces subsequent `load`s with direct SSA values.
+4. Finally, it deletes the `alloca`, `load`, and `store` instructions. The memory-bound variable is purely virtual registers now.
+
+### 5. When would a φ function have more than two arguments?
+**Answer:**
+A φ-function has exactly one argument for every incoming CFG edge to the basic block. It has >2 arguments when a block has >2 predecessors. A common example is a `switch` statement where multiple cases `break` into the same exit block, or a sequence of `if-else if-else` statements merging at a single downstream block.
+
+### 6. What is CSSA and why is it needed before De-SSA?
+**Answer:**
+CSSA (Conventional SSA) is a specific flavor of SSA where all variables related by a φ-function (both the definition and all its operands) have non-overlapping, "compatible" live ranges.
+When doing out-of-SSA translation (getting rid of φ-functions to generate machine code), we usually insert copies on predecessor edges. But these copies can interfere. CSSA ensures that for any φ-function `v = φ(a, b)`, `v, a, b` can be safely coalesced into the exact same physical register without conflicts. If they overlap in standard SSA, a CSSA-building pass inserts extra dummy copies to split the live ranges, resolving the "Lost Copy" and "Swap" problems before Register Allocation.
+
+---
+
+## Part 2: Optimization Passes
+
+### 1. LICM (Loop Invariant Code Motion)
+#### What makes an instruction loop invariant?
+An instruction is loop invariant if its operands are all either constants, defined outside the loop, or themselves loop invariant. 
+
+#### What conditions must hold before you can hoist an instruction out of a loop?
+1. **Loop Invariant:** The instruction calculates the same value every iteration.
+2. **Safe to Speculate/Execute:** It must not throw exceptions or trap (e.g., dividing by zero) unless the compiler can prove the execution of the loop *guarantees* it executes unconditionally.
+3. **No Side Effects:** It cannot modify global state.
+4. **Dominates all Exits:** (For hoisting) The instruction must dominate all exit blocks of the loop so we don't compute something that wouldn't have been computed if the loop exited early.
+
+#### Can you hoist a load out of a loop? What about a store?
+- **Load Hoisting**: Yes, but only if the memory address is loop invariant, and Alias Analysis proves no instruction *inside* the loop writes to (aliases) that memory address.
+- **Store Hoisting (Sink to Exit)**: Yes, but instead of hoisting, it's called **Loop Sinking**. We load it to a register in the pre-header, modify the register in the loop, and store it once in the loop exit block. Requires proving that no other thread reads/writes the memory, and no loop code reads it unexpectedly (aliasing).
+
+#### What is the relationship between LICM and Alias Analysis (AA)?
+LICM is entirely bound by Alias Analysis. To hoist `x = load p`, the compiler asks AA: "Does any store in this loop alias `p`?". If AA returns `MayAlias` for `*q = y` inside the loop, LICM is blocked, because `p` and `q` might overlap, changing `p`'s value per iteration.
+
+### 2. GVN (Global Value Numbering)
+#### How does GVN differ from local CSE?
+Local CSE (Common Subexpression Elimination) only eliminates redundancies within a single Basic Block. GVN works globally across the entire CFG using dominator trees to prove values are equivalent across branches.
+
+#### What is a value number? How does GVN assign them?
+A "value number" is a unique ID (often a hash) representing a specific computation (`Opcode + ValueNum(Op1) + ValueNum(Op2)`). If `a = x + y` gets Value #5, later when evaluating `b = x + y`, GVN sees the operands have the same value numbers, calculates the same hash #5, and replaces `b` with `a`.
+
+#### How does GVN handle loads — what can go wrong?
+GVN tries to number memory states. Using MemorySSA, GVN assigns a value number to a `load` based on the pointer and the current memory version (`MemoryUse` token). What can go wrong is **aliasing**. If an intervening opaque store occurs, GVN must pessimistically assume the memory changed, increment the memory version, and fail to optimize the redundant load.
+
+### 3. DCE and ADCE
+#### How does standard DCE work in SSA form?
+In SSA, standard Dead Code Elimination is trivial O(N). Because every variable has one definition and explicit use-lists, a pass iterates over instructions: if `use_count == 0` and the instruction has no side-effects (not a volatile load, store, or call), delete it. Done.
+
+#### What is aggressive DCE — how does it differ from standard DCE?
+Standard DCE only deletes instructions whose outputs are clearly unused. But what about a dead cycle? `a = b + 1; b = a + 1;` (with no outside uses). Standard DCE sees `use_count > 0` for both and leaves them. 
+**Aggressive DCE (ADCE)** works backwards. It assumes *everything* is dead initially, marks only "roots" (returns, side-effects) as live, and recursively marks their operands as live. Anything left unmarked at the end is deleted. This naturally kills dead cycles.
+
+### 4. Constant Propagation
+#### What is SCCP (Sparse Conditional Constant Propagation)?
+SCCP propagates constants through a CFG while simultaneously figuring out which branches of CFG execution are actually reachable (dead branch elimination). 
+
+#### How does SCCP differ from simple constant folding?
+Simple folding just looks at `x = 2 + 3` -> `x = 5`. SCCP evaluates a branch `if (x == 5)` as True, completely skips visiting the False branch, and propagates constants assuming the False branch never executes. 
+
+#### Why is "sparse" important — what does it mean here?
+"Sparse" means it doesn't propagate values linearly block-by-block. It uses SSA def-use chains (the sparse graph) to directly jump from a definition to its uses, regardless of where they are in the CFG, skipping over instructions that don't depend on the value. This makes it incredibly fast.
+
+### 5. Loop Optimizations
+#### What is SCEV (Scalar Evolution) in LLVM?
+SCEV mathematically analyzes how loop variables change. Instead of seeing `i = i + 1`, it models `i` as a polynomial or recurrence relation over loop iterations, like `{0, +, 1}` (starts at 0, adds 1 per iteration). It is used to compute exact loop trip counts and array access patterns.
+
+#### What is loop strength reduction? Give a concrete example.
+Replacing expensive operations inside a loop with cheaper ones. 
+Example: `for(i=0; i<N; ++i) { a[i] = i * 4; }`
+Multiplier `* 4` is expensive. Strength reduction transforms this into an accumulator using addition:
+`int temp = 0; for(i=0; i<N; ++i) { a[i] = temp; temp += 4; }`
+
+#### What conditions make loop interchange legal?
+Loop interchange (swapping inner and outer loops to improve cache locality) is legal if it preserves all **data dependencies** (true, anti, and output dependencies) defined by the loop distance vectors. No iteration `(i, j)` can read/write data that was meant to be written/read by a later/earlier iteration in the original order.
+
+#### What is loop unswitching?
+Hoisting a loop-invariant conditional check *outside* the loop, and duplicating the loop body for the True and False paths. Profitable because it removes a branch from the inner loop, enabling better vectorization and software pipelining, at the cost of code size.
+
+---
+
+## Part 3: Alias Analysis
+
+### What is may-alias vs must-alias vs no-alias?
+- **No-Alias:** Pointers definitely point to disjoint memory. (Optimization: safe to reorder).
+- **Must-Alias:** Pointers definitely point to the exact same memory location. (Optimization: we can forward values between them).
+- **May-Alias:** Compiler cannot prove either. Must conservatively assume they overlap. (Optimization blocker).
+
+### What is TBAA (Type-Based Alias Analysis)?
+TBAA uses the source language's type system rules (like C++ Strict Aliasing) to prove pointers don't alias. In C++, an `int*` and a `float*` are disallowed from pointing to the same memory. LLVM generates TBAA metadata nodes on loads/stores. The TBAA pass reads this metadata; if the types are fundamentally distinct on the TBAA hierarchy tree, it returns `NoAlias`.
+
+### Difference between flow-sensitive vs flow-insensitive AA?
+- **Flow-Insensitive:** Checks if `p` and `q` *ever* alias anywhere in the entire program. (Fast, less precise).
+- **Flow-Sensitive:** Takes control flow into account, knowing that `p` and `q` might alias at line 10, but after `q = new int()` at line 15, they definitely `NoAlias` at line 20. (Slower, highly precise). LLVM's basic AA is mostly flow-insensitive, augmented by MemorySSA for flow-sensitive queries.
+
+---
 
 ## Part 4: Back-End (Instruction Selection)
 
