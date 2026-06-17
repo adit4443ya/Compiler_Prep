@@ -115,7 +115,7 @@ const DsaGuideComponent = ({ setMode }) => {
             <Badge color={tk.accent + "33"} textColor={tk.accent}>Elite Edition</Badge>
           </div>
           <P style={{ opacity: 0.55, fontSize: 14, margin: 0 }}>
-            {ALL_PROBLEMS.length} Problems · {CHEATSHEET.length} Patterns · 10 C++ Concepts · {NVIDIA_BUG_HUNT.length} Bug Exercises · {NVIDIA_OUTPUT_QUIZ.length} Quiz | <span style={{color:'#ef4444',fontWeight:900}}>NVIDIA Round 1 Ready</span>
+            {ALL_PROBLEMS.length} Problems · {CHEATSHEET.length} Patterns · {CPP_CONCEPTS.length} C++ Concepts · {NVIDIA_BUG_HUNT.length} Bug Exercises · {NVIDIA_OUTPUT_QUIZ.length} Quiz | <span style={{color:'#ef4444',fontWeight:900}}>NVIDIA Round 1 Ready</span>
           </P>
         </div>
 

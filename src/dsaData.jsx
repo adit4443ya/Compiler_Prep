@@ -2170,6 +2170,517 @@ int partition(vector<int>& nums, int l, int r) {
     return count;
 }`
 },
+
+  // ══════════════════════════════
+  //  SEGMENT TREE / FENWICK  (ids 82–83)
+  // ══════════════════════════════
+  {
+    id: 82, section: "Segment Tree", title: "Range Sum Query — Mutable",
+    difficulty: "Medium", leetcode: 307, company: "Google / Nvidia / Bloomberg",
+    pattern: "Iterative segment tree — point update, range query",
+    intuition: "A naive array gives O(1) update but O(N) range sum; a prefix-sum array gives O(1) query but O(N) update. A segment tree balances both at O(log N) each by storing partial sums in a binary tree laid flat in an array of size 2N. Leaves sit at [N, 2N); each internal node stores the sum of its two children.",
+    keyInsight: "Build the tree in a flat array of size 2N. Leaf i lives at index i+N. Parent of node x is x/2; children are 2x and 2x+1. Update walks leaf→root fixing parents; query folds the [l, r) interval by climbing inward, adding any node that falls fully inside the range.",
+    approach: "1) Place values at tree[i+N], build parents downward: tree[i]=tree[2i]+tree[2i+1]. 2) update(i,v): set leaf, climb i/=2 recomputing. 3) query(l,r): l+=N,r+=N; while l<r, if l odd add tree[l++], if r odd add tree[--r], then l/=2,r/=2.",
+    complexity: "Time: O(log N) update & query, O(N) build | Space: O(N)",
+    tabCode: `class NumArray {
+    int n; vector<int> tree;          // flat segment tree, size 2n
+public:
+    NumArray(vector<int>& a) : n(a.size()), tree(2*a.size()) {
+        for (int i = 0; i < n; i++) tree[i+n] = a[i];      // fill leaves
+        for (int i = n-1; i > 0; i--) tree[i] = tree[2*i] + tree[2*i+1];
+    }
+    void update(int i, int val) {
+        for (tree[i += n] = val; i > 1; i /= 2)            // climb to root
+            tree[i/2] = tree[i] + tree[i^1];               // i^1 = sibling
+    }
+    int sumRange(int l, int r) {                            // inclusive [l,r]
+        int res = 0; for (l += n, r += n+1; l < r; l /= 2, r /= 2) {
+            if (l & 1) res += tree[l++];                   // l is a right child
+            if (r & 1) res += tree[--r];                   // r is a right child
+        }
+        return res;
+    }
+};`
+  },
+  {
+    id: 83, section: "Segment Tree", title: "Count of Smaller Numbers After Self",
+    difficulty: "Hard", leetcode: 315, company: "Google / Nvidia / Amazon",
+    pattern: "Fenwick (BIT) over coordinate-compressed values, scan right→left",
+    intuition: "For each element we want how many later elements are smaller. Scan from the RIGHT, and as we go, record each value in a Binary Indexed Tree keyed by RANK. Before inserting nums[i], query the BIT prefix sum of all ranks strictly less than rank(nums[i]) — that's exactly how many already-seen (i.e., to-the-right) elements are smaller.",
+    keyInsight: "Coordinate-compress values to ranks 1..k so the BIT stays small. A Fenwick tree gives O(log N) prefix-sum and point-update with almost no constant factor — far simpler to code than a segment tree for this. Right-to-left scan converts 'smaller after self' into a prefix-count query.",
+    approach: "1) Sort unique values → rank map. 2) BIT of size k. 3) For i=n-1..0: r=rank(nums[i]); res[i]=query(r-1); update(r,+1). 4) query(i)=sum of [1..i]; update(i,d): i+=i&-i.",
+    complexity: "Time: O(N log N) | Space: O(N)",
+    tabCode: `class BIT {
+    vector<int> t;
+public:
+    BIT(int n) : t(n+1, 0) {}
+    void update(int i, int d) { for (; i < (int)t.size(); i += i & -i) t[i] += d; }
+    int  query (int i) { int s=0; for (; i > 0; i -= i & -i) s += t[i]; return s; }
+};
+vector<int> countSmaller(vector<int>& nums) {
+    vector<int> sorted(nums);
+    sort(sorted.begin(), sorted.end());
+    sorted.erase(unique(sorted.begin(), sorted.end()), sorted.end());
+    auto rank = [&](int x){                              // 1-indexed rank
+        return int(lower_bound(sorted.begin(), sorted.end(), x) - sorted.begin()) + 1;
+    };
+    BIT bit(sorted.size());
+    vector<int> res(nums.size());
+    for (int i = nums.size()-1; i >= 0; --i) {
+        int r = rank(nums[i]);
+        res[i] = bit.query(r - 1);                       // strictly smaller seen so far
+        bit.update(r, 1);
+    }
+    return res;
+}`
+  },
+
+  // ══════════════════════════════
+  //  TRIE + BACKTRACKING  (id 84)
+  // ══════════════════════════════
+  {
+    id: 84, section: "Trie", title: "Word Search II",
+    difficulty: "Hard", leetcode: 212, company: "Nvidia / Google / Amazon",
+    pattern: "Build a Trie of words, then DFS the grid pruning by Trie edges",
+    intuition: "Searching each word independently is O(words × cells × wordLen). Instead, build ONE Trie from all words and DFS the board once: at each cell, only continue down board directions that correspond to an existing Trie child. The Trie collapses shared prefixes, so thousands of words with common prefixes are explored together.",
+    keyInsight: "Store the full word at the terminal Trie node so you can emit it on a hit without rebuilding the string. Prune aggressively: mark the visited cell, and after exploring, if a Trie node has no children left, you can detach it to shrink future work. The Trie turns the board DFS into a single shared traversal.",
+    approach: "1) Insert all words; node.word = full word at end. 2) DFS(r,c,node): get char; if no child → return. 3) Descend child; if child.word → record + null it (dedupe). 4) Explore 4 neighbors with visited mark. 5) Backtrack.",
+    complexity: "Time: O(M·N·4^L) worst, far less with pruning | Space: O(total chars)",
+    tabCode: `struct Node { Node* nxt[26]={}; string word; };
+class Solution {
+    vector<string> res;
+    void dfs(vector<vector<char>>& b, int r, int c, Node* n) {
+        char ch = b[r][c];
+        if (ch == '#' || !n->nxt[ch-'a']) return;        // pruned by Trie
+        n = n->nxt[ch-'a'];
+        if (!n->word.empty()) { res.push_back(n->word); n->word.clear(); } // dedupe
+        b[r][c] = '#';                                   // mark visited
+        int dr[]={-1,1,0,0}, dc[]={0,0,-1,1};
+        for (int k = 0; k < 4; k++) {
+            int nr=r+dr[k], nc=c+dc[k];
+            if (nr>=0 && nr<(int)b.size() && nc>=0 && nc<(int)b[0].size())
+                dfs(b, nr, nc, n);
+        }
+        b[r][c] = ch;                                    // restore
+    }
+public:
+    vector<string> findWords(vector<vector<char>>& board, vector<string>& words) {
+        Node* root = new Node();
+        for (auto& w : words) {                          // build Trie
+            Node* n = root;
+            for (char ch : w) {
+                if (!n->nxt[ch-'a']) n->nxt[ch-'a'] = new Node();
+                n = n->nxt[ch-'a'];
+            }
+            n->word = w;
+        }
+        for (int r = 0; r < (int)board.size(); r++)
+            for (int c = 0; c < (int)board[0].size(); c++)
+                dfs(board, r, c, root);
+        return res;
+    }
+};`
+  },
+
+  // ══════════════════════════════
+  //  BIT MANIPULATION  (ids 85–86)
+  // ══════════════════════════════
+  {
+    id: 85, section: "Bit Manipulation", title: "Single Number II",
+    difficulty: "Medium", leetcode: 137, company: "Nvidia / Apple / Google",
+    pattern: "Bitwise state machine — count bits mod 3 with two accumulators",
+    intuition: "Every number appears 3× except one. For each bit position the total count of 1s is a multiple of 3, plus possibly 1 from the unique number. We could sum each of 32 bit columns mod 3, but a slicker O(1)-space trick uses two integers (ones, twos) acting as a 2-bit counter PER bit that resets when it reaches 3.",
+    keyInsight: "Model each bit's occurrence count modulo 3 using two bitmasks: 'ones' holds bits seen 1×(mod 3), 'twos' holds bits seen 2×(mod 3). The update ones = (ones ^ x) & ~twos; twos = (twos ^ x) & ~ones; advances every bit's mini-counter 00→01→10→00. After processing all, 'ones' holds the unique number.",
+    approach: "ones=twos=0. For each x: ones = (ones ^ x) & ~twos; twos = (twos ^ x) & ~ones. Return ones. Generalizes: for k-repeats use ceil(log2 k) masks or per-column count % k.",
+    complexity: "Time: O(N) | Space: O(1)",
+    tabCode: `int singleNumber(vector<int>& nums) {
+    int ones = 0, twos = 0;          // two-bit per-column counter mod 3
+    for (int x : nums) {
+        ones = (ones ^ x) & ~twos;   // add x to 'ones', clear bits now in 'twos'
+        twos = (twos ^ x) & ~ones;   // carry into 'twos', clear bits now in 'ones'
+    }
+    return ones;                     // bits seen exactly once (mod 3)
+}
+// Simpler-to-explain alternative — count each bit column mod 3:
+int singleNumberColumns(vector<int>& nums) {
+    int res = 0;
+    for (int b = 0; b < 32; b++) {
+        int cnt = 0;
+        for (int x : nums) cnt += (x >> b) & 1;
+        if (cnt % 3) res |= (1 << b);
+    }
+    return res;
+}`
+  },
+  {
+    id: 86, section: "Bit Manipulation", title: "Sum of Two Integers (no + or -)",
+    difficulty: "Medium", leetcode: 371, company: "Nvidia / Apple / Amazon",
+    pattern: "Full-adder via XOR (sum) + AND<<1 (carry), loop until carry=0",
+    intuition: "Addition decomposes into two independent pieces: the sum WITHOUT carry is a^b (XOR adds bit-by-bit ignoring overflow), and the carry is (a&b)<<1 (a carry is generated wherever both bits are 1, and it lands one position left). Re-add sum and carry repeatedly until there's no carry — that's exactly how a hardware ripple-carry adder works.",
+    keyInsight: "XOR = addition mod 2 per bit; AND<<1 = the carries. Iterating sum/carry until carry is 0 emulates a full adder. Use unsigned for the shift to avoid signed-overflow UB on the carry propagation into the sign bit.",
+    approach: "while (b != 0): carry = (unsigned)(a & b) << 1; a = a ^ b; b = carry. Return a. Subtraction: add the two's complement (~b + 1).",
+    complexity: "Time: O(1) — at most 32 iterations | Space: O(1)",
+    tabCode: `int getSum(int a, int b) {
+    while (b != 0) {
+        unsigned carry = (unsigned)(a & b) << 1;  // bits where BOTH are 1, shifted
+        a = a ^ b;                                // add ignoring carry
+        b = (int)carry;                           // propagate carry next round
+    }
+    return a;
+}`
+  },
+
+  // ══════════════════════════════
+  //  MATH — FAST EXPONENTIATION  (id 87)
+  // ══════════════════════════════
+  {
+    id: 87, section: "Math", title: "Pow(x, n) — Fast Exponentiation",
+    difficulty: "Medium", leetcode: 50, company: "Nvidia / Google / Bloomberg",
+    pattern: "Binary exponentiation — square the base, consume exponent bits",
+    intuition: "Computing x^n by multiplying x n times is O(n). But x^n = (x^(n/2))^2 when n is even, and x·(x^(n/2))^2 when n is odd. Each step halves the exponent, giving O(log n). Equivalently: read the exponent's bits; square the running base each step and multiply it into the result wherever a bit is set.",
+    keyInsight: "Handle negative n by inverting: x^(-n) = (1/x)^n. The cast to long long before negating INT_MIN avoids overflow (−INT_MIN doesn't fit in int). This 'square-and-multiply' is the same routine used for modular exponentiation in crypto.",
+    approach: "1) long long N=n; if N<0 {x=1/x; N=-N;}. 2) result=1. 3) while N: if N&1 result*=x; x*=x; N>>=1. 4) return result.",
+    complexity: "Time: O(log n) | Space: O(1)",
+    tabCode: `double myPow(double x, int n) {
+    long long N = n;                 // widen so -INT_MIN is representable
+    if (N < 0) { x = 1 / x; N = -N; }
+    double result = 1.0;
+    while (N) {
+        if (N & 1) result *= x;      // this exponent bit is set
+        x *= x;                      // square the base
+        N >>= 1;                     // next bit
+    }
+    return result;
+}`
+  },
+
+  // ══════════════════════════════
+  //  HEAP — TWO-HEAP MEDIAN  (id 88)
+  // ══════════════════════════════
+  {
+    id: 88, section: "Heap", title: "Find Median from Data Stream",
+    difficulty: "Hard", leetcode: 295, company: "Nvidia / Google / Amazon",
+    pattern: "Two balanced heaps — max-heap (low half) + min-heap (high half)",
+    intuition: "To get the median in O(1) we keep the lower half of numbers in a MAX-heap and the upper half in a MIN-heap. The two tops straddle the median. By keeping the heaps' sizes balanced (differ by ≤1), the median is either the max-heap top (odd count) or the average of both tops (even count).",
+    keyInsight: "Always push to one heap then 'rebalance' by moving its top to the other, and fix sizes so low.size() ≥ high.size(). Insertion is O(log N) (heap push/pop), median is O(1). This beats keeping a sorted array (O(N) insert).",
+    approach: "addNum: push to low(max-heap); move low.top to high; if high>low, move high.top back to low. findMedian: low.size>high.size ? low.top : (low.top+high.top)/2.",
+    complexity: "Time: O(log N) add, O(1) median | Space: O(N)",
+    tabCode: `class MedianFinder {
+    priority_queue<int> low;                                  // max-heap: lower half
+    priority_queue<int, vector<int>, greater<int>> high;      // min-heap: upper half
+public:
+    void addNum(int num) {
+        low.push(num);
+        high.push(low.top()); low.pop();        // funnel largest of low into high
+        if (high.size() > low.size()) {         // keep low >= high
+            low.push(high.top()); high.pop();
+        }
+    }
+    double findMedian() {
+        if (low.size() > high.size()) return low.top();
+        return (low.top() + high.top()) / 2.0;  // even count → average of tops
+    }
+};`
+  },
+
+  // ══════════════════════════════
+  //  QUICKSELECT  (id 89)
+  // ══════════════════════════════
+  {
+    id: 89, section: "Quickselect", title: "Kth Largest Element in an Array",
+    difficulty: "Medium", leetcode: 215, company: "Nvidia / Apple / Meta",
+    pattern: "Quickselect — Lomuto partition, recurse into one side only",
+    intuition: "A heap solves this in O(N log k), but Quickselect averages O(N): partition around a pivot like quicksort, but after partitioning you know the pivot's FINAL sorted position. If that position is the one you want, you're done; otherwise recurse into ONLY the side that contains the target — discarding the other half each time gives the linear average.",
+    keyInsight: "The k-th LARGEST is the (n-k)-th smallest index in ascending order. Randomize the pivot (or shuffle) to avoid the O(N²) adversarial worst case on sorted input. Unlike quicksort you never recurse into both sides — that's what drops N log N to N on average.",
+    approach: "target = n-k. partition(l,r): pivot=a[r]; i=l; for j in [l,r): if a[j]<pivot swap(a[i++],a[j]); swap(a[i],a[r]); return i. If i==target return; else recurse left/right half.",
+    complexity: "Time: O(N) average, O(N²) worst | Space: O(1) iterative",
+    tabCode: `int findKthLargest(vector<int>& a, int k) {
+    int target = a.size() - k;                  // k-th largest = (n-k)-th smallest
+    int lo = 0, hi = a.size() - 1;
+    while (lo <= hi) {
+        int p = lo + rand() % (hi - lo + 1);    // randomized pivot
+        swap(a[p], a[hi]);
+        int pivot = a[hi], i = lo;
+        for (int j = lo; j < hi; ++j)           // Lomuto partition
+            if (a[j] < pivot) swap(a[i++], a[j]);
+        swap(a[i], a[hi]);                       // pivot lands at its sorted index i
+        if (i == target) return a[i];
+        else if (i < target) lo = i + 1;        // recurse RIGHT side only
+        else hi = i - 1;                         // recurse LEFT side only
+    }
+    return -1;
+}`
+  },
+
+  // ══════════════════════════════
+  //  BINARY SEARCH — HARD  (id 90)
+  // ══════════════════════════════
+  {
+    id: 90, section: "Binary Search", title: "Median of Two Sorted Arrays",
+    difficulty: "Hard", leetcode: 4, company: "Nvidia / Google / Apple",
+    pattern: "Binary search on the partition point of the smaller array",
+    intuition: "The median splits the merged array into a left half and a right half of equal size, where every left element ≤ every right element. Instead of merging (O(N+M)), binary-search WHERE to cut the smaller array; the cut in the larger array is then forced by the size constraint. Check the four boundary elements to know if the cut is correct.",
+    keyInsight: "Always binary-search the SMALLER array to guarantee O(log(min(N,M))). The partition is valid when maxLeftA ≤ minRightB AND maxLeftB ≤ minRightA. Use ±infinity sentinels for out-of-range boundaries so edge cuts (empty halves) need no special casing.",
+    approach: "Ensure A is smaller. lo=0,hi=m. cutA=(lo+hi)/2; cutB=(m+n+1)/2-cutA. L1=A[cutA-1]||-inf, R1=A[cutA]||+inf, L2,R2 sym. If L1<=R2 && L2<=R1 → median. Else if L1>R2 hi=cutA-1 else lo=cutA+1.",
+    complexity: "Time: O(log(min(N,M))) | Space: O(1)",
+    tabCode: `double findMedianSortedArrays(vector<int>& A, vector<int>& B) {
+    if (A.size() > B.size()) swap(A, B);        // binary-search the SMALLER one
+    int m = A.size(), n = B.size(), lo = 0, hi = m;
+    const long INF = LONG_MAX, NEG = LONG_MIN;
+    while (lo <= hi) {
+        int cutA = (lo + hi) / 2;
+        int cutB = (m + n + 1) / 2 - cutA;
+        long L1 = cutA ? A[cutA-1] : NEG, R1 = cutA < m ? A[cutA] : INF;
+        long L2 = cutB ? B[cutB-1] : NEG, R2 = cutB < n ? B[cutB] : INF;
+        if (L1 <= R2 && L2 <= R1) {             // correct partition found
+            if ((m + n) & 1) return max(L1, L2);
+            return (max(L1, L2) + min(R1, R2)) / 2.0;
+        } else if (L1 > R2) hi = cutA - 1;      // A's cut too far right
+        else                lo = cutA + 1;      // A's cut too far left
+    }
+    return 0.0;
+}`
+  },
+
+  // ══════════════════════════════
+  //  INTERVAL DP — BURST BALLOONS  (id 91)
+  // ══════════════════════════════
+  {
+    id: 91, section: "DP — Interval / Game", title: "Burst Balloons",
+    difficulty: "Hard", leetcode: 312, company: "Nvidia / Google / Amazon",
+    pattern: "Interval DP — fix the LAST balloon burst in each window",
+    intuition: "If you think about the FIRST balloon to burst, the array keeps changing and subproblems aren't independent. The trick is to fix the LAST balloon k burst inside an open interval (i, j): when k is last, its neighbors are exactly the fixed walls i and j, so the gain is nums[i]·nums[k]·nums[j] plus the two now-independent subintervals (i,k) and (k,j).",
+    keyInsight: "Pad the array with 1s on both ends so boundary multiplications are clean. Iterate by interval LENGTH so smaller subintervals are solved first. Choosing the last burst (not the first) is what decouples the left and right subproblems — the signature insight of interval DP.",
+    approach: "1) a = [1] + nums + [1]. 2) dp[i][j] = best for open interval (i,j). 3) For len 2..n+1, for each i, j=i+len: dp[i][j]=max over k in (i,j) of dp[i][k]+dp[k][j]+a[i]*a[k]*a[j]. 4) Answer dp[0][n+1].",
+    complexity: "Time: O(N³) | Space: O(N²)",
+    memoCode: `// TOP-DOWN: recursion on open interval (i, j)
+int dp[302][302];
+int solve(vector<int>& a, int i, int j) {
+    if (i + 1 == j) return 0;                    // no balloon between walls
+    if (dp[i][j] != -1) return dp[i][j];
+    int best = 0;
+    for (int k = i + 1; k < j; k++)              // k = LAST balloon burst in (i,j)
+        best = max(best, solve(a,i,k) + solve(a,k,j) + a[i]*a[k]*a[j]);
+    return dp[i][j] = best;
+}
+int maxCoins(vector<int>& nums) {
+    vector<int> a = {1};
+    a.insert(a.end(), nums.begin(), nums.end()); a.push_back(1);
+    memset(dp, -1, sizeof dp);
+    return solve(a, 0, a.size() - 1);
+}`,
+    tabCode: `// BOTTOM-UP: iterate by interval length
+int maxCoins(vector<int>& nums) {
+    int n = nums.size();
+    vector<int> a(n + 2, 1);
+    for (int i = 0; i < n; i++) a[i+1] = nums[i];
+    vector<vector<int>> dp(n + 2, vector<int>(n + 2, 0));
+    for (int len = 2; len <= n + 1; len++)       // distance between the two walls
+        for (int i = 0; i + len <= n + 1; i++) {
+            int j = i + len;
+            for (int k = i + 1; k < j; k++)       // last balloon burst between i,j
+                dp[i][j] = max(dp[i][j],
+                               dp[i][k] + dp[k][j] + a[i]*a[k]*a[j]);
+        }
+    return dp[0][n + 1];
+}`
+  },
+
+  // ══════════════════════════════
+  //  BACKTRACKING — N-QUEENS  (id 92)
+  // ══════════════════════════════
+  {
+    id: 92, section: "Backtracking", title: "N-Queens",
+    difficulty: "Hard", leetcode: 51, company: "Nvidia / Google / Apple",
+    pattern: "Row-by-row backtracking with O(1) column/diagonal conflict sets",
+    intuition: "Place exactly one queen per row, trying each column. A placement is legal if no earlier queen shares the column or either diagonal. Track three boolean sets so each conflict check is O(1): the column index, the ↘ diagonal (row−col, offset to stay non-negative), and the ↙ diagonal (row+col). Recurse to the next row; backtrack by clearing the marks.",
+    keyInsight: "Both diagonals have a constant value along their length: r−c is fixed on a ↘ diagonal, r+c on a ↙ diagonal. Encoding conflicts as three bitsets (or three bool arrays) turns the validity test from O(N) scanning into O(1), which is what makes N-Queens tractable for N up to ~13.",
+    approach: "solve(row): if row==n record board. For col 0..n-1: if !col[c] && !diag1[r-c+n] && !diag2[r+c]: mark all three + place; solve(row+1); unmark + remove. Diagonals offset by +n to keep indices ≥ 0.",
+    complexity: "Time: O(N!) | Space: O(N²) board + O(N) recursion",
+    tabCode: `class Solution {
+    int n; vector<vector<string>> res;
+    vector<bool> col, d1, d2;                 // column, r-c diag, r+c diag
+    vector<string> board;
+    void solve(int r) {
+        if (r == n) { res.push_back(board); return; }
+        for (int c = 0; c < n; c++) {
+            if (col[c] || d1[r - c + n] || d2[r + c]) continue;   // O(1) check
+            col[c] = d1[r-c+n] = d2[r+c] = true;
+            board[r][c] = 'Q';
+            solve(r + 1);
+            col[c] = d1[r-c+n] = d2[r+c] = false;                 // backtrack
+            board[r][c] = '.';
+        }
+    }
+public:
+    vector<vector<string>> solveNQueens(int N) {
+        n = N; col.assign(n,0); d1.assign(2*n,0); d2.assign(2*n,0);
+        board.assign(n, string(n, '.'));
+        solve(0);
+        return res;
+    }
+};`
+  },
+
+  // ══════════════════════════════
+  //  TWO POINTERS — 3SUM  (id 93)
+  // ══════════════════════════════
+  {
+    id: 93, section: "Two Pointers", title: "3Sum",
+    difficulty: "Medium", leetcode: 15, company: "Nvidia / Apple / Meta",
+    pattern: "Sort + fix one element + two-pointer scan for the remaining pair",
+    intuition: "Brute force is O(N³). Sort the array, then fix the first number a[i] and reduce the problem to '2Sum on a sorted array' for the rest: a left pointer just after i and a right pointer at the end converge based on whether the running sum is too small (move left up) or too big (move right down). Sorting also makes deduping trivial.",
+    keyInsight: "Skip duplicates at all three positions: for i (the fixed element) and for both pointers after recording a hit. Once a[i] > 0 you can stop entirely — three sorted non-negative numbers can't sum to zero. The sort costs O(N log N); the scan is O(N²) but with a tiny constant.",
+    approach: "Sort. For i in 0..n-3 (skip dup a[i]): if a[i]>0 break. l=i+1,r=n-1. While l<r: s=a[i]+a[l]+a[r]. s<0→l++; s>0→r--; s==0→record, then skip dup l and r, l++,r--.",
+    complexity: "Time: O(N²) | Space: O(1) extra (ignoring output / sort)",
+    tabCode: `vector<vector<int>> threeSum(vector<int>& a) {
+    sort(a.begin(), a.end());
+    vector<vector<int>> res;
+    int n = a.size();
+    for (int i = 0; i < n - 2; ++i) {
+        if (a[i] > 0) break;                         // no zero-sum triple possible
+        if (i && a[i] == a[i-1]) continue;           // skip duplicate fixed element
+        int l = i + 1, r = n - 1;
+        while (l < r) {
+            int s = a[i] + a[l] + a[r];
+            if (s < 0) ++l;
+            else if (s > 0) --r;
+            else {
+                res.push_back({a[i], a[l], a[r]});
+                while (l < r && a[l] == a[l+1]) ++l;  // skip dup left
+                while (l < r && a[r] == a[r-1]) --r;  // skip dup right
+                ++l; --r;
+            }
+        }
+    }
+    return res;
+}`
+  },
+
+  // ══════════════════════════════
+  //  MONOTONIC STACK — DAILY TEMPS  (id 94)
+  // ══════════════════════════════
+  {
+    id: 94, section: "Monotonic Stack", title: "Daily Temperatures",
+    difficulty: "Medium", leetcode: 739, company: "Nvidia / Amazon / Google",
+    pattern: "Monotonic decreasing stack of indices — resolve on a higher value",
+    intuition: "For each day we want the number of days until a warmer temperature. Keep a stack of indices whose answers are still PENDING, in decreasing-temperature order. When today's temperature is higher than the temperature at the stack top, today is that day's answer — pop it and record the index distance. Each index is pushed and popped once.",
+    keyInsight: "Store INDICES, not temperatures, so you can compute the day gap (i − poppedIndex). The stack stays monotonically decreasing, so every element is resolved exactly when the first warmer day appears — giving amortized O(N) despite the inner while-loop.",
+    approach: "stack of indices. For i in 0..n-1: while stack non-empty and T[i] > T[stack.top]: j=pop; ans[j]=i-j. push i. Remaining indices keep answer 0 (no warmer future day).",
+    complexity: "Time: O(N) amortized | Space: O(N)",
+    tabCode: `vector<int> dailyTemperatures(vector<int>& T) {
+    int n = T.size();
+    vector<int> ans(n, 0);
+    stack<int> st;                               // indices, decreasing temperature
+    for (int i = 0; i < n; ++i) {
+        while (!st.empty() && T[i] > T[st.top()]) {
+            int j = st.top(); st.pop();
+            ans[j] = i - j;                      // i is the first warmer day for j
+        }
+        st.push(i);
+    }
+    return ans;
+}`
+  },
+
+  // ══════════════════════════════
+  //  TOPO SORT — ALIEN DICTIONARY  (id 95)
+  // ══════════════════════════════
+  {
+    id: 95, section: "Graph — Topo Sort", title: "Alien Dictionary",
+    difficulty: "Hard", leetcode: 269, company: "Nvidia / Google / Airbnb",
+    pattern: "Build a precedence graph from adjacent words, Kahn's topo sort",
+    intuition: "The dictionary order encodes letter precedence: comparing two adjacent words, the FIRST position where they differ tells you the left word's letter comes before the right word's letter. Build a directed graph of those constraints over the alphabet, then a topological order of that graph is a valid letter ordering. A cycle means the input is contradictory (invalid).",
+    keyInsight: "Two traps: (1) the very first differing character is the ONLY constraint a word pair gives — stop there. (2) If a word is a PREFIX of the previous word (e.g., 'abc' before 'ab'), that's invalid and you must return \"\". Use Kahn's BFS so detecting a leftover (cycle) is just 'did we output every seen letter?'.",
+    approach: "1) Collect all letters. 2) For each adjacent pair: find first diff char (c1,c2); add edge c1→c2, indeg[c2]++; if no diff but word1 longer → return \"\". 3) Kahn: queue indeg-0 letters, pop→append→decrement neighbors. 4) If result covers all letters return it, else \"\".",
+    complexity: "Time: O(total chars) | Space: O(1) — bounded alphabet (26)",
+    tabCode: `string alienOrder(vector<string>& words) {
+    unordered_map<char, unordered_set<char>> g;
+    unordered_map<char, int> indeg;
+    for (auto& w : words) for (char c : w) indeg[c];   // register every letter
+    for (int i = 0; i + 1 < (int)words.size(); ++i) {
+        string& a = words[i]; string& b = words[i+1];
+        int len = min(a.size(), b.size()), j = 0;
+        for (; j < len; ++j) if (a[j] != b[j]) {
+            if (!g[a[j]].count(b[j])) { g[a[j]].insert(b[j]); indeg[b[j]]++; }
+            break;
+        }
+        if (j == len && a.size() > b.size()) return "";  // prefix conflict → invalid
+    }
+    queue<char> q;
+    for (auto& [c, d] : indeg) if (d == 0) q.push(c);
+    string res;
+    while (!q.empty()) {
+        char c = q.front(); q.pop(); res += c;
+        for (char nx : g[c]) if (--indeg[nx] == 0) q.push(nx);
+    }
+    return res.size() == indeg.size() ? res : "";        // leftover ⇒ cycle
+}`
+  },
+
+  // ══════════════════════════════
+  //  GREEDY — GAS STATION  (id 96)
+  // ══════════════════════════════
+  {
+    id: 96, section: "Greedy", title: "Gas Station",
+    difficulty: "Medium", leetcode: 134, company: "Nvidia / Amazon / Google",
+    pattern: "Single-pass greedy — reset start when the running tank goes negative",
+    intuition: "If the total gas ≥ total cost, a solution exists and is unique. The greedy insight: track a running tank as you move forward; the moment it dips below zero at station i, NONE of the stations from the current start through i can be a valid start (they all fail before or at i). So jump the candidate start to i+1 and reset the tank.",
+    keyInsight: "Two accumulators: 'total' (over the whole loop, to decide feasibility) and 'tank' (since the last reset, to pick the start). The proof that the surviving start works rests on total ≥ 0 — once feasibility is guaranteed, the last reset point must complete the circuit.",
+    approach: "total=tank=0, start=0. For i in 0..n-1: diff=gas[i]-cost[i]; total+=diff; tank+=diff; if tank<0 {start=i+1; tank=0;}. Return total>=0 ? start : -1.",
+    complexity: "Time: O(N) | Space: O(1)",
+    tabCode: `int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {
+    int total = 0, tank = 0, start = 0;
+    for (int i = 0; i < (int)gas.size(); ++i) {
+        int diff = gas[i] - cost[i];
+        total += diff;                 // overall feasibility
+        tank  += diff;                 // tank since the last candidate start
+        if (tank < 0) {                // can't reach i+1 from current start
+            start = i + 1;             // every station up to i is ruled out
+            tank = 0;
+        }
+    }
+    return total >= 0 ? start : -1;
+}`
+  },
+
+  // ══════════════════════════════
+  //  UNION FIND — CONNECTED COMPONENTS  (id 97)
+  // ══════════════════════════════
+  {
+    id: 97, section: "Graph — Union Find", title: "Number of Connected Components",
+    difficulty: "Medium", leetcode: 323, company: "Nvidia / Google / Amazon",
+    pattern: "Disjoint Set Union with path compression + union by rank",
+    intuition: "Start with n isolated nodes, hence n components. Each edge potentially merges two components: if the endpoints already share a root, the edge is redundant; if not, union them and decrement the component count. DSU answers 'are these connected?' in near-O(1) amortized, far cheaper than running a fresh DFS per query.",
+    keyInsight: "The two optimizations are what make DSU nearly O(1): PATH COMPRESSION flattens find() by repointing nodes straight to the root, and UNION BY RANK attaches the shorter tree under the taller. Together they give the inverse-Ackermann α(n) bound — effectively constant. Counting components = n minus the number of SUCCESSFUL unions.",
+    approach: "parent[i]=i, rank[i]=0, count=n. find(x): if parent[x]!=x parent[x]=find(parent[x]); return. union(a,b): ra=find(a),rb=find(b); if ra==rb return; attach by rank; count--. Answer = count.",
+    complexity: "Time: O(E·α(N)) ≈ O(E) | Space: O(N)",
+    tabCode: `class DSU {
+    vector<int> parent, rank_;
+public:
+    int count;
+    DSU(int n) : parent(n), rank_(n, 0), count(n) {
+        iota(parent.begin(), parent.end(), 0);   // each node is its own root
+    }
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);  // path compression
+        return parent[x];
+    }
+    void unite(int a, int b) {
+        int ra = find(a), rb = find(b);
+        if (ra == rb) return;                    // already connected → redundant
+        if (rank_[ra] < rank_[rb]) swap(ra, rb); // union by rank
+        parent[rb] = ra;
+        if (rank_[ra] == rank_[rb]) rank_[ra]++;
+        --count;                                 // two components became one
+    }
+};
+int countComponents(int n, vector<vector<int>>& edges) {
+    DSU dsu(n);
+    for (auto& e : edges) dsu.unite(e[0], e[1]);
+    return dsu.count;
+}`
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2771,6 +3282,132 @@ counter.fetch_add(1, memory_order_relaxed); // just atomic add`,
         explanation: "On x86/TSO model: acquire/release are essentially free (hardware provides them). seq_cst requires MFENCE. On ARM/POWER: all orderings have cost. Always benchmark on target architecture."
       }
     ]
+  },
+  {
+    id: 11,
+    title: "Rule of 0 / 3 / 5 & Special Member Functions",
+    category: "Resource Management",
+    explanation: "If your class manages a raw resource (owning pointer, file handle, socket), the compiler-generated special members do a SHALLOW copy — two owners, double free. The Rule of Three says: if you need a custom destructor, you almost certainly need a custom copy constructor AND copy assignment too. C++11's move semantics extend this to the Rule of Five (add move ctor + move assignment). The modern best practice is the Rule of Zero: own resources through RAII types (vector, unique_ptr, string) so you write NONE of the special members and the defaults are already correct.",
+    keyInsight: "Declaring ANY of dtor / copy / move changes what the compiler generates for the others. A user-declared destructor suppresses the implicit MOVE operations (so the class silently falls back to copying) and deprecates the implicit copy. So 'I added a destructor for logging' can silently kill move semantics and tank performance. Rule of Zero sidesteps all of it.",
+    codeExample: `// BAD: Rule of Three violated -> shallow copy -> double free
+struct Buf {
+    int* p;
+    Buf(int n): p(new int[n]) {}
+    ~Buf() { delete[] p; }          // custom dtor, but no copy ctrl
+};
+Buf a(10); Buf b = a;               // b.p == a.p; both dtors delete -> UB
+
+// GOOD (Rule of Five): deep copy + move
+struct Buf5 {
+    int* p; size_t n;
+    Buf5(size_t n): p(new int[n]), n(n) {}
+    ~Buf5() { delete[] p; }
+    Buf5(const Buf5& o): p(new int[o.n]), n(o.n) {        // copy
+        std::copy(o.p, o.p+o.n, p);
+    }
+    Buf5& operator=(Buf5 o) noexcept {                    // copy-and-swap
+        std::swap(p,o.p); std::swap(n,o.n); return *this;
+    }
+    Buf5(Buf5&& o) noexcept: p(o.p), n(o.n) { o.p=nullptr; o.n=0; } // move
+};
+
+// BEST (Rule of Zero): no special members needed at all
+struct Buf0 { std::vector<int> data; Buf0(int n): data(n) {} };`,
+    qa: [
+      {
+        question: `struct S {
+    int* p = new int[4];
+    ~S() { delete[] p; }
+};
+S a; S b = a; // what happens at scope end?`,
+        willCompile: true,
+        answer: "Compiles, but it's UB at runtime. The implicitly-generated copy constructor does a shallow copy, so a.p == b.p. At scope end BOTH destructors run delete[] on the same pointer → double free / heap corruption.",
+        fixedCode: `// Fix: Rule of Zero — let a vector own the memory
+struct S {
+    std::vector<int> p = std::vector<int>(4);
+    // no destructor, no copy/move needed; all defaults are correct
+};
+S a; S b = a; // deep copy, two independent buffers, no double free`,
+        explanation: "The presence of a user destructor is the red flag: it means the class owns something, so the default shallow copy is wrong. Either follow the Rule of Five or (better) delegate ownership to a RAII member and write zero special members."
+      },
+      {
+        question: `struct Logger {
+    ~Logger() { /* flush */ }
+    std::vector<int> data;
+};
+// Is 'Logger b = std::move(a);' a move or a copy?`,
+        willCompile: true,
+        answer: "It's a COPY, not a move. Because Logger declares a destructor, the compiler does NOT implicitly generate move operations. std::move(a) produces an rvalue, but with no move ctor available, overload resolution falls back to the copy constructor — silently copying the vector.",
+        fixedCode: `struct Logger {
+    ~Logger() { /* flush */ }
+    std::vector<int> data;
+    Logger(Logger&&) = default;             // re-enable moves explicitly
+    Logger& operator=(Logger&&) = default;
+    Logger(const Logger&) = default;
+    Logger& operator=(const Logger&) = default;
+};`,
+        explanation: "User-declaring a destructor suppresses implicit move generation (Rule of Five corollary). This is a classic silent performance bug — adding a logging destructor turned every 'move' into a deep copy. Either default the moves explicitly or remove the destructor (Rule of Zero)."
+      }
+    ]
+  },
+  {
+    id: 12,
+    title: "Virtual Dispatch, vtables & the Virtual Destructor Rule",
+    category: "OOP & Object Model",
+    explanation: "A class with any virtual function gets a hidden vptr (8 bytes) at offset 0, pointing to a per-class vtable in .rodata that holds the function pointers. A call through a base pointer loads the vptr, indexes the vtable, and does an indirect call — runtime ('late') binding. Non-virtual calls bind at compile time from the STATIC type. The most dangerous rule: if you ever delete a derived object through a base pointer, the base destructor MUST be virtual, or only ~Base runs and the derived resources leak (UB).",
+    keyInsight: "Three traps interviewers love: (1) deleting through a base pointer with a non-virtual destructor = UB / leak. (2) Calling a virtual function inside a constructor/destructor does NOT dispatch to the derived override — the vptr points to the class currently being (de)constructed. (3) Passing a polymorphic object BY VALUE slices it — only the base sub-object is copied and the vptr becomes the base's.",
+    codeExample: `struct Base {
+    virtual void who() { std::cout << "Base"; }
+    virtual ~Base() {}                  // virtual dtor: REQUIRED for safe delete
+};
+struct Derived : Base {
+    int* res = new int[100];
+    void who() override { std::cout << "Derived"; }
+    ~Derived() override { delete[] res; }
+};
+
+Base* b = new Derived();
+b->who();                               // "Derived" — vtable dispatch
+delete b;                               // ~Derived THEN ~Base run — no leak
+                                        // (if ~Base weren't virtual: leak + UB)
+
+// Slicing: pass by value loses the derived part
+void take(Base x) { x.who(); }          // always prints "Base"
+Derived d; take(d);                     // sliced — pass Base&/Base* instead`,
+    qa: [
+      {
+        question: `struct A { ~A(){ std::cout<<"~A"; } };
+struct B : A { ~B(){ std::cout<<"~B"; } };
+A* p = new B();
+delete p;   // output?`,
+        willCompile: true,
+        answer: "Prints only '~A'. A's destructor is NOT virtual, so 'delete p' (static type A*) calls only ~A. ~B never runs — any resources B owned leak, and deleting a derived object through a non-virtual base dtor is officially undefined behavior.",
+        fixedCode: `struct A { virtual ~A(){ std::cout<<"~A"; } };  // make it virtual
+struct B : A { ~B() override { std::cout<<"~B"; } };
+A* p = new B();
+delete p;   // now prints "~B~A" — full destruction, no leak`,
+        explanation: "Rule: a class intended to be used polymorphically (deleted via base pointer) needs a virtual destructor. Cost is one vptr per object. If a class is NOT meant to be a base, leaving the dtor non-virtual is fine — and you can mark the class 'final'."
+      },
+      {
+        question: `struct Base {
+    Base(){ log(); }
+    virtual void log(){ std::cout<<"Base"; }
+};
+struct Derived : Base {
+    void log() override { std::cout<<"Derived"; }
+};
+Derived d;  // what prints?`,
+        willCompile: true,
+        answer: "Prints 'Base'. During Base's constructor the Derived part doesn't exist yet, so the vptr still points to Base's vtable — the virtual call resolves to Base::log(), not the override. Virtual dispatch is effectively disabled inside constructors and destructors.",
+        fixedCode: `// Don't rely on virtual dispatch in ctors. Pass needed behavior in, or
+// do two-phase init:
+struct Derived : Base {
+    void log() override { std::cout<<"Derived"; }
+    static Derived create() { Derived d; d.log(); return d; } // call AFTER construction
+};`,
+        explanation: "The object is built base-first; the vptr is rewritten to each class's vtable as construction climbs the hierarchy. A pure-virtual call from a constructor is even worse — it's UB ('pure virtual method called')."
+      }
+    ]
   }
 ];
 
@@ -3266,6 +3903,61 @@ void worker() {
 }`,
     whatToSay: "++counter on a shared plain int from two threads is a data race — it's a non-atomic read-modify-write, so updates are lost and the program has UB. Fix with std::atomic<int> and fetch_add (memory_order_relaxed is fine for a pure counter since no other memory is being published), or a mutex when more than one variable must move together."
   },
+  {
+    id: 13, title: "Integer Overflow in Binary Search Midpoint",
+    category: "Bounds & Overflow", difficulty: "High Probability",
+    buggyCode: `int binarySearch(vector<int>& a, int target) {
+    int lo = 0, hi = a.size() - 1;
+    while (lo <= hi) {
+        int mid = (lo + hi) / 2;       // BUG: lo + hi can overflow int
+        if (a[mid] == target) return mid;
+        else if (a[mid] < target) lo = mid + 1;
+        else hi = mid - 1;
+    }
+    return -1;
+}`,
+    bugs: [
+      "lo + hi overflows signed int when both are large (e.g. near INT_MAX) → UB, negative mid → out-of-bounds",
+      "Signed integer overflow is undefined behavior, not a defined wraparound",
+      "Secondary: a.size()-1 is unsigned; on an empty vector it underflows to SIZE_MAX (separate latent bug)"
+    ],
+    fixedCode: `int binarySearch(vector<int>& a, int target) {
+    if (a.empty()) return -1;
+    int lo = 0, hi = (int)a.size() - 1;
+    while (lo <= hi) {
+        int mid = lo + (hi - lo) / 2;  // overflow-safe midpoint
+        if (a[mid] == target) return mid;
+        else if (a[mid] < target) lo = mid + 1;
+        else hi = mid - 1;
+    }
+    return -1;
+}`,
+    whatToSay: "The midpoint (lo + hi) / 2 overflows when lo + hi exceeds INT_MAX — a famous bug that sat in the JDK's binary search for years. Compute mid = lo + (hi - lo) / 2 instead, which never overflows. Also guard the unsigned size()-1 underflow on empty input."
+  },
+  {
+    id: 14, title: "Slicing — Storing Polymorphic Objects by Value",
+    category: "OOP & Polymorphism", difficulty: "Medium Probability",
+    buggyCode: `struct Shape { virtual double area() const { return 0; } };
+struct Circle : Shape {
+    double r;
+    Circle(double r): r(r) {}
+    double area() const override { return 3.14159 * r * r; }
+};
+std::vector<Shape> shapes;          // BUG: container of VALUES
+shapes.push_back(Circle(2.0));      // sliced to a Shape!
+double a = shapes[0].area();        // returns 0, not ~12.57`,
+    bugs: [
+      "vector<Shape> stores Shape VALUES; pushing a Circle copies only the Shape sub-object (slicing)",
+      "The stored object's vptr is Shape's → area() dispatches to Shape::area → returns 0",
+      "Polymorphism is silently lost; compiles with no warning"
+    ],
+    fixedCode: `// Store pointers so the dynamic type (and vtable) is preserved
+std::vector<std::unique_ptr<Shape>> shapes;
+shapes.push_back(std::make_unique<Circle>(2.0));
+double a = shapes[0]->area();        // ~12.57 — correct virtual dispatch
+// (Shape also needs a virtual destructor for safe deletion through Shape*)`,
+    whatToSay: "Storing a derived object in a vector<Base> slices it — only the base part is copied and virtual dispatch is lost, so area() returns the base's 0. Polymorphic objects must be held by pointer (vector<unique_ptr<Base>>) or reference, never by value. And give Base a virtual destructor."
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════
@@ -3506,6 +4198,70 @@ int main() { cout << next() << " " << next(); }`,
     correctAnswer: "init 101 102",
     explanation: "The static local's initializer runs exactly ONCE, on first entry to next() — so 'init' prints a single time. n persists across calls: 100→101 (printed), then 101→102 (printed). The comma operator evaluates the cout then yields 100.",
     keyInsight: "Function-local statics are initialized lazily on first reach, exactly once, and (since C++11) the initialization is thread-safe — the compiler emits a guard variable. This is the canonical Meyers' Singleton and the fix for the static-init-order fiasco."
+  },
+  {
+    id: 23, title: "Unspecified Argument Evaluation Order",
+    category: "Sequencing",
+    code: `int i = 0;
+auto f = [&]{ return i++; };
+cout << f() << " " << f() << " " << f();`,
+    correctAnswer: "Unspecified order — could print 0 1 2 or 2 1 0",
+    explanation: "The order in which function arguments (here, the three f() calls feeding operator<<) are evaluated is UNSPECIFIED in C++. Each f() has a side effect on i, so the printed values depend on evaluation order, which the standard does not fix (and differs between GCC and Clang).",
+    keyInsight: "Don't put side effects in multiple arguments of the same call. Note: this is 'unspecified' (one of a set of valid orders), distinct from the 'undefined behavior' you'd get from modifying the same scalar twice unsequenced like i++ + i++."
+  },
+  {
+    id: 24, title: "std::vector<bool> Is Not a Container of bool",
+    category: "STL Pitfalls",
+    code: `std::vector<bool> v = {true, false, true};
+auto& r = v[0];        // does this compile?
+bool* p = &v[0];       // and this?`,
+    correctAnswer: "Neither compiles — v[0] returns a proxy, not bool&",
+    explanation: "std::vector<bool> is a space-optimized SPECIALIZATION that packs bits, so operator[] returns a proxy object (std::vector<bool>::reference), not a real bool&. You can't bind a bool& to it, and you can't take a bool* address of a bit. 'auto x = v[0]' also captures the PROXY, not a bool.",
+    keyInsight: "vector<bool> breaks the container contract (no bool&, no &element). For real bool storage use std::vector<char>, std::deque<bool>, std::bitset, or std::array<bool>. A frequent interview 'gotcha' and a real-world API trap."
+  },
+  {
+    id: 25, title: "Most Vexing Parse",
+    category: "Parsing & Declarations",
+    code: `struct Timer { Timer() {} };
+struct Widget { Widget(Timer) {} };
+Widget w(Timer());     // what is w?`,
+    correctAnswer: "A FUNCTION declaration, not an object — 'w' is not a Widget",
+    explanation: "C++ parses 'Widget w(Timer());' as the declaration of a FUNCTION named w that returns Widget and takes a (pointer to) function returning Timer — the 'most vexing parse'. Trying to use w as an object then fails to compile in surprising ways.",
+    keyInsight: "When anything could be read as a declaration, C++ reads it as one. Fix with braces: 'Widget w{Timer{}};' (uniform initialization) or an extra paren: 'Widget w((Timer()));'. Brace-init also avoids narrowing — prefer {} for variable initialization."
+  },
+  {
+    id: 26, title: "Integer Promotion Hides a Negative",
+    category: "Integer Conversions",
+    code: `std::vector<int> v;          // empty
+for (int i = 0; i < v.size() - 1; ++i)
+    cout << v[i];
+cout << "done";`,
+    correctAnswer: "Crash / huge loop — NOT 'done' immediately",
+    explanation: "v.size() returns size_t (UNSIGNED). For an empty vector, v.size() - 1 is 0u - 1 = SIZE_MAX (a huge unsigned). The comparison promotes i to unsigned, so 0 < SIZE_MAX is true and the loop runs billions of times indexing out of bounds → UB/crash.",
+    keyInsight: "Never write `size() - 1` in a loop condition on a possibly-empty container. Use `i + 1 < v.size()`, iterators, or a range-for. Unsigned underflow is the classic source of 'loop that should be empty runs forever'."
+  },
+  {
+    id: 27, title: "Returning std::move Defeats NRVO",
+    category: "Copy Elision",
+    code: `std::vector<int> make() {
+    std::vector<int> v(1000);
+    return std::move(v);   // 'helpful' move?
+}`,
+    correctAnswer: "Slower — std::move here PREVENTS copy elision (NRVO)",
+    explanation: "Returning a local by name lets the compiler do NRVO: construct v directly in the caller's return slot — ZERO copies or moves. Writing 'return std::move(v)' turns the expression into an xvalue the NRVO rule no longer applies to, forcing an actual move construction. You traded a free elision for a real move.",
+    keyInsight: "Just `return v;`. The compiler elides (C++17 mandates elision for prvalues; NRVO for named locals is near-universal). Adding std::move on a return of a local is a pessimization — a very common 'looks optimized but isn't' mistake."
+  },
+  {
+    id: 28, title: "Capturing 'this' vs the Member by Value",
+    category: "Lambda & Closures",
+    code: `struct Worker {
+    int id = 7;
+    auto task() { return [=]{ return id; }; }  // captures what?
+};
+// Worker freed, then the returned lambda is called`,
+    correctAnswer: "Dangling — [=] captures 'this', not a copy of id",
+    explanation: "Inside a member function, [=] does NOT copy the member id — it copies the 'this' POINTER and accesses id through it. Once the Worker is destroyed, the stored lambda dereferences a dangling this → UB. The capture looks by-value but is effectively by-reference to the object.",
+    keyInsight: "To copy the member, capture it explicitly: [id]{...} or init-capture [id=id]{...}. In C++20, [=, this] is required to capture this explicitly and [=] implicitly capturing this is deprecated. Watch this whenever a lambda outlives its enclosing object."
   },
 ];
 
