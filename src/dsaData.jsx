@@ -3154,6 +3154,118 @@ Node* find(Node* head, int v) {
 }`,
     whatToSay: "Always null-check before dereferencing. strlen(NULL) is UB. Loop condition needs head != NULL before accessing head->val."
   },
+  {
+    id: 9, title: "Iterator Invalidation During erase()",
+    category: "STL & Iterators", difficulty: "High Probability",
+    buggyCode: `std::vector<int> v = {1,2,3,4,5,6};
+for (auto it = v.begin(); it != v.end(); ++it) {
+    if (*it % 2 == 0)
+        v.erase(it);   // BUG: erase invalidates 'it', then ++it is UB
+}`,
+    bugs: [
+      "vector::erase invalidates 'it' and every iterator after it",
+      "After erase, ++it advances a dangling iterator → UB / skipped elements",
+      "Also shifts elements left, so the loop silently skips the value after each removal"
+    ],
+    fixedCode: `// Fix 1: erase returns the next valid iterator — use it
+for (auto it = v.begin(); it != v.end(); ) {
+    if (*it % 2 == 0) it = v.erase(it);  // reseat from return value
+    else              ++it;
+}
+// Fix 2 (C++20, preferred): erase-remove in one line
+std::erase_if(v, [](int x){ return x % 2 == 0; });
+// Pre-C++20 idiom:
+v.erase(std::remove_if(v.begin(), v.end(),
+        [](int x){ return x % 2 == 0; }), v.end());`,
+    whatToSay: "vector::erase invalidates the passed iterator and all that follow. Never ++ an iterator you just erased. Use the iterator erase() RETURNS, or the erase-remove idiom / std::erase_if. For std::map/set, erase only invalidates the erased node, so `it = m.erase(it)` also works there."
+  },
+  {
+    id: 10, title: "Use-After-Move",
+    category: "Move Semantics", difficulty: "Medium Probability",
+    buggyCode: `std::unique_ptr<int> a = std::make_unique<int>(42);
+std::unique_ptr<int> b = std::move(a);   // ownership transferred to b
+std::cout << *a << "\\n";                 // BUG: a is now nullptr → UB`,
+    bugs: [
+      "After std::move, 'a' holds nullptr (unique_ptr's moved-from state is defined as null)",
+      "Dereferencing *a is a null-pointer dereference → UB / crash",
+      "General trap: reading the VALUE of any moved-from object (it's valid-but-unspecified)"
+    ],
+    fixedCode: `std::unique_ptr<int> a = std::make_unique<int>(42);
+std::unique_ptr<int> b = std::move(a);
+if (a) std::cout << *a;          // safe: a is null, branch skipped
+std::cout << *b << "\\n";        // use b — it owns the value now
+// Rule: after moving from x, only assign to it or destroy it
+// before reading its value again.`,
+    whatToSay: "std::move is a cast to rvalue; the move ctor leaves the source in a valid-but-unspecified state. For unique_ptr that state is defined as nullptr, so *a is a null deref. After moving from an object, only reassign or destroy it before reading its value. Enable clang-tidy bugprone-use-after-move to catch this."
+  },
+  {
+    id: 11, title: "Rule of Three Violation — Double Free",
+    category: "Memory Safety", difficulty: "High Probability",
+    buggyCode: `struct Buf {
+    int* data;
+    Buf(int n) { data = new int[n]; }
+    ~Buf() { delete[] data; }
+    // BUG: no copy ctor / copy assignment defined
+};
+void f() {
+    Buf a(10);
+    Buf b = a;     // shallow copy: b.data == a.data
+}                  // ~b then ~a both delete[] the SAME pointer → double free`,
+    bugs: [
+      "Compiler-generated copy ctor does a shallow (member-wise) copy → two objects own one buffer",
+      "Both destructors delete[] the same pointer → double free (heap corruption)",
+      "Violates the Rule of Three: a class managing a raw resource needs dtor + copy ctor + copy assignment"
+    ],
+    fixedCode: `// Fix 1 (best): own the resource with a smart container — Rule of Zero
+struct Buf {
+    std::vector<int> data;
+    Buf(int n) : data(n) {}      // no dtor/copy/move needed at all
+};
+// Fix 2: obey the Rule of Five with deep copy + move
+struct Buf {
+    int* data; size_t n;
+    Buf(size_t n): data(new int[n]), n(n) {}
+    ~Buf() { delete[] data; }
+    Buf(const Buf& o): data(new int[o.n]), n(o.n) {
+        std::copy(o.data, o.data + o.n, data);          // deep copy
+    }
+    Buf& operator=(Buf o) { swap(o); return *this; }    // copy-and-swap
+    Buf(Buf&& o) noexcept: data(o.data), n(o.n) { o.data=nullptr; o.n=0; }
+    void swap(Buf& o) noexcept { std::swap(data,o.data); std::swap(n,o.n); }
+};`,
+    whatToSay: "A class with a raw owning pointer and a custom destructor MUST also define copy/move (Rule of Three/Five) or it gets a shallow copy → two owners → double free. The modern answer is the Rule of Zero: hold the resource in std::vector / std::unique_ptr so the compiler-generated special members are already correct."
+  },
+  {
+    id: 12, title: "Data Race — Unsynchronized Shared Counter",
+    category: "Concurrency", difficulty: "Medium Probability",
+    buggyCode: `int counter = 0;                       // shared, non-atomic
+void worker() {
+    for (int i = 0; i < 100000; ++i)
+        ++counter;                     // BUG: read-modify-write race
+}
+// std::thread t1(worker), t2(worker); t1.join(); t2.join();
+// counter is < 200000 and non-deterministic`,
+    bugs: [
+      "++counter is load → add → store, NOT atomic; two threads interleave and lose updates",
+      "Concurrent access with at least one writer and no synchronization = data race = UB",
+      "Result is non-deterministic and typically less than the expected 200000"
+    ],
+    fixedCode: `// Fix 1: atomic (lock-free, fastest for a simple counter)
+std::atomic<int> counter{0};
+void worker() {
+    for (int i = 0; i < 100000; ++i)
+        counter.fetch_add(1, std::memory_order_relaxed); // count-only → relaxed OK
+}
+// Fix 2: mutex (when the update isn't a single atomic op)
+std::mutex m; int counter = 0;
+void worker() {
+    for (int i = 0; i < 100000; ++i) {
+        std::lock_guard<std::mutex> lk(m);
+        ++counter;
+    }
+}`,
+    whatToSay: "++counter on a shared plain int from two threads is a data race — it's a non-atomic read-modify-write, so updates are lost and the program has UB. Fix with std::atomic<int> and fetch_add (memory_order_relaxed is fine for a pure counter since no other memory is being published), or a mutex when more than one variable must move together."
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════
@@ -3272,6 +3384,128 @@ int main() {
     correctAnswer: "UB — dangling reference to destroyed local variable",
     explanation: "[&] captures x by reference. When make_adder returns, x is destroyed (local var). Calling f() after that dereferences a dangling reference — UB.",
     keyInsight: "Never capture local variables by reference in lambdas that outlive the scope. Use [=] (capture by value) or init-capture [x=x] for safety."
+  },
+  {
+    id: 11, title: "Signed / Unsigned Comparison",
+    category: "Integer Conversions",
+    code: `int      i = -1;
+unsigned u =  1;
+cout << (i < u);`,
+    correctAnswer: "0 (false)",
+    explanation: "In a comparison between int and unsigned, the int is converted to unsigned (usual arithmetic conversions). -1 becomes UINT_MAX (4294967295), which is NOT < 1, so the result is 0. The 'obvious' answer 1 is wrong.",
+    keyInsight: "Mixing signed and unsigned in a comparison promotes BOTH to unsigned. This is the #1 source of silent loop bugs: `for (unsigned i = n-1; i >= 0; --i)` never terminates. Compile with -Wsign-compare."
+  },
+  {
+    id: 12, title: "Signed Integer Overflow",
+    category: "Undefined Behavior",
+    code: `int x = INT_MAX;
+cout << x + 1;`,
+    correctAnswer: "Undefined Behavior (NOT guaranteed INT_MIN)",
+    explanation: "Signed integer overflow is UB in C++, not defined wraparound. The compiler is free to assume it never happens — at -O2 it may even optimize `x + 1 > x` to always-true. Don't say 'it wraps to INT_MIN'; that's only true for UNSIGNED types.",
+    keyInsight: "Unsigned overflow = well-defined modulo 2^N wraparound. Signed overflow = UB. Optimizers exploit signed-overflow-is-UB to assume loop induction variables never wrap — say 'UB' in interviews, not 'INT_MIN'."
+  },
+  {
+    id: 13, title: "Moved-From std::string State",
+    category: "Move Semantics",
+    code: `string a = "hello";
+string b = std::move(a);
+cout << "[" << a << "] " << b;`,
+    correctAnswer: "[] hello  (a is valid but unspecified — typically empty)",
+    explanation: "After std::move, a is in a 'valid but unspecified' state. You may safely destroy or REASSIGN it, but its value is unspecified — in practice libstdc++/libc++ leave it empty, so you usually see []. Relying on it being empty is non-portable; relying on it being usable (assign/destroy) is correct.",
+    keyInsight: "std::move is just a cast to rvalue reference — it moves nothing by itself; the move ctor does the work. A moved-from object is not destroyed, not garbage: it's valid-but-unspecified. Only call operations with no preconditions on it (assignment, clear, destruction)."
+  },
+  {
+    id: 14, title: "Ternary Common Type Promotion",
+    category: "Type Deduction",
+    code: `cout << (true ? 'A' : 65);`,
+    correctAnswer: "65",
+    explanation: "The two arms of ?: must have a common type. 'A' is char (65) and 65 is int → the common type is int → the char arm is promoted to int → operator<< prints it as an INTEGER, not a character. So you get 65, not 'A'.",
+    keyInsight: "?: computes a single common type for both branches regardless of which is taken. Mixing char and int (or different pointer types) silently promotes — the printed type can differ from what each branch 'looks like'."
+  },
+  {
+    id: 15, title: "Floating-Point Equality",
+    category: "Floating Point",
+    code: `cout << (0.1 + 0.2 == 0.3);`,
+    correctAnswer: "0 (false)",
+    explanation: "0.1, 0.2, and 0.3 are not exactly representable in IEEE-754 binary. 0.1 + 0.2 == 0.30000000000000004, which is not bit-equal to the nearest double to 0.3. So == returns false.",
+    keyInsight: "Never compare floats with ==. Use |a - b| < epsilon (absolute) or a relative tolerance. This is a guaranteed interview trap; mention IEEE-754 representability and an epsilon-based compare."
+  },
+  {
+    id: 16, title: "Virtual Call Inside a Constructor",
+    category: "OOP Lifecycle",
+    code: `struct Base {
+    Base() { print(); }                 // calls Base::print
+    virtual void print() { cout << "Base "; }
+};
+struct Derived : Base {
+    void print() override { cout << "Derived "; }
+};
+int main() { Derived d; d.print(); }`,
+    correctAnswer: "Base Derived",
+    explanation: "During Base's constructor the Derived part doesn't exist yet, so the vptr still points to Base's vtable → Base::print() runs (prints 'Base'). After construction completes, d.print() dispatches normally → Derived::print() (prints 'Derived').",
+    keyInsight: "Virtual dispatch is disabled during construction/destruction — it resolves to the class currently being built. A pure-virtual call from a ctor/dtor is UB ('pure virtual method called'). Never rely on overrides inside ctors."
+  },
+  {
+    id: 17, title: "Object Slicing on Pass-by-Value",
+    category: "Polymorphism",
+    code: `struct Base   { virtual int id() { return 1; } };
+struct Derived: Base { int id() override { return 2; } };
+void show(Base b) { cout << b.id(); }   // by value!
+int main() { Derived d; show(d); }`,
+    correctAnswer: "1",
+    explanation: "show takes Base BY VALUE, so only the Base sub-object of d is copied (sliced). The parameter b is a genuine Base, its vptr is Base's, and b.id() returns 1 — polymorphism is lost.",
+    keyInsight: "Passing/storing polymorphic types by value slices them. Always pass by Base& or Base* (or smart pointer). This compiles cleanly with no warning, which is what makes slicing dangerous."
+  },
+  {
+    id: 18, title: "map::operator[] Inserts on Read",
+    category: "STL Pitfalls",
+    code: `map<int,int> m;
+if (m[42] == 0) cout << "absent ";
+cout << "size=" << m.size();`,
+    correctAnswer: "absent size=1",
+    explanation: "operator[] on a map DEFAULT-CONSTRUCTS the element if the key is missing (value-initialized int = 0). So m[42] inserts {42,0}, the condition is true, AND size becomes 1 — even though you only meant to read.",
+    keyInsight: "operator[] is a mutating operation on map/unordered_map. To probe without inserting, use m.find(k) != m.end() or m.contains(k) (C++20). operator[] also can't be used on a const map for this reason."
+  },
+  {
+    id: 19, title: "Dangling std::string_view",
+    category: "Lifetime & Views",
+    code: `std::string_view sv = std::string("temporary");
+cout << sv;`,
+    correctAnswer: "Undefined Behavior (dangling view)",
+    explanation: "The temporary std::string is destroyed at the end of the full expression (the semicolon), but sv still points into its freed buffer. Printing sv reads freed memory — UB. It may print garbage, 'temporary', or crash depending on the build.",
+    keyInsight: "string_view is a non-owning {ptr,len}. It must never outlive the buffer it views. Returning a string_view to a local string, or binding one to a temporary, is a classic dangling bug. Lifetime extension does NOT apply through a view."
+  },
+  {
+    id: 20, title: "char Arithmetic Promotes to int",
+    category: "Integer Promotions",
+    code: `char c = 'A';
+cout << c << " " << c + 1 << " " << char(c + 1);`,
+    correctAnswer: "A 66 B",
+    explanation: "c prints as 'A' (value 65). But c + 1 triggers integer promotion: char → int, so the result is int 66 and prints as the number 66, not the character. Casting back with char(c + 1) yields 'B' (66 is 'B').",
+    keyInsight: "Any arithmetic on char/short first promotes the operand to int (integer promotion). The result type is int, so operator<< prints a number. Cast back to char to get the character. This is why `c + 1` and `++c` behave differently in cout."
+  },
+  {
+    id: 21, title: "Vector Reallocation Invalidates References",
+    category: "Iterator Invalidation",
+    code: `vector<int> v = {10};
+int& ref = v[0];
+v.push_back(20);   // may reallocate
+cout << ref;       // ref may dangle`,
+    correctAnswer: "Undefined Behavior (ref may be dangling)",
+    explanation: "push_back can trigger reallocation (size reaches capacity), moving all elements to a new buffer and freeing the old one. ref still points into the OLD freed buffer → UB. With initial capacity 1, the push_back here reallocates, so ref dangles.",
+    keyInsight: "Any vector insertion that grows past capacity invalidates ALL iterators, pointers, and references into it. Take the index instead of a reference across mutations, or reserve() up front. erase invalidates everything from the erased point onward."
+  },
+  {
+    id: 22, title: "Static Local Initialization Is Once and Thread-Safe",
+    category: "Storage Duration",
+    code: `int next() {
+    static int n = (cout << "init ", 100);
+    return ++n;
+}
+int main() { cout << next() << " " << next(); }`,
+    correctAnswer: "init 101 102",
+    explanation: "The static local's initializer runs exactly ONCE, on first entry to next() — so 'init' prints a single time. n persists across calls: 100→101 (printed), then 101→102 (printed). The comma operator evaluates the cout then yields 100.",
+    keyInsight: "Function-local statics are initialized lazily on first reach, exactly once, and (since C++11) the initialization is thread-safe — the compiler emits a guard variable. This is the canonical Meyers' Singleton and the fix for the static-init-order fiasco."
   },
 ];
 
