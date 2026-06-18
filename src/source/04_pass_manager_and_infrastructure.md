@@ -7,6 +7,9 @@ readTime: 30 min
 
 # LLVM Deep Dive: Pass Infrastructure & The New Pass Manager (NPM)
 
+> [!IMPORTANT]
+> **TL;DR — what you must remember:** The New Pass Manager replaces the legacy one with **value-semantics passes**, **explicit analysis dependencies** via `AnalysisManager`, and **proxies** that thread module/function/loop analyses across IR-unit boundaries. Analyses are cached and invalidated precisely; pipelines are composed declaratively (`-passes=...`). The reason NPM exists: cheaper analysis reuse and faster pipelines than the legacy manager's implicit, re-computed dependencies.
+
 ---
 
 # 1. The Core Architecture: Two Managers, One Pipeline

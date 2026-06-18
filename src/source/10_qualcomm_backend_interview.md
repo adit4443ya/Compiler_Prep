@@ -7,6 +7,9 @@ readTime: 35 min
 
 # Qualcomm Compiler Systems Interview: Deep Dive Preparation
 
+> [!IMPORTANT]
+> **TL;DR — what you must remember:** Qualcomm designs **both the silicon and the compiler**. Two targets dominate: **Hexagon DSP** (VLIW — the *compiler* is the scheduler; it bundles independent ops into packets, with HVX as the wide vector unit) and **Oryon** (a wide custom-ARM core, Snapdragon X Elite). Mobile flips the objective function: **code size and power often beat peak throughput**, so `-Os`/`-O2` frequently win over `-O3`. Expect SSA/dominance, pass internals, register allocation, **AArch64 codegen, addressing modes, and weak-memory** questions — and a top-5 upstream contributor's bar for patch quality.
+
 This document contains highly detailed, production-grade answers to deep compiler backend and middle-end engineering questions, explicitly tailored for a Qualcomm technical interview panel (specifically involving back-end/RISC-V and LLVM Pass engineers).
 
 ---
@@ -209,3 +212,33 @@ Instead of an expensive graph, LinearScan sorts all live intervals by start time
 From a compiler's view, modifying the tablegen backend:
 - `RV32`: Uses `f32`/`i32` register class types (`X` and `F` registers are 32 bits wide).
 - `RV64`: Uses `f64`/`i64` register class types (`X` registers are 64 bits wide). Pointers are natively 64-bit in the DAG generation. Calling Convention tables (`RISCVCallingConv.td`) adapt how arguments are packed into `a0-a7` vs passed on the stack.
+
+---
+
+## Part 8: AArch64, Oryon & Hexagon Specifics
+
+Qualcomm's flagship targets are ARM-based (Oryon CPU) and the Hexagon DSP. These questions probe the ARM/AArch64 layer specifically. → For the full treatment see [AArch64 Architecture](#guide/13), [NEON & SVE Vectorization](#guide/14), and [The AArch64 Backend + Onboarding](#guide/15).
+
+### Why is Hexagon's VLIW design "the compiler is the scheduler"?
+A VLIW core has **no out-of-order hardware** — it issues a fixed *packet* of up to 4 instructions every cycle exactly as the compiler arranged them. There is no dynamic reservation station to hide a bad schedule. So the compiler must (1) find enough independent instructions (ILP) to fill each packet, (2) respect each slot's resource constraints, and (3) software-pipeline loops to overlap iterations. If the compiler packs poorly, you get NOPs and wasted issue width — the performance is *defined* by codegen quality, not silicon cleverness. This is why VLIW scheduling is one of the hardest, most valuable backend skills.
+
+### On AArch64, your loop's pointer increment costs an extra `ADD`. What removes it and where does LLVM form it?
+**Pre/post-index addressing** folds the increment into the load/store (`LDR X0, [X1], #8` post-increments `X1` by 8 for free). LLVM forms these in the `AArch64LoadStoreOptimizer` (a late MI pass) and via DAG combines that recognize the `base + offset` then `base += offset` pattern. → [AArch64 addressing modes](#guide/13/the-addressing-modes).
+
+### Why might `CSEL` beat a branch, and when does it lose?
+`CSEL Xd, Xn, Xm, cond` is a **branchless** conditional move driven by NZCV flags — it avoids a branch the predictor might mispredict (≈10–20 cycle flush on a deep Oryon pipeline). It wins for short, unpredictable, balanced conditions. It **loses** when the branch is highly predictable (then the branch is ~free and `CSEL` needlessly evaluates both sides) or when one side is expensive/side-effecting and you'd rather not compute it. → [CSEL family](#guide/13/csel-family-branchless-codegen).
+
+### Why does mobile prefer `-Os`/`-O2` over `-O3`, concretely?
+Three reasons. (1) **I-cache pressure:** `-O3`'s aggressive inlining and unrolling bloat code; on a small-icache core that causes more misses than the extra ILP saves. (2) **Power:** more instructions retired = more energy; battery life is a product metric. (3) **Diminishing returns:** `-O3`'s extra transforms (aggressive vectorization, unrolling) often don't pay off on memory-bound mobile workloads. So Qualcomm tunes the cost model and pass pipeline toward size/power, not just speed — the cost model is a *product surface*. → [The cost model](#guide/15/4-the-cost-model-is-a-product-surface).
+
+### `-O0` on AArch64 — which instruction selector runs, and what happens on a fallback?
+At `-O0` LLVM uses **GlobalISel** on AArch64 (it's the GlobalISel flagship target and faster than SelectionDAG at `-O0`). If GlobalISel hits an unsupported construct it **falls back** to SelectionDAG for that function (counted via `-global-isel-abort=0` / the `globalisel-falls-back` statistic). Part of backend work is shrinking that fallback set. → [What makes the AArch64 target special](#guide/15/part-2-what-makes-the-aarch64-target-special).
+
+### How do C++ `seq_cst` atomics lower on Oryon, and why is the cost different from x86?
+A `seq_cst` load is `LDAR`, a `seq_cst` store is `STLR`; RMWs use `LDAXR/STLXR` or, with LSE, a single `CASAL`/`LDADDAL`. Because AArch64 is **weakly ordered**, even acquire/release cost a dedicated instruction (unlike x86 where plain `MOV` already gives them) — but `seq_cst` is barely more than acquire/release on ARM, whereas on x86 the `seq_cst` store is the only one needing a fence. → [Weak memory model & atomics mapping](#guide/13/c-aarch64-mapping-you-must-know-cold).
+
+### A kernel is 20% slower on Oryon core A than core B at identical clocks. Compiler-side investigation?
+First confirm the *same* binary runs on both (rule out big.LITTLE scheduling). Then check whether the cores have different **SchedModels** / microarchitectures and whether `-mcpu` is tuned for the slow one — a mismatched scheduling model produces stalls. Use `llvm-mca` to model the hot loop on each core's model, look for resource-port pressure or latency chains, and inspect whether vectorization width or addressing-mode selection differs. → [Scheduling models](#guide/15/part-3-scheduling-models-where-cpu-tuning-lives).
+
+### When does SVE actually help a Qualcomm workload over NEON, and what's the codegen cost?
+SVE helps when trip counts are **unknown or non-multiples of the vector width** — predication removes the scalar remainder loop NEON needs, and the *same* binary scales across vector widths (vector-length-agnostic). The codegen cost is that vector types become **scalable** (`<vscale x 4 x float>`): you can't store them in structs, can't assume a compile-time size, and the cost model must reason about an unknown `vscale`. → [NEON vs SVE](#guide/14/part-2-sve-scalable-vectors-the-headline-act).

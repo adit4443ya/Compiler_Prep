@@ -1,6 +1,9 @@
 // ═══════════════════════════════════════════════════════════════════
 //  DSA FORGE — Complete Data File
-//  76 problems | 10 C++ deep-dive concepts | 15 patterns | 6 tip sets
+//  97 problems | 12 C++ deep-dive concepts | 15 patterns | 6 tip sets
+//  Each problem has TWO orthogonal axes:
+//    difficulty: "Easy" | "Medium" | "Hard"   (intrinsic problem hardness)
+//    frequency:  "High"  | "Medium" | "Low"    (how often it shows up in interviews)
 // ═══════════════════════════════════════════════════════════════════
 
 export const PROBLEMS = [
@@ -10,7 +13,7 @@ export const PROBLEMS = [
   // ══════════════════════════════
   {
     id: 1, section: "DP — Knapsack", title: "Partition Equal Subset Sum",
-    difficulty: "Medium", leetcode: 416, company: "Apple / Qualcomm / Amazon",
+    difficulty: "Medium", frequency: "High", leetcode: 416, company: "Apple / Qualcomm / Amazon",
     pattern: "0/1 Knapsack — Boolean",
     intuition: "Reduce to: does a subset exist with sum = totalSum/2? This is a classic 0/1 knapsack. dp[s] = can we achieve sum s? For each num, iterate sums BACKWARDS (critical: prevents reuse). If total is odd → false immediately.",
     keyInsight: "Reverse inner loop = 0/1 knapsack (each element once). Forward inner loop = unbounded knapsack (element reusable). This single distinction separates two entire problem families.",
@@ -50,7 +53,7 @@ bool canPartition(vector<int>& nums) {
   },
   {
     id: 2, section: "DP — Knapsack", title: "Target Sum",
-    difficulty: "Medium", leetcode: 494, company: "Amazon / Nvidia / Google",
+    difficulty: "Medium", frequency: "Medium", leetcode: 494, company: "Amazon / Nvidia / Google",
     pattern: "0/1 Knapsack — Count subsets with difference",
     intuition: "Assign + or − to each number to reach target S. Let P = sum of positives, N = sum of negatives. P − N = S AND P + N = total → P = (S + total)/2. Now count subsets summing to P.",
     keyInsight: "Many ±-assignment problems reduce to subset sum via: positiveSubset = (target + total) / 2. Always check (target+total) is even and non-negative before proceeding.",
@@ -88,7 +91,7 @@ int findTargetSumWays(vector<int>& nums, int target) {
   },
   {
     id: 3, section: "DP — Knapsack", title: "Coin Change (Minimum Coins)",
-    difficulty: "Medium", leetcode: 322, company: "Apple / Amazon / Qualcomm",
+    difficulty: "Medium", frequency: "High", leetcode: 322, company: "Apple / Amazon / Qualcomm",
     pattern: "Unbounded Knapsack — Minimize",
     intuition: "Each coin can be used unlimited times → unbounded knapsack. dp[a] = min coins for amount a. FORWARD loop allows reuse. dp[a] = min(dp[a], dp[a-coin]+1). Init dp[0]=0, rest=INF.",
     keyInsight: "Forward inner loop allows unlimited reuse (unbounded). This is the ONLY structural difference from 0/1 knapsack. For counting combinations vs permutations, the outer loop order matters.",
@@ -127,7 +130,7 @@ int coinChange(vector<int>& coins, int amount) {
   },
   {
     id: 4, section: "DP — Knapsack", title: "Coin Change II (Count Combinations)",
-    difficulty: "Medium", leetcode: 518, company: "Qualcomm / Apple / AMD",
+    difficulty: "Medium", frequency: "Medium", leetcode: 518, company: "Qualcomm / Apple / AMD",
     pattern: "Unbounded Knapsack — Count combinations",
     intuition: "Count COMBINATIONS (not permutations). Outer loop = coins, inner = amounts. This ensures [1,2] and [2,1] are counted once. Swap the loop order → you count permutations (LC 377).",
     keyInsight: "Outer=coins, Inner=amounts → combinations. Outer=amounts, Inner=coins → permutations. Critical interview distinction that trips many candidates.",
@@ -161,7 +164,7 @@ int change(int amount, vector<int>& coins) {
   },
   {
     id: 5, section: "DP — Knapsack", title: "Last Stone Weight II",
-    difficulty: "Medium", leetcode: 1049, company: "Google / Nvidia",
+    difficulty: "Medium", frequency: "Low", leetcode: 1049, company: "Google / Nvidia",
     pattern: "0/1 Knapsack — Minimize difference",
     intuition: "Smash stones optimally. Each stone gets + or − sign. Minimize |total - 2*S| where S is a subset sum ≤ total/2. Maximize S such that S ≤ total/2. Same as Partition Subset Sum generalization.",
     keyInsight: "Any 'minimize difference of two groups' problem reduces to: maximize subset sum ≤ total/2, then answer = total - 2*maxSubset. Core knapsack insight.",
@@ -204,7 +207,7 @@ int lastStoneWeightII(vector<int>& stones) {
   // ══════════════════════════════
   {
     id: 6, section: "DP — String", title: "Edit Distance",
-    difficulty: "Hard", leetcode: 72, company: "Nvidia / Apple / Google",
+    difficulty: "Hard", frequency: "High", leetcode: 72, company: "Nvidia / Apple / Google",
     pattern: "Two-string alignment DP",
     intuition: "dp[i][j] = min ops to convert word1[0..i-1] to word2[0..j-1]. Match → free (diagonal). Otherwise 1 + min of: INSERT (left), DELETE (top), REPLACE (diagonal). Classic 2D string DP.",
     keyInsight: "The 3 ops map to 3 DP grid neighbors: left=insert, top=delete, diagonal=replace. This 2D recurrence appears in LCS, wildcard, regex — learn once, apply everywhere.",
@@ -249,7 +252,7 @@ int minDistance(string word1, string word2) {
   },
   {
     id: 7, section: "DP — String", title: "Longest Common Subsequence",
-    difficulty: "Medium", leetcode: 1143, company: "Qualcomm / Apple / AMD",
+    difficulty: "Medium", frequency: "High", leetcode: 1143, company: "Qualcomm / Apple / AMD",
     pattern: "Two-string matching DP",
     intuition: "dp[i][j] = LCS of text1[0..i-1] and text2[0..j-1]. Match → diagonal + 1. No match → max of skipping one char from either side. Foundation of many string DP problems.",
     keyInsight: "LCS is a building block: SCS length = m+n-LCS. Edit distance (insert/delete only) = m+n-2*LCS. Longest palindromic subsequence = LCS(s, reverse(s)).",
@@ -287,7 +290,7 @@ int longestCommonSubsequence(string text1, string text2) {
   },
   {
     id: 8, section: "DP — String", title: "Longest Palindromic Subsequence",
-    difficulty: "Medium", leetcode: 516, company: "Amazon / Google",
+    difficulty: "Medium", frequency: "Medium", leetcode: 516, company: "Amazon / Google",
     pattern: "Interval DP / Reverse LCS trick",
     intuition: "Two approaches: (1) LPS(s) = LCS(s, reverse(s)). (2) Interval DP: dp[i][j] = LPS in s[i..j]. Match endpoints → inner + 2. Else max of excluding either end. Fill by increasing gap.",
     keyInsight: "Interval DP fills diagonally (by increasing gap). Same fill order: Stone Game, Burst Balloons, Matrix Chain. Base: dp[i][i]=1 (single char).",
@@ -326,7 +329,7 @@ int longestPalindromeSubseq(string s) {
   },
   {
     id: 9, section: "DP — String", title: "Wildcard Matching",
-    difficulty: "Hard", leetcode: 44, company: "Google / Apple",
+    difficulty: "Hard", frequency: "Medium", leetcode: 44, company: "Google / Apple",
     pattern: "Two-string pattern DP",
     intuition: "'?' matches one char. '*' matches any sequence. dp[i][j] = s[0..i-1] matches p[0..j-1]? For '*': match empty (dp[i][j-1]) OR consume one char from s (dp[i-1][j]).",
     keyInsight: "For '*': dp[i][j-1] = '*' matches empty. dp[i-1][j] = '*' consumed s[i] and remains. Leading '*'s can match empty string.",
@@ -371,7 +374,7 @@ bool isMatch(string s, string p) {
   },
   {
     id: 10, section: "DP — String", title: "Regular Expression Matching",
-    difficulty: "Hard", leetcode: 10, company: "Nvidia / Apple / Facebook",
+    difficulty: "Hard", frequency: "Medium", leetcode: 10, company: "Nvidia / Apple / Facebook",
     pattern: "Regex DP with '.' and '*'",
     intuition: "'.' matches any char. '*' = zero or more of PRECEDING char. For '*': zero copies → dp[i][j-2]. One+ copies → dp[i-1][j] if preceding char matches s[i-1].",
     keyInsight: "'*' always refers to the PRECEDING element. Treat (p[j-2], p[j-1]='*') as a pair. Zero copies = skip the pair. One+ = extend if chars match.",
@@ -416,7 +419,7 @@ bool isMatch(string s, string p) {
   },
   {
     id: 11, section: "DP — String", title: "Word Break",
-    difficulty: "Medium", leetcode: 139, company: "Facebook / Google / Apple",
+    difficulty: "Medium", frequency: "High", leetcode: 139, company: "Facebook / Google / Apple",
     pattern: "Linear prefix DP + dictionary lookup",
     intuition: "dp[i] = can s[0..i-1] be segmented into valid words? For each i, try splits: if dp[j] is true AND s[j..i-1] is in dictionary → dp[i]=true. Use unordered_set for O(1) lookup.",
     keyInsight: "Optimization: only check substrings up to maxWordLength. For Word Break II: backtrack with memoization. BFS from index 0 also works cleanly.",
@@ -457,7 +460,7 @@ bool wordBreak(string s, vector<string>& wordDict) {
   // ══════════════════════════════
   {
     id: 12, section: "DP — Interval / Game", title: "Stone Game / Predict the Winner",
-    difficulty: "Medium", leetcode: 877, company: "Amazon / Google",
+    difficulty: "Medium", frequency: "Low", leetcode: 877, company: "Amazon / Google",
     pattern: "Minimax Interval DP — relative advantage",
     intuition: "Two players pick from ends. dp[l][r] = max RELATIVE advantage for current player over opponent on [l..r]. Pick left: nums[l] - dp[l+1][r]. Pick right: nums[r] - dp[l][r-1]. Subtraction handles opponent's optimal play.",
     keyInsight: "Storing RELATIVE advantage (my score - opponent's) instead of absolute scores is the key. After your pick, remaining game is from OPPONENT's perspective → hence subtraction.",
@@ -495,7 +498,7 @@ bool predictTheWinner(vector<int>& nums) {
   },
   {
     id: 13, section: "DP — Interval / Game", title: "Burst Balloons",
-    difficulty: "Hard", leetcode: 312, company: "Nvidia / Apple / Google",
+    difficulty: "Hard", frequency: "Low", leetcode: 312, company: "Nvidia / Apple / Google",
     pattern: "Interval DP — think LAST action",
     intuition: "Think which balloon to burst LAST in range (l,r) — not first. If k is last, left and right subproblems become INDEPENDENT. dp[l][r] = max coins from bursting all balloons strictly between l and r.",
     keyInsight: "Thinking about the LAST action makes subproblems independent — core interval DP insight. Same idea in Matrix Chain Multiplication: think LAST multiplication.",
@@ -543,7 +546,7 @@ int maxCoins(vector<int>& n) {
   // ══════════════════════════════
   {
     id: 14, section: "DP — Bitmask", title: "Shortest Path Visiting All Nodes",
-    difficulty: "Hard", leetcode: 847, company: "Nvidia / Google / Meta",
+    difficulty: "Hard", frequency: "Low", leetcode: 847, company: "Nvidia / Google / Meta",
     pattern: "BFS + Bitmask state (graph TSP)",
     intuition: "State = (node, visited_mask). BFS gives shortest path. Start from ALL nodes simultaneously. Goal: mask = (1<<n)-1. Graph BFS + bitmask = TSP for unweighted graphs.",
     keyInsight: "Start BFS from ALL nodes at once when start is unknown. State space is O(N × 2^N). For DP version: dp[mask][node] = min steps to reach 'node' having visited 'mask'.",
@@ -584,7 +587,7 @@ int shortestPathLength(vector<vector<int>>& g) {
   // ══════════════════════════════
   {
     id: 15, section: "DP — Sequence", title: "Longest Increasing Subsequence",
-    difficulty: "Medium", leetcode: 300, company: "Nvidia / Qualcomm / AMD",
+    difficulty: "Medium", frequency: "High", leetcode: 300, company: "Nvidia / Qualcomm / AMD",
     pattern: "Patience sorting / Binary search O(N log N)",
     intuition: "O(N log N): maintain tails[] where tails[k] = smallest possible tail of all increasing subsequences of length k+1. For each num: lower_bound gives position. Extends array or replaces.",
     keyInsight: "tails[] doesn't store the actual LIS — just tail values. lower_bound gives the correct position. tails.size() = LIS length. To reconstruct: track parent array alongside.",
@@ -616,7 +619,7 @@ int lengthOfLIS(vector<int>& nums) {
   },
   {
     id: 16, section: "DP — Sequence", title: "House Robber I & II",
-    difficulty: "Medium", leetcode: 198, company: "Apple / Amazon / Google",
+    difficulty: "Medium", frequency: "High", leetcode: 198, company: "Apple / Amazon / Google",
     pattern: "Linear DP — no two adjacent",
     intuition: "I: dp[i] = max loot up to house i. Either rob house i (dp[i-2]+nums[i]) or skip (dp[i-1]). II: Circular — can't rob both first and last. Run I twice: [0..n-2] and [1..n-1], take max.",
     keyInsight: "House Robber II = run House Robber I on two sub-arrays (exclude first or exclude last) and take the max. Elegant reduction handles circular constraint without special logic.",
@@ -656,7 +659,7 @@ int rob2(vector<int>& nums) {
   },
   {
     id: 17, section: "DP — Sequence", title: "Unique Paths / Minimum Path Sum",
-    difficulty: "Medium", leetcode: 62, company: "Nvidia / Qualcomm / Apple",
+    difficulty: "Medium", frequency: "High", leetcode: 62, company: "Nvidia / Qualcomm / Apple",
     pattern: "Grid DP — 2D traversal",
     intuition: "Unique Paths: dp[i][j] = paths to reach (i,j) = dp[i-1][j] + dp[i][j-1]. Min Path Sum: dp[i][j] = min cost = min(dp[i-1][j], dp[i][j-1]) + grid[i][j]. Both build left-to-right, top-to-bottom.",
     keyInsight: "Grid DP is among the easiest 2D DPs to visualize. Space optimization: use 1D rolling array (each row depends only on prev row). dp[j] = min(dp[j], dp[j-1]) + grid[i][j].",
@@ -703,7 +706,7 @@ int uniquePaths(int m, int n) {
   // ══════════════════════════════
   {
     id: 18, section: "Graph — BFS", title: "Number of Islands",
-    difficulty: "Medium", leetcode: 200, company: "Apple / Qualcomm / Amazon",
+    difficulty: "Medium", frequency: "High", leetcode: 200, company: "Apple / Qualcomm / Amazon",
     pattern: "Grid flood fill BFS/DFS",
     intuition: "For each unvisited '1': launch BFS to flood-fill all connected land, marking as '0'. Each launch = one island. Mark cells BEFORE enqueue to prevent duplicate processing.",
     keyInsight: "Mark cells BEFORE enqueueing, not after popping. This is the most common BFS mistake — without pre-marking, same cell enqueued multiple times → TLE.",
@@ -736,7 +739,7 @@ int uniquePaths(int m, int n) {
   },
   {
     id: 19, section: "Graph — BFS", title: "Rotting Oranges",
-    difficulty: "Medium", leetcode: 994, company: "Amazon / Nvidia / Google",
+    difficulty: "Medium", frequency: "High", leetcode: 994, company: "Amazon / Nvidia / Google",
     pattern: "Multi-source BFS — simultaneous spread",
     intuition: "All rotten spread simultaneously → enqueue ALL rotten BEFORE BFS starts. Process level-by-level (each level = 1 minute). After BFS, if any fresh remains → -1.",
     keyInsight: "Multi-source BFS: enqueue all sources before starting. Pattern appears in: 01 Matrix, Walls and Gates, Shortest Bridge, Pacific Atlantic Water Flow.",
@@ -768,7 +771,7 @@ int uniquePaths(int m, int n) {
   },
   {
     id: 20, section: "Graph — BFS", title: "Word Ladder",
-    difficulty: "Hard", leetcode: 127, company: "Apple / Amazon / Qualcomm",
+    difficulty: "Hard", frequency: "Medium", leetcode: 127, company: "Apple / Amazon / Qualcomm",
     pattern: "BFS shortest transformation sequence",
     intuition: "Each word = node. Edge if 1-char different. BFS from begin. For each word, try 26×L mutations instead of checking all N words → O(26L) vs O(NL) per step. Use wordSet as visited.",
     keyInsight: "Bidirectional BFS reduces O(b^d) to O(b^(d/2)). Erase words from set as visited — no separate visited structure needed.",
@@ -797,7 +800,7 @@ int uniquePaths(int m, int n) {
   },
   {
     id: 21, section: "Graph — BFS", title: "Clone Graph",
-    difficulty: "Medium", leetcode: 133, company: "Facebook / Apple / Nvidia",
+    difficulty: "Medium", frequency: "High", leetcode: 133, company: "Facebook / Apple / Nvidia",
     pattern: "BFS with node-clone mapping",
     intuition: "BFS traversal while maintaining a map from original node → cloned node. Before enqueueing a neighbor, check if already cloned (acts as visited). Link cloned nodes as edges are traversed.",
     keyInsight: "The clone map doubles as the visited set. For any graph deep copy: maintain oldNode → newNode map. Works for any graph structure.",
@@ -824,7 +827,7 @@ int uniquePaths(int m, int n) {
   },
   {
     id: 22, section: "Graph — BFS", title: "Pacific Atlantic Water Flow",
-    difficulty: "Medium", leetcode: 417, company: "Nvidia / Qualcomm / Google",
+    difficulty: "Medium", frequency: "Medium", leetcode: 417, company: "Nvidia / Qualcomm / Google",
     pattern: "Reverse multi-source BFS from both oceans",
     intuition: "Instead of simulating water flow forward (expensive), run BFS BACKWARDS from each ocean. Pacific: top row + left column. Atlantic: bottom row + right column. Answer = cells reachable from BOTH.",
     keyInsight: "Reverse thinking: instead of 'can water flow from cell X to ocean?', ask 'can water flow from ocean to cell X if we reverse flow direction?'. Reduces to two multi-source BFS runs.",
@@ -864,7 +867,7 @@ int uniquePaths(int m, int n) {
   // ══════════════════════════════
   {
     id: 23, section: "Graph — Topo Sort", title: "Course Schedule I & II",
-    difficulty: "Medium", leetcode: 207, company: "Nvidia / AMD / Qualcomm",
+    difficulty: "Medium", frequency: "High", leetcode: 207, company: "Nvidia / AMD / Qualcomm",
     pattern: "Kahn's BFS Topological Sort",
     intuition: "DAG: a valid ordering exists iff there is NO cycle. Kahn's: start from all 0-indegree nodes, process node, decrement neighbors. If processed count < total nodes → cycle.",
     keyInsight: "Kahn's = cycle detection + topological ordering in one pass. DFS topo uses reverse post-order. Kahn's is usually cleaner for interviews.",
@@ -899,7 +902,7 @@ public:
   // ══════════════════════════════
   {
     id: 24, section: "Graph — Shortest Path", title: "Dijkstra's Algorithm",
-    difficulty: "Medium", leetcode: 743, company: "Qualcomm / Nvidia / AMD",
+    difficulty: "Medium", frequency: "Medium", leetcode: 743, company: "Qualcomm / Nvidia / AMD",
     pattern: "Greedy min-heap — non-negative weights only",
     intuition: "Expand closest unfinalized node using min-heap. Once popped = FINAL distance. Skip stale entries (d > dist[u]). Fails with negative edges.",
     keyInsight: "The 'skip stale' check (if d > dist[u]) is critical. Without it, same node processed multiple times → O(VE) instead of O(E log V). This check is what makes Dijkstra efficient.",
@@ -924,7 +927,7 @@ public:
   },
   {
     id: 25, section: "Graph — Shortest Path", title: "Bellman-Ford (K Stops)",
-    difficulty: "Medium", leetcode: 787, company: "Uber / Expedia / Amazon",
+    difficulty: "Medium", frequency: "Medium", leetcode: 787, company: "Uber / Expedia / Amazon",
     pattern: "Relax all edges V-1 times — handles negatives",
     intuition: "Handles NEGATIVE edges. Relax all edges K+1 times for K-stops. COPY dist before each round to prevent cascading (a single round must not chain multiple edges).",
     keyInsight: "COPY dist before each round for K-stops. Without the copy, one relaxation round can chain multiple edges, violating the K-constraint.",
@@ -945,7 +948,7 @@ public:
   },
   {
     id: 26, section: "Graph — Shortest Path", title: "Floyd-Warshall (All-Pairs)",
-    difficulty: "Medium", leetcode: 1334, company: "Nvidia / AMD / Intel",
+    difficulty: "Medium", frequency: "Low", leetcode: 1334, company: "Nvidia / AMD / Intel",
     pattern: "All-pairs shortest path — DP on intermediate nodes",
     intuition: "Try each node k as an intermediate. dist[i][j] = min(direct, through k). After all k: dist[i][j] = true shortest. O(V³) — only for small V (≤500).",
     keyInsight: "Negative cycle detected if dist[i][i] < 0. Order of loops matters: k (intermediate) must be outermost loop.",
@@ -974,7 +977,7 @@ public:
   // ══════════════════════════════
   {
     id: 27, section: "Graph — Union Find", title: "Union Find Template",
-    difficulty: "Medium", leetcode: 547, company: "Nvidia / AMD / Intel",
+    difficulty: "Medium", frequency: "Medium", leetcode: 547, company: "Nvidia / AMD / Intel",
     pattern: "DSU with path compression + union by rank",
     intuition: "PATH COMPRESSION: find() points directly to root. UNION BY RANK: smaller tree under larger. Together: near O(1) amortized. unite() returning false → cycle detected.",
     keyInsight: "unite() returning false = cycle in undirected graph (LC 684). Also core of Kruskal's MST. Track component count for connectivity queries.",
@@ -1010,7 +1013,7 @@ vector<int> findRedundantConnection(vector<vector<int>>& edges) {
   // ══════════════════════════════
   {
     id: 28, section: "Graph — MST", title: "Kruskal's Minimum Spanning Tree",
-    difficulty: "Medium", leetcode: 1584, company: "Intel / AMD / Qualcomm",
+    difficulty: "Medium", frequency: "Low", leetcode: 1584, company: "Intel / AMD / Qualcomm",
     pattern: "Sort edges + Union Find greedy",
     intuition: "Sort edges by weight. Greedily add cheapest edge that doesn't create a cycle (use Union-Find). Stop at V-1 edges. Kruskal = sort+UF. Prim = heap-growth from one node.",
     keyInsight: "Kruskal is simpler to code. Prim is better for dense graphs. Both produce the same MST weight.",
@@ -1032,7 +1035,7 @@ int minCostConnectPoints(vector<vector<int>>& pts) {
   },
   {
     id: 29, section: "Graph — Tarjan", title: "Critical Connections (Bridges)",
-    difficulty: "Hard", leetcode: 1192, company: "Nvidia / AMD / Google",
+    difficulty: "Hard", frequency: "Low", leetcode: 1192, company: "Nvidia / AMD / Google",
     pattern: "Tarjan's bridge-finding algorithm",
     intuition: "Edge (u,v) is a bridge if low[v] > disc[u]. DFS with disc[] (discovery time) and low[] (lowest reachable via back edges). Back edges update low[] upward.",
     keyInsight: "low[v] > disc[u] → bridge. low[v] >= disc[u] → articulation point. Both in ONE DFS pass.",
@@ -1066,7 +1069,7 @@ public:
   // ══════════════════════════════
   {
     id: 30, section: "Sliding Window", title: "Longest Substring Without Repeating",
-    difficulty: "Medium", leetcode: 3, company: "Amazon / Nvidia / Google",
+    difficulty: "Medium", frequency: "High", leetcode: 3, company: "Amazon / Nvidia / Google",
     pattern: "Variable window + last-index map",
     intuition: "Expand right. On duplicate within window, jump left pointer past previous occurrence. Track last seen index per char. Window always maintains unique chars.",
     keyInsight: "Left pointer ONLY moves forward → O(N) total. Check last_seen >= left to ensure previous occurrence is actually within current window.",
@@ -1086,7 +1089,7 @@ public:
   },
   {
     id: 31, section: "Sliding Window", title: "Minimum Window Substring",
-    difficulty: "Hard", leetcode: 76, company: "Google / Facebook / Apple",
+    difficulty: "Hard", frequency: "High", leetcode: 76, company: "Google / Facebook / Apple",
     pattern: "Shrinkable window with HAVE/NEED tracking",
     intuition: "Expand right until all chars of t satisfied (have==need). Shrink left to minimize. 'have' only updates at exact threshold crossings.",
     keyInsight: "'have' increments/decrements only at exact threshold — avoids re-scanning all frequencies. 'need' = count of distinct chars in t needed at full frequency.",
@@ -1111,7 +1114,7 @@ public:
   },
   {
     id: 32, section: "Sliding Window", title: "Sliding Window Maximum",
-    difficulty: "Hard", leetcode: 239, company: "Qualcomm / Apple / Nvidia",
+    difficulty: "Hard", frequency: "High", leetcode: 239, company: "Qualcomm / Apple / Nvidia",
     pattern: "Monotonic decreasing deque",
     intuition: "Deque of INDICES, monotonic decreasing VALUES. Front = window max. Remove expired front. Remove smaller from back before adding.",
     keyInsight: "Deque stores INDICES (to check window expiry). Values are decreasing. Each element enters and exits once → O(N) total.",
@@ -1131,7 +1134,7 @@ public:
   },
   {
     id: 33, section: "Sliding Window", title: "Permutation in String",
-    difficulty: "Medium", leetcode: 567, company: "Nvidia / Amazon / Google",
+    difficulty: "Medium", frequency: "Medium", leetcode: 567, company: "Nvidia / Amazon / Google",
     pattern: "Fixed-size window with frequency matching",
     intuition: "Check if any permutation of s1 is a substring of s2. Fixed window of size len(s1). Use 'matches' counter: 26 possible chars, count how many have matching frequencies.",
     keyInsight: "Fixed window variant. 'matches' counter trick: increment when freq matches threshold, decrement when it breaks. O(1) per slide.",
@@ -1161,7 +1164,7 @@ public:
   },
   {
     id: 34, section: "Sliding Window", title: "Longest Repeating Char Replacement",
-    difficulty: "Medium", leetcode: 424, company: "Google / Qualcomm / Apple",
+    difficulty: "Medium", frequency: "Medium", leetcode: 424, company: "Google / Qualcomm / Apple",
     pattern: "Variable window with max frequency tracking",
     intuition: "Window is valid if (windowSize - maxFreqInWindow) <= k. Expand right, track maxFreq. Shrink left when invalid. maxFreq only ever increases — we only care about the best seen.",
     keyInsight: "We never shrink maxFreq when left shrinks — if window can't beat current best, it just slides. This makes the operation O(N) — left and right each move forward once.",
@@ -1185,7 +1188,7 @@ public:
   // ══════════════════════════════
   {
     id: 35, section: "Monotonic Stack", title: "Largest Rectangle in Histogram",
-    difficulty: "Hard", leetcode: 84, company: "Nvidia / Qualcomm / AMD",
+    difficulty: "Hard", frequency: "High", leetcode: 84, company: "Nvidia / Qualcomm / AMD",
     pattern: "Monotonic increasing stack + sentinel",
     intuition: "Monotonic increasing stack of indices. When current bar is shorter (pop): popped bar is HEIGHT, current index and new top determine WIDTH. Sentinel 0 at end flushes all remaining bars.",
     keyInsight: "Sentinel trick (append 0) forces stack flush. Building block for Maximal Rectangle (LC 85): run histogram on each row's accumulated heights.",
@@ -1209,7 +1212,7 @@ public:
   },
   {
     id: 36, section: "Monotonic Stack", title: "Trapping Rain Water",
-    difficulty: "Hard", leetcode: 42, company: "Apple / Nvidia / Qualcomm",
+    difficulty: "Hard", frequency: "High", leetcode: 42, company: "Apple / Nvidia / Qualcomm",
     pattern: "Two pointers — process smaller wall",
     intuition: "Water at i = min(maxLeft, maxRight) - height[i]. Two pointers: process the SMALLER side. The smaller side's max definitively bounds water there.",
     keyInsight: "Move smaller pointer because water is bounded by LOWER wall. The other side is already >= so its exact value doesn't affect current calculation.",
@@ -1230,7 +1233,7 @@ public:
   // ══════════════════════════════
   {
     id: 37, section: "Prefix Sums", title: "Subarray Sum Equals K",
-    difficulty: "Medium", leetcode: 560, company: "Facebook / Amazon / Google",
+    difficulty: "Medium", frequency: "High", leetcode: 560, company: "Facebook / Amazon / Google",
     pattern: "Prefix sum + frequency hashmap",
     intuition: "prefix[j] - prefix[i] = k → subarray (i,j] has sum k. Count prefix[i] = prefix[j]-k seen before j.",
     keyInsight: "Init map with {0:1} to handle subarrays starting from index 0. Extends to XOR subarrays, divisible-by-K, longest subarray sum K.",
@@ -1246,7 +1249,7 @@ public:
   },
   {
     id: 38, section: "Prefix Sums", title: "Product of Array Except Self",
-    difficulty: "Medium", leetcode: 238, company: "Nvidia / AMD / Apple",
+    difficulty: "Medium", frequency: "High", leetcode: 238, company: "Nvidia / AMD / Apple",
     pattern: "Left-right prefix/suffix decomposition",
     intuition: "result[i] = leftProduct × rightProduct. Left pass: accumulate prefix products. Right pass: multiply suffix products using running variable.",
     keyInsight: "Left-right decomposition appears in: rain water, stock buy/sell, max product subarray. Two-pass prefix/suffix when you need info from both sides of each element.",
@@ -1268,7 +1271,7 @@ public:
   // ══════════════════════════════
   {
     id: 39, section: "Greedy", title: "Jump Game I & II",
-    difficulty: "Medium", leetcode: 55, company: "Nvidia / Apple / Google",
+    difficulty: "Medium", frequency: "High", leetcode: 55, company: "Nvidia / Apple / Google",
     pattern: "Greedy reachability — BFS level analogy",
     intuition: "I: Track maxReach. If i > maxReach → stuck. II: BFS-like greedy with currentEnd and farthest boundaries. Jump when i reaches currentEnd.",
     keyInsight: "Jump Game II = BFS where each level = one jump. currentEnd = current level boundary. farthest = next level boundary.",
@@ -1291,7 +1294,7 @@ int jump(vector<int>& nums) {
   },
   {
     id: 40, section: "Greedy", title: "Merge Intervals",
-    difficulty: "Medium", leetcode: 56, company: "Nvidia / AMD / Amazon",
+    difficulty: "Medium", frequency: "High", leetcode: 56, company: "Nvidia / AMD / Amazon",
     pattern: "Sort + merge overlapping intervals",
     intuition: "Sort by start. Merge if overlap (current.start <= last.end). Extend end. After sorting, only need to compare with LAST merged interval.",
     keyInsight: "After sorting by start, you only need to check the LAST merged interval. O(N) scan after O(N log N) sort.",
@@ -1309,7 +1312,7 @@ int jump(vector<int>& nums) {
   },
   {
     id: 41, section: "Greedy", title: "Task Scheduler",
-    difficulty: "Medium", leetcode: 621, company: "Apple / Qualcomm / Google",
+    difficulty: "Medium", frequency: "Medium", leetcode: 621, company: "Apple / Qualcomm / Google",
     pattern: "Frequency greedy — idle frame counting",
     intuition: "(maxFreq-1) chunks of (n+1) slots, plus final chunk of maxCount tasks. If enough diverse tasks → idle slots collapse. Answer = max(formula, totalTasks).",
     keyInsight: "Visualize: [A _ _ _][A _ _ _][A B]. Chunks = maxFreq-1, width = n+1. Final chunk = count of tasks at maxFreq.",
@@ -1329,7 +1332,7 @@ int jump(vector<int>& nums) {
   // ══════════════════════════════
   {
     id: 42, section: "Two Pointers", title: "3Sum",
-    difficulty: "Medium", leetcode: 15, company: "Nvidia / Apple / Google",
+    difficulty: "Medium", frequency: "High", leetcode: 15, company: "Nvidia / Apple / Google",
     pattern: "Sort + fix one + two pointers",
     intuition: "Sort. Fix one number (i), two pointers find pair summing to -nums[i]. Skip duplicates at all 3 levels. Early break if nums[i] > 0.",
     keyInsight: "Skip duplicates: for i before processing; for left/right after match. Extends to 4Sum with one extra outer loop.",
@@ -1359,7 +1362,7 @@ int jump(vector<int>& nums) {
   },
   {
     id: 43, section: "Two Pointers", title: "Sort Colors (Dutch National Flag)",
-    difficulty: "Medium", leetcode: 75, company: "Nvidia / AMD / Qualcomm",
+    difficulty: "Medium", frequency: "Medium", leetcode: 75, company: "Nvidia / AMD / Qualcomm",
     pattern: "Three-way partition — one pass",
     intuition: "Partition array into 0s | 1s | 2s in one pass. Three pointers: lo, mid, hi. Swap and advance based on nums[mid] value.",
     keyInsight: "When swapping with hi: DON'T advance mid — element from hi is unknown. When swapping with lo: advance both (lo is always 0 from prior swaps).",
@@ -1380,7 +1383,7 @@ int jump(vector<int>& nums) {
   // ══════════════════════════════
   {
     id: 44, section: "Binary Search", title: "Search in Rotated Sorted Array",
-    difficulty: "Medium", leetcode: 33, company: "Apple / Nvidia / Qualcomm",
+    difficulty: "Medium", frequency: "High", leetcode: 33, company: "Apple / Nvidia / Qualcomm",
     pattern: "Modified binary search — identify sorted half first",
     intuition: "One half is always sorted. Check nums[left] <= nums[mid] → left half sorted. Then check if target falls in sorted half → narrow. For duplicates (LC 81): nums[left]==nums[mid] → left++.",
     keyInsight: "IDENTIFY sorted half first, THEN check if target is within it. Exactly one half is always sorted after rotation.",
@@ -1408,7 +1411,7 @@ int jump(vector<int>& nums) {
   // ══════════════════════════════
   {
     id: 45, section: "Heap", title: "Find Median from Data Stream",
-    difficulty: "Hard", leetcode: 295, company: "Nvidia / Qualcomm / HFT firms",
+    difficulty: "Hard", frequency: "High", leetcode: 295, company: "Nvidia / Qualcomm / HFT firms",
     pattern: "Two heaps — max-heap (small) + min-heap (large)",
     intuition: "Max-heap (small half) + min-heap (large half). Median = max-heap top (odd) or avg of both tops (even). Always add to small first, then rebalance.",
     keyInsight: "C++ priority_queue is max-heap. Min-heap: priority_queue<int,vector<int>,greater<int>>. Invariant: small.size() == large.size() or small.size() == large.size()+1.",
@@ -1430,7 +1433,7 @@ public:
   },
   {
     id: 46, section: "Heap", title: "Merge K Sorted Lists",
-    difficulty: "Hard", leetcode: 23, company: "Nvidia / Qualcomm / Apple",
+    difficulty: "Hard", frequency: "High", leetcode: 23, company: "Nvidia / Qualcomm / Apple",
     pattern: "Min-heap of list heads",
     intuition: "Push all non-null list heads into min-heap. Pop smallest → append → push its next. Heap maintains at most K elements. Each of N total nodes enters and exits once → O(N log K).",
     keyInsight: "Generalizes merge sort's merge step to K lists. Custom comparator with lambda in C++.",
@@ -1454,7 +1457,7 @@ public:
   // ══════════════════════════════
   {
     id: 47, section: "Trees", title: "Binary Tree Maximum Path Sum",
-    difficulty: "Hard", leetcode: 124, company: "Nvidia / Qualcomm / Apple",
+    difficulty: "Hard", frequency: "High", leetcode: 124, company: "Nvidia / Qualcomm / Apple",
     pattern: "DFS with global max — through vs return distinction",
     intuition: "At each node: THROUGH = val + leftGain + rightGain (update global max). RETURN to parent = val + max(left, right). Clamp negative gains to 0.",
     keyInsight: "'Through' uses BOTH child branches. 'Return' uses ONE (can't go both ways up). Same logic powers tree diameter.",
@@ -1475,7 +1478,7 @@ public:
   },
   {
     id: 48, section: "Trees", title: "LCA + Serialize / Deserialize",
-    difficulty: "Medium", leetcode: 236, company: "Apple / Nvidia / Google",
+    difficulty: "Medium", frequency: "High", leetcode: 236, company: "Apple / Nvidia / Google",
     pattern: "Recursive DFS — split point / preorder encoding",
     intuition: "LCA: first node where p and q are in DIFFERENT subtrees. Serialize: preorder with 'N' as null markers. Deserialize: read preorder, build recursively.",
     keyInsight: "Generic LCA: first node where both children return non-null = split point. Serialize needs null markers for UNIQUE reconstruction.",
@@ -1508,7 +1511,7 @@ private:
   },
   {
     id: 49, section: "Trees", title: "Construct Binary Tree from Preorder + Inorder",
-    difficulty: "Medium", leetcode: 105, company: "Nvidia / Apple / Qualcomm",
+    difficulty: "Medium", frequency: "High", leetcode: 105, company: "Nvidia / Apple / Qualcomm",
     pattern: "Divide and conquer using inorder index map",
     intuition: "Preorder: first element = root. Inorder: root divides left/right subtrees. Hashmap for O(1) root index lookup in inorder. Recursively build left then right.",
     keyInsight: "Left subtree size = (inorder root index) - inStart. Map inorder values to indices for O(1) lookup.",
@@ -1535,7 +1538,7 @@ public:
   },
   {
     id: 50, section: "Trees", title: "Validate Binary Search Tree",
-    difficulty: "Medium", leetcode: 98, company: "Qualcomm / Apple / AMD",
+    difficulty: "Medium", frequency: "High", leetcode: 98, company: "Qualcomm / Apple / AMD",
     pattern: "DFS with valid range propagation",
     intuition: "At each node, pass down valid [min, max] range. Root has (-INF, +INF). Left child: (min, node->val). Right child: (node->val, max). Fail if node->val out of range.",
     keyInsight: "Common mistake: only check parent-child. You MUST propagate bounds top-down. All nodes in right subtree must be > root->val, not just > direct parent.",
@@ -1557,7 +1560,7 @@ public:
   // ══════════════════════════════
   {
     id: 51, section: "Backtracking", title: "Combination Sum + N-Queens",
-    difficulty: "Hard", leetcode: 39, company: "Nvidia / Apple / Qualcomm",
+    difficulty: "Hard", frequency: "High", leetcode: 39, company: "Nvidia / Apple / Qualcomm",
     pattern: "Choose-recurse-unchoose framework",
     intuition: "Combo Sum: allow reuse so recurse with same index i (not i+1). N-Queens: place row by row, track cols and diagonals with sets. (row-col) for '\\\\' diagonal, (row+col) for '/' diagonal.",
     keyInsight: "start index = combinations. swap indices = permutations. sort + skip = dedup. N-Queens: same '\\\\' diagonal = same (row-col), same '/' = same (row+col).",
@@ -1601,7 +1604,7 @@ public:
   },
   {
     id: 52, section: "Backtracking", title: "Word Search II (Trie + DFS)",
-    difficulty: "Hard", leetcode: 212, company: "Apple / Nvidia / Google",
+    difficulty: "Hard", frequency: "Medium", leetcode: 212, company: "Apple / Nvidia / Google",
     pattern: "Trie-pruned grid backtracking",
     intuition: "Build Trie from word list. DFS from each cell, traverse trie simultaneously. If no trie edge → prune. At isEnd → found word. Avoids checking each word individually.",
     keyInsight: "Trie pruning: if no trie edge for grid char, DFS stops immediately. Remove found words from Trie to avoid duplicates.",
@@ -1636,7 +1639,7 @@ public:
   // ══════════════════════════════
   {
     id: 53, section: "Linked List", title: "Reverse Linked List + LRU Cache",
-    difficulty: "Medium", leetcode: 206, company: "Apple / Qualcomm / Nvidia",
+    difficulty: "Medium", frequency: "High", leetcode: 206, company: "Apple / Qualcomm / Nvidia",
     pattern: "Pointer reversal + DLL with HashMap",
     intuition: "Reverse: 3 pointers (prev, curr, next). LRU: HashMap O(1) lookup + DLL O(1) removal/insertion. Sentinel head/tail eliminate null-check edge cases.",
     keyInsight: "DLL + HashMap = O(1) for ALL LRU operations. Sentinel nodes remove null checks. Most frequently tested linked list combination at Apple/Qualcomm.",
@@ -1665,7 +1668,7 @@ public:
   },
   {
     id: 54, section: "Linked List", title: "Cycle Detection (Floyd's Algorithm)",
-    difficulty: "Easy", leetcode: 141, company: "Apple / Nvidia / Amazon",
+    difficulty: "Easy", frequency: "High", leetcode: 141, company: "Apple / Nvidia / Amazon",
     pattern: "Floyd's Tortoise & Hare — slow/fast pointers",
     intuition: "I (detect): slow+fast meet iff cycle. II (find start): after meeting, move one to head, advance both at speed 1 — they meet at cycle start.",
     keyInsight: "Phase 2 math: 2*(slow dist) = fast dist. When both start at speed 1 — one from head, one from meeting point — they reach cycle entrance simultaneously.",
@@ -1688,7 +1691,7 @@ ListNode*detectCycle(ListNode*head){
   },
   {
     id: 55, section: "Linked List", title: "Copy List with Random Pointer",
-    difficulty: "Medium", leetcode: 138, company: "Nvidia / Qualcomm / Apple",
+    difficulty: "Medium", frequency: "Medium", leetcode: 138, company: "Nvidia / Qualcomm / Apple",
     pattern: "Interleave copy + random pointer linking",
     intuition: "O(1) space: interleave copies (A→A'→B→B'→...). Set random: copy->random = node->random->next. Extract: separate interleaved lists.",
     keyInsight: "The interleave trick: A'→random can be set as A→random→next because the copy follows the original in our interleaved list.",
@@ -1715,7 +1718,7 @@ ListNode*detectCycle(ListNode*head){
   // ══════════════════════════════
   {
     id: 56, section: "Stack", title: "Valid Parentheses + Min Stack",
-    difficulty: "Easy", leetcode: 20, company: "Apple / Qualcomm / Google",
+    difficulty: "Easy", frequency: "High", leetcode: 20, company: "Apple / Qualcomm / Google",
     pattern: "LIFO matching + O(1) min tracking",
     intuition: "Valid Parentheses: push opening, pop on closing — check match. Min Stack: store (val, min_at_this_depth) pair — O(1) getMin().",
     keyInsight: "Min Stack: each entry is (val, min_so_far). getMin = top.second. No separate structure needed.",
@@ -1749,7 +1752,7 @@ public:
   // ══════════════════════════════
   {
     id: 57, section: "Trie", title: "Implement Trie",
-    difficulty: "Medium", leetcode: 208, company: "Nvidia / AMD / Apple",
+    difficulty: "Medium", frequency: "High", leetcode: 208, company: "Nvidia / AMD / Apple",
     pattern: "Prefix tree — O(L) per operation",
     intuition: "Node with children[26] + isEnd flag. Insert: create path. Search: traverse + check isEnd. StartsWith: traverse + check existence.",
     keyInsight: "Trie + grid backtracking = Word Search II. Build trie from words, DFS following trie edges. Shared prefixes are pruned once.",
@@ -1772,7 +1775,7 @@ public:
   // ══════════════════════════════
   {
     id: 58, section: "System Design DSA", title: "LRU Cache (Standalone)",
-    difficulty: "Medium", leetcode: 146, company: "Qualcomm / Apple / Nvidia",
+    difficulty: "Medium", frequency: "High", leetcode: 146, company: "Qualcomm / Apple / Nvidia",
     pattern: "HashMap + Doubly Linked List",
     intuition: "O(1) get and put. HashMap maps key→node. DLL orders by recency. On get: move node to front. On put: insert front, evict tail if over capacity.",
     keyInsight: "Sentinel head/tail nodes eliminate all null checks. The only tricky part is correctly wiring the DLL operations. Used in compiler caches, TLB, instruction caches.",
@@ -1787,7 +1790,7 @@ public:
   },
   {
     id: 59, section: "System Design DSA", title: "Longest Palindromic Substring",
-    difficulty: "Medium", leetcode: 5, company: "Qualcomm / Apple / AMD",
+    difficulty: "Medium", frequency: "High", leetcode: 5, company: "Qualcomm / Apple / AMD",
     pattern: "Expand around center — O(N²) time, O(1) space",
     intuition: "For each center (N odd + N-1 even = 2N-1 total centers), expand outward while chars match. Track longest palindrome found.",
     keyInsight: "Two types of centers: single char (odd palindromes) and gap between chars (even palindromes). Always try BOTH from each position.",
@@ -1819,7 +1822,7 @@ string longestPalindrome(string s) {
   },
   {
     id: 60, section: "System Design DSA", title: "Median of Two Sorted Arrays",
-    difficulty: "Hard", leetcode: 4, company: "Google / Apple / Nvidia",
+    difficulty: "Hard", frequency: "High", leetcode: 4, company: "Google / Apple / Nvidia",
     pattern: "Binary search on partition",
     intuition: "Binary search on smaller array to find partition point where left half of both arrays together has (m+n)/2 elements. Median is max of left parts (or avg with min of right for even total).",
     keyInsight: "Partition condition: max(leftA, leftB) <= min(rightA, rightB). Binary search on the shorter array: O(log(min(m,n))). Handles odd/even total length separately.",
@@ -1846,7 +1849,7 @@ string longestPalindrome(string s) {
   },
   {
     id: 61, section: "System Design DSA", title: "IPO Problem (Max Capital)",
-    difficulty: "Hard", leetcode: 502, company: "Qualcomm / AMD / HFT firms",
+    difficulty: "Hard", frequency: "Low", leetcode: 502, company: "Qualcomm / AMD / HFT firms",
     pattern: "Two heaps — greedy capital maximization",
     intuition: "At each step, pick most profitable affordable project. Min-heap gates projects by required capital. Max-heap selects by profit. Always taking max profit from available is greedy-optimal.",
     keyInsight: "Two heaps: min-heap(capital, profit) gates by capital, max-heap(profit) selects. Classic greedy + heap at Apple/AMD.",
@@ -1869,7 +1872,7 @@ string longestPalindrome(string s) {
   },
   {
     id: 62, section: "HashMap", title: "Group Anagrams",
-    difficulty: "Medium", leetcode: 49, company: "Amazon / Google / Facebook",
+    difficulty: "Medium", frequency: "High", leetcode: 49, company: "Amazon / Google / Facebook",
     pattern: "Sort string as key",
     intuition: "Anagrams have identical sorted strings. Use sorted string as map key. O(NK log K) where K is max word length.",
     keyInsight: "Character counting (freq array) is O(NK) but sorting is often cleaner and fast enough for interview constraints.",
@@ -1888,7 +1891,7 @@ string longestPalindrome(string s) {
   },
   {
     id: 63, section: "HashMap", title: "Top K Frequent Elements",
-    difficulty: "Medium", leetcode: 347, company: "Amazon / Google / Microsoft",
+    difficulty: "Medium", frequency: "High", leetcode: 347, company: "Amazon / Google / Microsoft",
     pattern: "Frequency map + Bucket Sort",
     intuition: "O(N log K) with heap, but O(N) with bucket sort by using frequencies as indices. Frequencies are bounded by N.",
     keyInsight: "When range of counters is known and bounded (like counts in array of size N), bucket sort always beats heaps.",
@@ -1907,7 +1910,7 @@ string longestPalindrome(string s) {
   },
   {
     id: 64, section: "Array", title: "Find All Duplicates in an Array",
-    difficulty: "Medium", leetcode: 442, company: "Apple / Amazon / Adobe",
+    difficulty: "Medium", frequency: "Medium", leetcode: 442, company: "Apple / Amazon / Adobe",
     pattern: "Cyclic sort logic / Negation marking",
     intuition: "Numbers are 1 to n. Use current array as hash table by negating values at index abs(val)-1. If already negative, it's a duplicate.",
     keyInsight: "The nums[abs(n)-1] trick is the most efficient way to detect duplicates in [1,n] range with O(1) space.",
@@ -1925,7 +1928,7 @@ string longestPalindrome(string s) {
   },
   {
     id: 65, section: "HashMap", title: "Valid Sudoku",
-    difficulty: "Medium", leetcode: 36, company: "Apple / Amazon / Uber",
+    difficulty: "Medium", frequency: "Medium", leetcode: 36, company: "Apple / Amazon / Uber",
     pattern: "Hashing row/col/box constraints",
     intuition: "Track used digits in rows, cols, and 3x3 boxes simultaneously. Box index = (r/3)*3 + (c/3). One pass validation.",
     keyInsight: "Bitmasking can reduce space for 1-9 checks to single integers, but hashsets/arrays are more readable for interviews.",
@@ -1946,7 +1949,7 @@ string longestPalindrome(string s) {
 },
 {
   id: 66, section: "Sliding Window", title: "At Most K Distinct Characters",
-  difficulty: "Hard", leetcode: 340, company: "Google / Amazon / Apple",
+  difficulty: "Hard", frequency: "Low", leetcode: 340, company: "Google / Amazon / Apple",
   pattern: "Variable window + freq map",
   intuition: "Expand right. If distinct chars > k, shrink left while decrementing freq map. Remove char from map when freq reaches 0. Maximize window size.",
   keyInsight: "Use a hashmap to store the frequency of characters in the current window. The number of distinct characters is simply the size of the map.",
@@ -1969,7 +1972,7 @@ string longestPalindrome(string s) {
 },
 {
   id: 67, section: "Sliding Window", title: "Max Consecutive Ones III",
-  difficulty: "Medium", leetcode: 1004, company: "Apple / Google / Meta",
+  difficulty: "Medium", frequency: "Medium", leetcode: 1004, company: "Apple / Google / Meta",
   pattern: "Sliding window 'k-zeroes' limit",
   intuition: "Find longest subarray with at most k zeroes. Expand R. If nums[R]==0, zeroes++. While zeroes > k, if nums[L]==0 zeroes--, L++.",
   keyInsight: "Standard variable window. Can be optimized into a 'non-shrinking' window (O(N) with just R-L total).",
@@ -1989,7 +1992,7 @@ string longestPalindrome(string s) {
 },
 {
   id: 68, section: "Two Pointers", title: "Container With Most Water",
-  difficulty: "Medium", leetcode: 11, company: "Nvidia / Apple / Qualcomm",
+  difficulty: "Medium", frequency: "High", leetcode: 11, company: "Nvidia / Apple / Qualcomm",
   pattern: "Two pointers — converging from ends",
   intuition: "Area = min(h[L], h[R]) * (R-L). To potentially find a larger area, we must move the pointer with the SMALLER height, as it is the bottleneck.",
   keyInsight: "Proof: Moving the larger height can only decrease width and won't increase the bottlenecking height. Thus, moving smaller is the only way to improve.",
@@ -2007,7 +2010,7 @@ string longestPalindrome(string s) {
 },
 {
   id: 69, section: "Greedy", title: "Gas Station",
-  difficulty: "Medium", leetcode: 134, company: "Amazon / Google / Apple",
+  difficulty: "Medium", frequency: "Medium", leetcode: 134, company: "Amazon / Google / Apple",
   pattern: "Single pass — surplus tracking",
   intuition: "If total gas < total cost, impossible. Else, a solution exists. If we run out of gas between A and B, any station between A and B cannot be the start. Restart from station B+1.",
   keyInsight: "The 'if sum < 0, start = i+1' logic works because we know a solution exists if totalSum >= 0. Any station that results in a negative tank cannot be the start or part of the starting path.",
@@ -2025,7 +2028,7 @@ string longestPalindrome(string s) {
 },
 {
   id: 70, section: "Greedy", title: "Hand of Straights",
-  difficulty: "Medium", leetcode: 846, company: "Google / Amazon / Apple",
+  difficulty: "Medium", frequency: "Low", leetcode: 846, company: "Google / Amazon / Apple",
   pattern: "Frequency map + Sorted keys",
   intuition: "Must start with the smallest card available to form a group. Count frequencies, sort keys. For each card, try to form a group of size 'groupSize' starting from it.",
   keyInsight: "Always pick the smallest card first. If we can't form a group starting from the smallest, we can't form it at all.",
@@ -2047,7 +2050,7 @@ string longestPalindrome(string s) {
 },
 {
   id: 71, section: "Stack", title: "Daily Temperatures",
-  difficulty: "Medium", leetcode: 739, company: "Apple / Amazon / Google",
+  difficulty: "Medium", frequency: "Medium", leetcode: 739, company: "Apple / Amazon / Google",
   pattern: "Monotonic Stack (Decreasing)",
   intuition: "Find next greater element. Use stack to store indices of 'unresolved' days. When we find a warmer day, pop from stack and calculate distance.",
   keyInsight: "The stack elements are always in descending order of temperature. New warmer temperature 'unlocks' all colder days on top of stack.",
@@ -2068,7 +2071,7 @@ string longestPalindrome(string s) {
 },
 {
   id: 72, section: "Stack", title: "Decode String",
-  difficulty: "Medium", leetcode: 394, company: "Google / Apple / Amazon",
+  difficulty: "Medium", frequency: "Medium", leetcode: 394, company: "Google / Apple / Amazon",
   pattern: "Dual stacks (Multiplier + String)",
   intuition: "nested structures 'k[string]'. Use a stack to save the current string and the multiplier when encountering '['. Pop and repeat when encountering ']'.",
   keyInsight: "Handle numbers digit-by-digit. When '[': push current state and reset. When ']': pop multiplier and previous string, append repeat.",
@@ -2091,7 +2094,7 @@ string longestPalindrome(string s) {
 },
 {
   id: 73, section: "Sorting", title: "Kth Largest Element",
-  difficulty: "Medium", leetcode: 215, company: "Apple / Nvidia / Google",
+  difficulty: "Medium", frequency: "High", leetcode: 215, company: "Apple / Nvidia / Google",
   pattern: "QuickSelect or Max-Heap",
   intuition: "Max-Heap: O(N log K). QuickSelect: O(N) average. QuickSelect partitions the array around a pivot until the pivot is at index n-k.",
   keyInsight: "QuickSelect is the standard follow-up for large N. Randomize pivot to avoid O(N²) worst case.",
@@ -2118,7 +2121,7 @@ int partition(vector<int>& nums, int l, int r) {
 },
 {
   id: 74, section: "Binary Search", title: "Koko Eating Bananas",
-  difficulty: "Medium", leetcode: 875, company: "Google / Amazon / Apple",
+  difficulty: "Medium", frequency: "Medium", leetcode: 875, company: "Google / Amazon / Apple",
   pattern: "Binary search on solution space",
   intuition: "Range of speed is [1, max(piles)]. For a speed K, calculate total hours. If hours <= H, try smaller K. If hours > H, must increase K.",
   keyInsight: "Monotonicity: If she can finish at speed S, she can finish at any speed > S. Binary search finds the 'tipping point' (minimum S).",
@@ -2137,7 +2140,7 @@ int partition(vector<int>& nums, int l, int r) {
 },
 {
   id: 75, section: "Greedy", title: "Jump Game II",
-  difficulty: "Medium", leetcode: 45, company: "Amazon / Google / Apple",
+  difficulty: "Medium", frequency: "Medium", leetcode: 45, company: "Amazon / Google / Apple",
   pattern: "Greedy — BFS layered approach",
   intuition: "Find minimum jumps. At each jump, calculate the furthest point reachable from the current jump range. When we reach the end of current jump range, perform another jump.",
   keyInsight: "One-pass greedy: 'curEnd' tracks how far we can go with 'jumps', 'curFarthest' tracks the max reach for the NEXT jump.",
@@ -2154,7 +2157,7 @@ int partition(vector<int>& nums, int l, int r) {
 },
 {
   id: 76, section: "Greedy", title: "Non-overlapping Intervals",
-  difficulty: "Medium", leetcode: 435, company: "Amazon / Google / Facebook",
+  difficulty: "Medium", frequency: "Medium", leetcode: 435, company: "Amazon / Google / Facebook",
   pattern: "Interval scheduling",
   intuition: "To minimize removals, maximize kept intervals. Sort by END TIME. Pick first, skip any that overlap with current end. Re-update end to new end.",
   keyInsight: "Sorting by end time is greedy-optimal because it leaves the most room for subsequent intervals.",
@@ -2176,7 +2179,7 @@ int partition(vector<int>& nums, int l, int r) {
   // ══════════════════════════════
   {
     id: 82, section: "Segment Tree", title: "Range Sum Query — Mutable",
-    difficulty: "Medium", leetcode: 307, company: "Google / Nvidia / Bloomberg",
+    difficulty: "Medium", frequency: "Low", leetcode: 307, company: "Google / Nvidia / Bloomberg",
     pattern: "Iterative segment tree — point update, range query",
     intuition: "A naive array gives O(1) update but O(N) range sum; a prefix-sum array gives O(1) query but O(N) update. A segment tree balances both at O(log N) each by storing partial sums in a binary tree laid flat in an array of size 2N. Leaves sit at [N, 2N); each internal node stores the sum of its two children.",
     keyInsight: "Build the tree in a flat array of size 2N. Leaf i lives at index i+N. Parent of node x is x/2; children are 2x and 2x+1. Update walks leaf→root fixing parents; query folds the [l, r) interval by climbing inward, adding any node that falls fully inside the range.",
@@ -2204,7 +2207,7 @@ public:
   },
   {
     id: 83, section: "Segment Tree", title: "Count of Smaller Numbers After Self",
-    difficulty: "Hard", leetcode: 315, company: "Google / Nvidia / Amazon",
+    difficulty: "Hard", frequency: "Low", leetcode: 315, company: "Google / Nvidia / Amazon",
     pattern: "Fenwick (BIT) over coordinate-compressed values, scan right→left",
     intuition: "For each element we want how many later elements are smaller. Scan from the RIGHT, and as we go, record each value in a Binary Indexed Tree keyed by RANK. Before inserting nums[i], query the BIT prefix sum of all ranks strictly less than rank(nums[i]) — that's exactly how many already-seen (i.e., to-the-right) elements are smaller.",
     keyInsight: "Coordinate-compress values to ranks 1..k so the BIT stays small. A Fenwick tree gives O(log N) prefix-sum and point-update with almost no constant factor — far simpler to code than a segment tree for this. Right-to-left scan converts 'smaller after self' into a prefix-count query.",
@@ -2240,7 +2243,7 @@ vector<int> countSmaller(vector<int>& nums) {
   // ══════════════════════════════
   {
     id: 84, section: "Trie", title: "Word Search II",
-    difficulty: "Hard", leetcode: 212, company: "Nvidia / Google / Amazon",
+    difficulty: "Hard", frequency: "Medium", leetcode: 212, company: "Nvidia / Google / Amazon",
     pattern: "Build a Trie of words, then DFS the grid pruning by Trie edges",
     intuition: "Searching each word independently is O(words × cells × wordLen). Instead, build ONE Trie from all words and DFS the board once: at each cell, only continue down board directions that correspond to an existing Trie child. The Trie collapses shared prefixes, so thousands of words with common prefixes are explored together.",
     keyInsight: "Store the full word at the terminal Trie node so you can emit it on a hit without rebuilding the string. Prune aggressively: mark the visited cell, and after exploring, if a Trie node has no children left, you can detach it to shrink future work. The Trie turns the board DFS into a single shared traversal.",
@@ -2287,7 +2290,7 @@ public:
   // ══════════════════════════════
   {
     id: 85, section: "Bit Manipulation", title: "Single Number II",
-    difficulty: "Medium", leetcode: 137, company: "Nvidia / Apple / Google",
+    difficulty: "Medium", frequency: "Low", leetcode: 137, company: "Nvidia / Apple / Google",
     pattern: "Bitwise state machine — count bits mod 3 with two accumulators",
     intuition: "Every number appears 3× except one. For each bit position the total count of 1s is a multiple of 3, plus possibly 1 from the unique number. We could sum each of 32 bit columns mod 3, but a slicker O(1)-space trick uses two integers (ones, twos) acting as a 2-bit counter PER bit that resets when it reaches 3.",
     keyInsight: "Model each bit's occurrence count modulo 3 using two bitmasks: 'ones' holds bits seen 1×(mod 3), 'twos' holds bits seen 2×(mod 3). The update ones = (ones ^ x) & ~twos; twos = (twos ^ x) & ~ones; advances every bit's mini-counter 00→01→10→00. After processing all, 'ones' holds the unique number.",
@@ -2314,7 +2317,7 @@ int singleNumberColumns(vector<int>& nums) {
   },
   {
     id: 86, section: "Bit Manipulation", title: "Sum of Two Integers (no + or -)",
-    difficulty: "Medium", leetcode: 371, company: "Nvidia / Apple / Amazon",
+    difficulty: "Medium", frequency: "Medium", leetcode: 371, company: "Nvidia / Apple / Amazon",
     pattern: "Full-adder via XOR (sum) + AND<<1 (carry), loop until carry=0",
     intuition: "Addition decomposes into two independent pieces: the sum WITHOUT carry is a^b (XOR adds bit-by-bit ignoring overflow), and the carry is (a&b)<<1 (a carry is generated wherever both bits are 1, and it lands one position left). Re-add sum and carry repeatedly until there's no carry — that's exactly how a hardware ripple-carry adder works.",
     keyInsight: "XOR = addition mod 2 per bit; AND<<1 = the carries. Iterating sum/carry until carry is 0 emulates a full adder. Use unsigned for the shift to avoid signed-overflow UB on the carry propagation into the sign bit.",
@@ -2335,7 +2338,7 @@ int singleNumberColumns(vector<int>& nums) {
   // ══════════════════════════════
   {
     id: 87, section: "Math", title: "Pow(x, n) — Fast Exponentiation",
-    difficulty: "Medium", leetcode: 50, company: "Nvidia / Google / Bloomberg",
+    difficulty: "Medium", frequency: "Medium", leetcode: 50, company: "Nvidia / Google / Bloomberg",
     pattern: "Binary exponentiation — square the base, consume exponent bits",
     intuition: "Computing x^n by multiplying x n times is O(n). But x^n = (x^(n/2))^2 when n is even, and x·(x^(n/2))^2 when n is odd. Each step halves the exponent, giving O(log n). Equivalently: read the exponent's bits; square the running base each step and multiply it into the result wherever a bit is set.",
     keyInsight: "Handle negative n by inverting: x^(-n) = (1/x)^n. The cast to long long before negating INT_MIN avoids overflow (−INT_MIN doesn't fit in int). This 'square-and-multiply' is the same routine used for modular exponentiation in crypto.",
@@ -2359,7 +2362,7 @@ int singleNumberColumns(vector<int>& nums) {
   // ══════════════════════════════
   {
     id: 88, section: "Heap", title: "Find Median from Data Stream",
-    difficulty: "Hard", leetcode: 295, company: "Nvidia / Google / Amazon",
+    difficulty: "Hard", frequency: "High", leetcode: 295, company: "Nvidia / Google / Amazon",
     pattern: "Two balanced heaps — max-heap (low half) + min-heap (high half)",
     intuition: "To get the median in O(1) we keep the lower half of numbers in a MAX-heap and the upper half in a MIN-heap. The two tops straddle the median. By keeping the heaps' sizes balanced (differ by ≤1), the median is either the max-heap top (odd count) or the average of both tops (even count).",
     keyInsight: "Always push to one heap then 'rebalance' by moving its top to the other, and fix sizes so low.size() ≥ high.size(). Insertion is O(log N) (heap push/pop), median is O(1). This beats keeping a sorted array (O(N) insert).",
@@ -2388,7 +2391,7 @@ public:
   // ══════════════════════════════
   {
     id: 89, section: "Quickselect", title: "Kth Largest Element in an Array",
-    difficulty: "Medium", leetcode: 215, company: "Nvidia / Apple / Meta",
+    difficulty: "Medium", frequency: "High", leetcode: 215, company: "Nvidia / Apple / Meta",
     pattern: "Quickselect — Lomuto partition, recurse into one side only",
     intuition: "A heap solves this in O(N log k), but Quickselect averages O(N): partition around a pivot like quicksort, but after partitioning you know the pivot's FINAL sorted position. If that position is the one you want, you're done; otherwise recurse into ONLY the side that contains the target — discarding the other half each time gives the linear average.",
     keyInsight: "The k-th LARGEST is the (n-k)-th smallest index in ascending order. Randomize the pivot (or shuffle) to avoid the O(N²) adversarial worst case on sorted input. Unlike quicksort you never recurse into both sides — that's what drops N log N to N on average.",
@@ -2417,7 +2420,7 @@ public:
   // ══════════════════════════════
   {
     id: 90, section: "Binary Search", title: "Median of Two Sorted Arrays",
-    difficulty: "Hard", leetcode: 4, company: "Nvidia / Google / Apple",
+    difficulty: "Hard", frequency: "High", leetcode: 4, company: "Nvidia / Google / Apple",
     pattern: "Binary search on the partition point of the smaller array",
     intuition: "The median splits the merged array into a left half and a right half of equal size, where every left element ≤ every right element. Instead of merging (O(N+M)), binary-search WHERE to cut the smaller array; the cut in the larger array is then forced by the size constraint. Check the four boundary elements to know if the cut is correct.",
     keyInsight: "Always binary-search the SMALLER array to guarantee O(log(min(N,M))). The partition is valid when maxLeftA ≤ minRightB AND maxLeftB ≤ minRightA. Use ±infinity sentinels for out-of-range boundaries so edge cuts (empty halves) need no special casing.",
@@ -2447,7 +2450,7 @@ public:
   // ══════════════════════════════
   {
     id: 91, section: "DP — Interval / Game", title: "Burst Balloons",
-    difficulty: "Hard", leetcode: 312, company: "Nvidia / Google / Amazon",
+    difficulty: "Hard", frequency: "Low", leetcode: 312, company: "Nvidia / Google / Amazon",
     pattern: "Interval DP — fix the LAST balloon burst in each window",
     intuition: "If you think about the FIRST balloon to burst, the array keeps changing and subproblems aren't independent. The trick is to fix the LAST balloon k burst inside an open interval (i, j): when k is last, its neighbors are exactly the fixed walls i and j, so the gain is nums[i]·nums[k]·nums[j] plus the two now-independent subintervals (i,k) and (k,j).",
     keyInsight: "Pad the array with 1s on both ends so boundary multiplications are clean. Iterate by interval LENGTH so smaller subintervals are solved first. Choosing the last burst (not the first) is what decouples the left and right subproblems — the signature insight of interval DP.",
@@ -2491,7 +2494,7 @@ int maxCoins(vector<int>& nums) {
   // ══════════════════════════════
   {
     id: 92, section: "Backtracking", title: "N-Queens",
-    difficulty: "Hard", leetcode: 51, company: "Nvidia / Google / Apple",
+    difficulty: "Hard", frequency: "High", leetcode: 51, company: "Nvidia / Google / Apple",
     pattern: "Row-by-row backtracking with O(1) column/diagonal conflict sets",
     intuition: "Place exactly one queen per row, trying each column. A placement is legal if no earlier queen shares the column or either diagonal. Track three boolean sets so each conflict check is O(1): the column index, the ↘ diagonal (row−col, offset to stay non-negative), and the ↙ diagonal (row+col). Recurse to the next row; backtrack by clearing the marks.",
     keyInsight: "Both diagonals have a constant value along their length: r−c is fixed on a ↘ diagonal, r+c on a ↙ diagonal. Encoding conflicts as three bitsets (or three bool arrays) turns the validity test from O(N) scanning into O(1), which is what makes N-Queens tractable for N up to ~13.",
@@ -2527,7 +2530,7 @@ public:
   // ══════════════════════════════
   {
     id: 93, section: "Two Pointers", title: "3Sum",
-    difficulty: "Medium", leetcode: 15, company: "Nvidia / Apple / Meta",
+    difficulty: "Medium", frequency: "High", leetcode: 15, company: "Nvidia / Apple / Meta",
     pattern: "Sort + fix one element + two-pointer scan for the remaining pair",
     intuition: "Brute force is O(N³). Sort the array, then fix the first number a[i] and reduce the problem to '2Sum on a sorted array' for the rest: a left pointer just after i and a right pointer at the end converge based on whether the running sum is too small (move left up) or too big (move right down). Sorting also makes deduping trivial.",
     keyInsight: "Skip duplicates at all three positions: for i (the fixed element) and for both pointers after recording a hit. Once a[i] > 0 you can stop entirely — three sorted non-negative numbers can't sum to zero. The sort costs O(N log N); the scan is O(N²) but with a tiny constant.",
@@ -2562,7 +2565,7 @@ public:
   // ══════════════════════════════
   {
     id: 94, section: "Monotonic Stack", title: "Daily Temperatures",
-    difficulty: "Medium", leetcode: 739, company: "Nvidia / Amazon / Google",
+    difficulty: "Medium", frequency: "Medium", leetcode: 739, company: "Nvidia / Amazon / Google",
     pattern: "Monotonic decreasing stack of indices — resolve on a higher value",
     intuition: "For each day we want the number of days until a warmer temperature. Keep a stack of indices whose answers are still PENDING, in decreasing-temperature order. When today's temperature is higher than the temperature at the stack top, today is that day's answer — pop it and record the index distance. Each index is pushed and popped once.",
     keyInsight: "Store INDICES, not temperatures, so you can compute the day gap (i − poppedIndex). The stack stays monotonically decreasing, so every element is resolved exactly when the first warmer day appears — giving amortized O(N) despite the inner while-loop.",
@@ -2588,7 +2591,7 @@ public:
   // ══════════════════════════════
   {
     id: 95, section: "Graph — Topo Sort", title: "Alien Dictionary",
-    difficulty: "Hard", leetcode: 269, company: "Nvidia / Google / Airbnb",
+    difficulty: "Hard", frequency: "High", leetcode: 269, company: "Nvidia / Google / Airbnb",
     pattern: "Build a precedence graph from adjacent words, Kahn's topo sort",
     intuition: "The dictionary order encodes letter precedence: comparing two adjacent words, the FIRST position where they differ tells you the left word's letter comes before the right word's letter. Build a directed graph of those constraints over the alphabet, then a topological order of that graph is a valid letter ordering. A cycle means the input is contradictory (invalid).",
     keyInsight: "Two traps: (1) the very first differing character is the ONLY constraint a word pair gives — stop there. (2) If a word is a PREFIX of the previous word (e.g., 'abc' before 'ab'), that's invalid and you must return \"\". Use Kahn's BFS so detecting a leftover (cycle) is just 'did we output every seen letter?'.",
@@ -2623,7 +2626,7 @@ public:
   // ══════════════════════════════
   {
     id: 96, section: "Greedy", title: "Gas Station",
-    difficulty: "Medium", leetcode: 134, company: "Nvidia / Amazon / Google",
+    difficulty: "Medium", frequency: "Medium", leetcode: 134, company: "Nvidia / Amazon / Google",
     pattern: "Single-pass greedy — reset start when the running tank goes negative",
     intuition: "If the total gas ≥ total cost, a solution exists and is unique. The greedy insight: track a running tank as you move forward; the moment it dips below zero at station i, NONE of the stations from the current start through i can be a valid start (they all fail before or at i). So jump the candidate start to i+1 and reset the tank.",
     keyInsight: "Two accumulators: 'total' (over the whole loop, to decide feasibility) and 'tank' (since the last reset, to pick the start). The proof that the surviving start works rests on total ≥ 0 — once feasibility is guaranteed, the last reset point must complete the circuit.",
@@ -2649,7 +2652,7 @@ public:
   // ══════════════════════════════
   {
     id: 97, section: "Graph — Union Find", title: "Number of Connected Components",
-    difficulty: "Medium", leetcode: 323, company: "Nvidia / Google / Amazon",
+    difficulty: "Medium", frequency: "Medium", leetcode: 323, company: "Nvidia / Google / Amazon",
     pattern: "Disjoint Set Union with path compression + union by rank",
     intuition: "Start with n isolated nodes, hence n components. Each edge potentially merges two components: if the endpoints already share a root, the edge is redundant; if not, union them and decrement the component count. DSU answers 'are these connected?' in near-O(1) amortized, far cheaper than running a fresh DFS per query.",
     keyInsight: "The two optimizations are what make DSU nearly O(1): PATH COMPRESSION flattens find() by repointing nodes straight to the root, and UNION BY RANK attaches the shorter tree under the taller. Together they give the inverse-Ackermann α(n) bound — effectively constant. Counting components = n minus the number of SUCCESSFUL unions.",
@@ -2690,7 +2693,7 @@ int countComponents(int n, vector<vector<int>>& edges) {
 export const NVIDIA_PROBLEMS = [
   {
     id: 77, section: "Tree", title: "Lowest Common Ancestor of a Binary Tree",
-    difficulty: "Medium", leetcode: 236, company: "NVIDIA / Google / Amazon",
+    difficulty: "Medium", frequency: "High", leetcode: 236, company: "NVIDIA / Google / Amazon",
     pattern: "Recursive post-order DFS — bubble up found nodes",
     intuition: "DFS returns p or q if found. If left AND right are non-null, current node is LCA. Otherwise return whichever side is non-null.",
     keyInsight: "The recursion bubbles up the first match. If both children return a node, the current root is the split point — and thus the LCA.",
@@ -2706,7 +2709,7 @@ export const NVIDIA_PROBLEMS = [
   },
   {
     id: 78, section: "Tree", title: "Binary Tree Level Order Traversal",
-    difficulty: "Easy", leetcode: 102, company: "NVIDIA / Apple / Amazon",
+    difficulty: "Easy", frequency: "High", leetcode: 102, company: "NVIDIA / Apple / Amazon",
     pattern: "BFS with queue — level-by-level processing",
     intuition: "Use a queue. On each 'round', iterate exactly queue.size() elements (current level) before processing next level. Record each element in a temp vector.",
     keyInsight: "Snapshot queue size AT THE START of each level-loop to know exactly how many nodes belong to the current level.",
@@ -2733,7 +2736,7 @@ export const NVIDIA_PROBLEMS = [
   },
   {
     id: 79, section: "Tree", title: "Diameter of Binary Tree",
-    difficulty: "Easy", leetcode: 543, company: "NVIDIA / Google / Meta",
+    difficulty: "Easy", frequency: "Medium", leetcode: 543, company: "NVIDIA / Google / Meta",
     pattern: "Post-order DFS — track global max through function return",
     intuition: "Diameter through a node = height(left) + height(right). Track global max as we compute heights bottom-up.",
     keyInsight: "The function returns height (for parent to use), but updates a global diameter as a side effect. Two pointers trick for trees.",
@@ -2753,7 +2756,7 @@ int dfs(TreeNode* node) {
   },
   {
     id: 80, section: "Graph", title: "Cycle Detection in Directed Graph",
-    difficulty: "Medium", leetcode: 207, company: "NVIDIA / Qualcomm / Google",
+    difficulty: "Medium", frequency: "High", leetcode: 207, company: "NVIDIA / Qualcomm / Google",
     pattern: "DFS with 3-color marking (White/Gray/Black)",
     intuition: "Track 3 states: 0=unvisited, 1=in current path (gray), 2=done (black). If we reach a gray node → back edge → cycle!",
     keyInsight: "Gray nodes are on the current recursive path. A gray→gray edge is a back edge (cycle). This is how compilers detect circular dependencies.",
@@ -2777,7 +2780,7 @@ int dfs(TreeNode* node) {
   },
   {
     id: 81, section: "Linked List", title: "Binary Tree to Doubly Linked List",
-    difficulty: "Medium", leetcode: 426, company: "NVIDIA / Apple / Qualcomm",
+    difficulty: "Medium", frequency: "Low", leetcode: 426, company: "NVIDIA / Apple / Qualcomm",
     pattern: "In-order DFS with thread weaving — NVIDIA's actual coding round problem!",
     intuition: "In-order traversal of BST gives sorted order. As we visit each node in-order, weave it into a DLL by linking prev->right=cur and cur->left=prev. Track head and prev pointers.",
     keyInsight: "This was literally the exact problem given in NVIDIA's compiler intern coding round. Pointer manipulation bugs are what they test. Key: handle head initialization (first in-order node), and circular linking at the end.",

@@ -7,6 +7,9 @@ readTime: 45 min
 
 # SSA Construction & Destruction: Complete Deep Dive
 
+> [!IMPORTANT]
+> **TL;DR — what you must remember:** SSA gives every value exactly one definition, so every use has one unambiguous reaching def — collapsing O(N²) dataflow into O(1) def-use lookups. φ-nodes reconcile values where control flow merges; they go at the **iterated dominance frontier** (Cytron's algorithm) and are destroyed during register allocation by inserting copies (mind the lost-copy and swap problems). Dominance is the backbone: A dominates B if *every* path to B passes through A.
+
 ---
 
 # PART 1 — WHY SSA EXISTS
@@ -86,6 +89,8 @@ y1 = x3 + 1;
 ```
 
 The φ function is not a real instruction — it's a compiler fiction. It says: "at this join point, select the value that was live on the incoming control flow edge." During code generation (de-SSA), φ functions are replaced by actual move instructions or register assignments.
+
+> → **Deep dive:** when a φ merges two values guarded by a condition, the backend often skips the moves entirely and emits a *branchless conditional select* instead. See the AArch64 [CSEL / CCMP family](#guide/13/csel-family-branchless-codegen) — and when it beats a real branch.
 
 ---
 

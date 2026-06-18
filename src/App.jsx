@@ -1,6 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, createContext, useContext } from "react";
 import DsaGuide from "./DsaGuide.jsx";
 import LibrarySource from "./LibrarySource.jsx";
+import { LIBRARY_INDEX, DSA_INDEX, PREP_INDEX, PREP_MODULE_LABELS } from "./searchData";
+
+// Cross-tab navigation: lets any component jump to a Library guide, a Prep
+// module, or a DSA problem (used by deep-dive links and global search).
+export const NavCtx = createContext(null);
 
 /* ══════════════════════════════════════════════════════════════════════════
    COMPILER INTERVIEW FORGE v5.0 — Aditya Trivedi → Qualcomm
@@ -114,8 +119,9 @@ export const S=({title,children,c=tk.accent})=>(
   </div>
 );
 
-export const Q=({q,a,d="medium",code})=>{
+export const Q=({q,a,d="medium",code,deep})=>{
   const[o,setO]=useState(false);
+  const nav=useContext(NavCtx);
   const cl={easy:tk.cyan,medium:tk.amber,hard:tk.rose,must:tk.violet};
   const lb={easy:"EASY",medium:"MED",hard:"HARD",must:"MUST"};
   return(
@@ -128,6 +134,17 @@ export const Q=({q,a,d="medium",code})=>{
       {o&&<div style={{padding:"18px 20px 24px",borderTop:`1px solid ${tk.border}`,background:tk.bg}}>
         <div style={{color:tk.textDim,fontSize:14.5,lineHeight:1.8,fontFamily:tk.sans,whiteSpace:"pre-wrap"}}>{a}</div>
         {code&&<C code={code}/>}
+        {deep&&nav&&(
+          <button onClick={()=>nav.goToGuide(deep.g,deep.a)}
+            style={{marginTop:14,display:"inline-flex",alignItems:"center",gap:7,background:"#10b98112",
+              border:`1px solid #10b98140`,borderRadius:6,color:"#10b981",cursor:"pointer",
+              padding:"7px 12px",fontSize:12.5,fontFamily:tk.sans,fontWeight:600,transition:"all .15s"}}
+            onMouseOver={e=>{e.currentTarget.style.background="#10b98122";}}
+            onMouseOut={e=>{e.currentTarget.style.background="#10b98112";}}>
+            <span style={{fontFamily:tk.mono,fontSize:10,opacity:.8}}>LEARN ↗</span>
+            deep dive in {deep.t}
+          </button>
+        )}
       </div>}
     </div>
   );
@@ -143,6 +160,52 @@ export const B=({type="info",children})=>{
 };
 
 export const P=({children})=><p style={{color:tk.text,lineHeight:1.8,fontSize:15,fontFamily:tk.sans,marginBottom:16,margin:"0 0 16px"}}>{children}</p>;
+
+/* ─── Three-tab mental model: LEARN → REVISE → PRACTICE ─── */
+export const TabBanner=({mode,setMode})=>{
+  const steps=[
+    {key:"library", verb:"LEARN",    tab:"Library", color:"#10b981"},
+    {key:"compiler",verb:"REVISE",   tab:"Prep",    color:tk.accent},
+    {key:"dsa",     verb:"PRACTICE", tab:"DSA",     color:tk.violet},
+  ];
+  const taglines={
+    library:"Deep first-pass understanding — read a concept here, then revise it in Prep and drill it in DSA.",
+    compiler:"Rapid recall + Q&A for the night before. Already learned it in Library? Lock it in here, then practice in DSA.",
+    dsa:"Apply it under pressure — 97 curated problems. Revise the concepts in Prep, or learn the theory in Library.",
+  };
+  const active=steps.find(s=>s.key===mode)||steps[1];
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:16,flexWrap:"wrap",
+      background:`linear-gradient(135deg, ${active.color}0E, transparent)`,
+      border:`1px solid ${active.color}33`,borderLeft:`3px solid ${active.color}`,
+      borderRadius:8,padding:"9px 16px",margin:"0 0 22px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:7,flexShrink:0}}>
+        {steps.map((s,i)=>{
+          const isActive=s.key===mode;
+          return(
+            <div key={s.key} style={{display:"flex",alignItems:"center",gap:7}}>
+              <button onClick={()=>!isActive&&setMode(s.key)} title={isActive?undefined:`Go to ${s.tab}`}
+                style={{display:"flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:6,
+                  cursor:isActive?"default":"pointer",transition:"all .15s",
+                  background:isActive?s.color+"22":"transparent",
+                  border:`1px solid ${isActive?s.color+"88":tk.border}`,
+                  color:isActive?s.color:tk.textDim,fontFamily:tk.mono,fontSize:10.5,fontWeight:800,letterSpacing:".06em"}}
+                onMouseOver={e=>{if(!isActive){e.currentTarget.style.borderColor=s.color+"66";e.currentTarget.style.color=s.color;}}}
+                onMouseOut={e=>{if(!isActive){e.currentTarget.style.borderColor=tk.border;e.currentTarget.style.color=tk.textDim;}}}>
+                <span>{s.verb}</span>
+                <span style={{opacity:.6,fontSize:9,fontWeight:600}}>{s.tab}</span>
+              </button>
+              {i<steps.length-1&&<span style={{color:tk.border,fontSize:12}}>→</span>}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{color:tk.textDim,fontSize:12.5,fontFamily:tk.sans,lineHeight:1.5,flex:1,minWidth:240}}>
+        {taglines[mode]}
+      </div>
+    </div>
+  );
+};
 
 export const G=({items,children,cols=1,gap=12})=>(
   <div style={{display:"grid",gridTemplateColumns:`repeat(${cols},1fr)`,gap:gap,margin:"12px 0"}}>
@@ -629,7 +692,7 @@ pipeline:()=>(
     <Q d="medium" q="What is the difference between -O2 and -O3? When is -O3 slower?" a={"-O2: standard production optimization. Vectorizes, inlines, unrolls within conservative thresholds.\n\n-O3: more aggressive inlining (275 vs 225 threshold), more loop unrolling, loop unswitching, more vectorization.\n\n-O3 can be SLOWER because:\n• More inlining → larger functions → more register pressure → more spills\n• More unrolling → larger code → I-cache misses\n• Extra optimization passes add compile time\n\nFor Qualcomm mobile: -Os or -O2 is often better than -O3 due to small icache on Hexagon DSP."}/>
     <Q d="hard" q="What is Profile-Guided Optimization (PGO)? How does it change the pipeline?" a={"PGO runs the binary on representative inputs, collects branch probabilities, function call frequencies, and basic block execution counts. Then recompiles using this profile.\n\nPGO changes:\n1. Branch prediction hints → better branch layout (hot path is sequential)\n2. Hot/cold function layout → hot functions packed together in .text (better iTLB)\n3. Inlining decisions → inline hot callees even below threshold; don't waste space on cold\n4. Loop unrolling → unroll hot loops more aggressively\n5. Vectorization → vectorize loops known to execute many iterations\n\nFor Qualcomm: PGO is essential for production mobile code. Camera/audio pipelines have very regular hot paths — PGO eliminates most dead code from the fast path."}/>
     <Q d="medium" q="Why does InstCombine run so many times in the -O2 pipeline instead of just once?" a={"InstCombine is LLVM's peephole/algebraic simplifier (x+0→x, x*2→x<<1, redundant casts, etc.). It runs 4–5 times in -O2 not because it's incomplete, but because optimization is a FIXPOINT process: each pass EXPOSES new opportunities for the others.\n\nExample chain: the Inliner pastes a callee's body in → now a constant argument flows into the body → SCCP/constant-folding collapses a branch → SimplifyCFG deletes the dead block and merges blocks → that merge brings two instructions adjacent → InstCombine can now fold them → the fold creates a trivially-true compare → and so on.\n\nSo the pipeline interleaves 'cleanup' passes (InstCombine, SimplifyCFG, EarlyCSE) between 'heavy' passes (inlining, GVN, loop opts) because the heavy passes leave behind simplifiable residue. Running InstCombine once at the start would miss everything inlining and loop transforms create later. The trade-off is compile time — that's why -O1 runs fewer rounds.\n\nInterview line: 'Compiler passes aren't a sequence, they're a convergence loop — InstCombine is the broom that sweeps up after every structural change so the next pass sees clean IR.'"}/>
-    <Q d="hard" q="What is phase-ordering, and why is the 'optimal' pass order undecidable?" a={"Phase-ordering is the problem of choosing the SEQUENCE of optimization passes. It matters because passes interact non-commutatively: running A then B can produce different (and sometimes worse) code than B then A.\n\nClassic tension: inlining before vs after other passes. Inline too early and you bloat IR before simplification, blowing up compile time and register pressure; inline too late and you miss the cross-function constant propagation that would have triggered loop optimizations. Vectorization vs unrolling: unroll first and you may defeat the vectorizer's recognition of the loop; vectorize first and the leftover scalar tail still wants unrolling.\n\nWhy there's no universally optimal order: a pass can both create AND destroy opportunities for another, so the search space is enormous and input-dependent — the best order for one function is wrong for the next. There's no closed-form 'best'; LLVM's -O2 pipeline is a hand-tuned heuristic refined over years of benchmarking. Research approaches (MILEPOST, machine-learned pass orderings, autotuners like OpenTuner, and 'optimization bisection' for debugging) explore the space empirically rather than solving it. Practically: this is why -O3 isn't strictly better than -O2, and why PGO helps — profile data lets the compiler pick orderings/thresholds per hot region."}/>
+    <Q d="hard" q="What is phase-ordering, and why is the 'optimal' pass order undecidable?" a={"Phase-ordering is the problem of choosing the SEQUENCE of optimization passes. It matters because passes interact non-commutatively: running A then B can produce different (and sometimes worse) code than B then A.\n\nClassic tension: inlining before vs after other passes. Inline too early and you bloat IR before simplification, blowing up compile time and register pressure; inline too late and you miss the cross-function constant propagation that would have triggered loop optimizations. Vectorization vs unrolling: unroll first and you may defeat the vectorizer's recognition of the loop; vectorize first and the leftover scalar tail still wants unrolling.\n\nWhy there's no universally optimal order: a pass can both create AND destroy opportunities for another, so the search space is enormous and input-dependent — the best order for one function is wrong for the next. There's no closed-form 'best'; LLVM's -O2 pipeline is a hand-tuned heuristic refined over years of benchmarking. Research approaches (MILEPOST, machine-learned pass orderings, autotuners like OpenTuner, and 'optimization bisection' for debugging) explore the space empirically rather than solving it. Practically: this is why -O3 isn't strictly better than -O2, and why PGO helps — profile data lets the compiler pick orderings/thresholds per hot region."} deep={{g:"02",t:"Optimization Passes"}}/>
   </S>
 </div>
 ),
@@ -680,7 +743,7 @@ isel:()=>(
     <Q d="medium" q="What is operation legalization? How does it differ from type legalization?" a={"Type legalization: fix illegal TYPES (i8 on AArch64, i128 on 32-bit)\nOperation legalization: fix illegal OPERATIONS (ops the target doesn't support)\n\nExamples:\n• sdiv on Hexagon DSP (no hardware divider) → expand to __divsi3 library call\n• f16 arithmetic on targets without f16 support → promote to f32\n• v2f64 on SSE (only up to v2f64) → legal\n• popcount on old x86 without POPCNT → expand to bit-counting sequence"}/>
     <Q d="hard" q="What is a TableGen .td file and why is it important for Qualcomm?" a={"TableGen (.td) files define the target's instruction set, register file, and selection patterns in a declarative DSL. llvm-tblgen generates C++ from them.\n\nContents:\n• Register definitions (which registers exist, their classes, calling convention)\n• Instruction definitions (encoding, operands, assembly, scheduling info)\n• DAG selection patterns (map IR SDNodes to instructions)\n• Scheduling models (instruction latencies, issue widths, resource constraints)\n\nFor Qualcomm:\n• HexagonInstrInfo.td defines all Hexagon instructions including VLIW packets\n• HexagonInstrInfoHVX.td defines 1024-bit HVX vector instructions\n• The packet scheduler reads Hexagon scheduling models to bundle instructions\n\nUnderstanding TableGen = understanding how to ADD new instructions or OPTIMIZE selection patterns."}/>
     <Q d="hard" q="What is DAG combining and why is it done after selection?" a={"Pre-selection DAG combining: target-independent optimizations on the instruction DAG before pattern matching. E.g., fold (add (shl X,1), X) → (mul X,3).\n\nPost-selection DAG combining (MachineCombiner): target-specific combinations on MachineInstrs. E.g., combine separate multiply+add into FMA, combine adjacent vector loads into wider loads.\n\nDone in two phases because: pre-selection has more context about intent (types, semantics), while post-selection has target knowledge (which instruction combinations exist). Both are needed for peak performance."}/>
-    <Q d="medium" q="On a VLIW DSP like Hexagon, what does instruction selection have to do that an out-of-order ARM core handles in hardware?" a={"On a superscalar out-of-order core (Oryon/Kryo), the hardware dynamically finds independent instructions, renames registers, and issues several per cycle — the compiler just emits a good linear stream and the core extracts parallelism at runtime.\n\nA VLIW (Very Long Instruction Word) DSP like Hexagon has NO such hardware. Instructions are grouped into PACKETS of up to 4 that issue together in ONE cycle, and it's entirely the COMPILER's job to prove they're independent and bundle them. If the compiler can't find parallelism, the slots are filled with NOPs and you waste issue width every cycle.\n\nSo on Hexagon the backend must additionally:\n• PACKETIZE — bundle independent ops while respecting per-slot constraints (some operations can only go in certain slots; loads/stores, jumps, and HVX vector ops have placement rules).\n• Respect that there's no hardware hazard detection — the schedule it emits IS the execution order; a mistake is a wrong answer, not just slow.\n• Coordinate with register allocation, since some slots can only read certain register banks (HVX vector registers vs GPRs).\n\nThis is why 'the compiler IS the scheduler' on VLIW — interview-gold for the Qualcomm Hexagon role. The same independence analysis that hardware does for free on a big ARM core is a hard compile-time optimization problem on the DSP."}/>
+    <Q d="medium" q="On a VLIW DSP like Hexagon, what does instruction selection have to do that an out-of-order ARM core handles in hardware?" a={"On a superscalar out-of-order core (Oryon/Kryo), the hardware dynamically finds independent instructions, renames registers, and issues several per cycle — the compiler just emits a good linear stream and the core extracts parallelism at runtime.\n\nA VLIW (Very Long Instruction Word) DSP like Hexagon has NO such hardware. Instructions are grouped into PACKETS of up to 4 that issue together in ONE cycle, and it's entirely the COMPILER's job to prove they're independent and bundle them. If the compiler can't find parallelism, the slots are filled with NOPs and you waste issue width every cycle.\n\nSo on Hexagon the backend must additionally:\n• PACKETIZE — bundle independent ops while respecting per-slot constraints (some operations can only go in certain slots; loads/stores, jumps, and HVX vector ops have placement rules).\n• Respect that there's no hardware hazard detection — the schedule it emits IS the execution order; a mistake is a wrong answer, not just slow.\n• Coordinate with register allocation, since some slots can only read certain register banks (HVX vector registers vs GPRs).\n\nThis is why 'the compiler IS the scheduler' on VLIW — interview-gold for the Qualcomm Hexagon role. The same independence analysis that hardware does for free on a big ARM core is a hard compile-time optimization problem on the DSP."} deep={{g:"10",t:"Qualcomm Backend Interview"}}/>
     <Q d="hard" q="What is the difference between SelectionDAG's per-block scope and GlobalISel's whole-function scope, and why does it matter for code quality?" a={"SelectionDAG builds a fresh DAG for EACH basic block, selects it, then throws it away and moves to the next. That block-local horizon means it cannot reason across branches: a value computed in one block and used in another is handled by 'glue'/copies at block boundaries, and optimizations like cross-block redundancy elimination or sinking a computation to the block that needs it are out of reach during selection.\n\nGlobalISel works on Generic MIR for the WHOLE function at once (IRTranslator → Legalizer → RegBankSelect → InstructionSelect). Because the representation is real MachineInstrs spanning all blocks, it can make decisions with cross-block context, integrates better with the rest of the MIR pipeline, and avoids the expensive build-up/tear-down of DAGs per block (so it's much faster to compile — great at -O0).\n\nWhy SelectionDAG still wins at -O2: two decades of hand-written TableGen patterns and DAG-combine rules give it superior peak code quality on mature targets; GlobalISel is still closing that gap. The trade-off is compile speed and cross-block reasoning (GlobalISel) vs. battle-tested pattern coverage (SelectionDAG). Several targets default to GlobalISel at -O0 and SelectionDAG at -O2/-O3 for exactly this reason."}/>
   </S>
 </div>
@@ -913,7 +976,7 @@ alias:()=>(
     <Q d="easy" q="What are the four possible results of an alias query?" a={"NoAlias: definitely different memory locations. Optimizer can reorder freely.\nMayAlias: unknown/possibly same. Conservatively assume they alias.\nMustAlias: definitely the same location. Useful for some optimizations.\nPartialAlias: overlapping but not identical (e.g., loading from offset within another load's range)."}/>
     <Q d="medium" q="What is the strict aliasing rule and how does TBAA implement it in LLVM?" a={"C strict aliasing: pointers to incompatible types cannot legally point to the same memory (with exception for char* and std::byte*). float* and int* CANNOT alias.\n\nLLVM implements this via !tbaa metadata attached to load/store instructions:\n  store float %v, ptr %p, !tbaa !{!\"float\", !omnipotent_char, ...}\n  load i32, ptr %q, !tbaa !{!\"int\", !omnipotent_char, ...}\n  → Different TBAA tags → NoAlias between these two accesses.\n\n-fno-strict-aliasing: removes all TBAA metadata → all memory ops MayAlias with all → 10-30% slower. Use when your code intentionally breaks aliasing rules (e.g., type punning via pointer casts)."}/>
     <Q d="hard" q="How does SCEV-AA enable vectorization of a loop with index arithmetic?" a={"For a loop like: for(int i=0; i<n; i++) a[i+K] = a[i] + 1; (where K is a loop-invariant constant)\n\nSCEV-AA queries: do a[i+K] (write) and a[j] (read) alias for any i,j in [0,n)?\n\nSCEV represents: write address = base + (i+K) * stride, read address = base + j * stride.\nIf K >= n: no read address can equal any write address → NoAlias → vectorizable!\nIf K < n: MayAlias → not safely vectorizable (or need runtime check).\n\nThis is how LLVM decides whether stencil computations can be vectorized. Without SCEV-AA, all a[i+K] writes MayAlias all a[j] reads."}/>
-    <Q d="hard" q="What exactly does __restrict promise, and what is the cost of lying to the compiler?" a={"__restrict (C99 'restrict', non-standard but universal in C++) is a promise to the optimizer: 'for the lifetime of this pointer, the object it points to is accessed ONLY through this pointer (or pointers derived from it).' It is a NoAlias assertion that the compiler trusts without proof.\n\nWhat it unlocks:\n• The classic memcpy-style loop can be vectorized with NO runtime overlap check (LLVM otherwise emits a runtime 'do these ranges overlap?' branch and TWO loop versions — a vectorized one and a scalar fallback).\n• Loads can be hoisted out of loops and reused instead of re-read after every store through another pointer.\n\nThe danger: it's an UNCHECKED contract. If two restrict pointers actually DO overlap, you get undefined behavior — the compiler may keep a stale value in a register, reorder a store past a dependent load, or vectorize a loop that has a real loop-carried dependence, silently producing wrong results that only show up at -O2.\n\nNote on C++ references: a T& does NOT imply noalias. People assume references can't alias — they can. Only restrict (or a proven NoAlias from BasicAA/TBAA/SCEV) gives the optimizer that freedom."} code={`// Without restrict: compiler emits an overlap check + 2 loop versions
+    <Q d="hard" q="What exactly does __restrict promise, and what is the cost of lying to the compiler?" a={"__restrict (C99 'restrict', non-standard but universal in C++) is a promise to the optimizer: 'for the lifetime of this pointer, the object it points to is accessed ONLY through this pointer (or pointers derived from it).' It is a NoAlias assertion that the compiler trusts without proof.\n\nWhat it unlocks:\n• The classic memcpy-style loop can be vectorized with NO runtime overlap check (LLVM otherwise emits a runtime 'do these ranges overlap?' branch and TWO loop versions — a vectorized one and a scalar fallback).\n• Loads can be hoisted out of loops and reused instead of re-read after every store through another pointer.\n\nThe danger: it's an UNCHECKED contract. If two restrict pointers actually DO overlap, you get undefined behavior — the compiler may keep a stale value in a register, reorder a store past a dependent load, or vectorize a loop that has a real loop-carried dependence, silently producing wrong results that only show up at -O2.\n\nNote on C++ references: a T& does NOT imply noalias. People assume references can't alias — they can. Only restrict (or a proven NoAlias from BasicAA/TBAA/SCEV) gives the optimizer that freedom."} deep={{g:"02",t:"Optimization Passes"}} code={`// Without restrict: compiler emits an overlap check + 2 loop versions
 void add(float* a, float* b, float* c, int n) {
   for (int i = 0; i < n; ++i) c[i] = a[i] + b[i];
 }
@@ -1085,7 +1148,7 @@ cpp_mem:()=>(
     <Q d="hard" q="What is RVO vs NRVO? When does NRVO fail?" a={"RVO (prvalue): when a function returns a prvalue (temporary), C++17 guarantees the object is constructed directly in the caller's return slot. Zero copies. MANDATORY since C++17.\n\nNRVO (named): when a function returns a named local variable via a single return path, the compiler may construct it directly in the caller's return slot. Not guaranteed, but universally implemented.\n\nNRVO FAILS when:\n1. Multiple return paths return different named variables\n2. Returning a function PARAMETER (not a local)\n3. Exception handling with different catch-path variables\n4. You write 'return std::move(x)' — defeats NRVO, forces a move instead of elision!\n\nBottom line: just 'return x;' — trust the compiler. Never add std::move on a return value."}/>
     <Q d="hard" q="What is a dangling reference in modern C++? Give a subtle example." a={"A dangling reference refers to memory whose lifetime has ended. Classic: returning reference to local. Modern subtle cases:\n\n1. Range-for over temporary:\n  for (auto& x : func_returning_vector()) // DANGLING! Vector destroyed after first ;\n  // Fix: auto vec = func(); for (auto& x : vec)\n\n2. std::string_view over temporary:\n  std::string_view sv = std::string(\"hello\");  // string destroyed, sv dangles!\n  // Fix: store the string: std::string s = \"hello\"; std::string_view sv = s;\n\n3. Structured binding to map element then erase:\n  auto& [k, v] = *m.begin(); m.erase(m.begin()); // v is now dangling!\n\nModern C++ makes these subtle because implicit conversions and range-for hide the temporaries."}/>
     <Q d="hard" q="What are the five value categories, and why was the glvalue/prvalue/xvalue split introduced?" a={"C++ has three PRIMARY categories and two composite ones:\n\nPrimary:\n• lvalue — has identity, cannot be implicitly moved from (a named variable, *ptr, a[i]).\n• prvalue ('pure rvalue') — a value with no identity yet: a literal, or the result of a function returning by value. Since C++17 a prvalue is NOT an object — it's a recipe that materializes an object only when needed (this is what powers guaranteed copy elision).\n• xvalue ('eXpiring value') — has identity AND is movable: the result of std::move(x) or a function returning T&&.\n\nComposite:\n• glvalue = lvalue ∪ xvalue (anything with identity / an address).\n• rvalue = prvalue ∪ xvalue (anything you may move from).\n\nWhy the split: pre-C++11 only had lvalue/rvalue. Move semantics needed a category that has identity but is safe to cannibalize (xvalue), distinct from fresh temporaries (prvalue). C++17 then redefined prvalue as 'not yet an object' so that 'T x = f();' provably constructs in place — copy elision became mandatory, not an optimization."}/>
-    <Q d="hard" q="What is the difference between std::move and std::forward? When is each correct?" a={"Both are casts that generate ZERO code; the difference is WHAT they cast and WHERE you use them.\n\nstd::move(x): UNCONDITIONALLY casts to T&&. Use it when you are done with x and want to move from a concrete lvalue (e.g., moving a member out, returning a member by move). Saying std::move on something you still need is a bug.\n\nstd::forward<T>(x): CONDITIONALLY casts — it preserves the original value category of a forwarding reference. Use it ONLY inside a function template taking T&& (a 'forwarding/universal reference'), to pass an argument onward with its lvalue-ness or rvalue-ness intact ('perfect forwarding'). If the caller passed an lvalue, forward yields an lvalue; if an rvalue, it yields an rvalue.\n\nKey gotchas:\n• T&& is a forwarding reference ONLY when T is a deduced template parameter. 'auto&&' too. But 'std::string&&' (concrete type) is a plain rvalue reference — forward there is wrong.\n• Reference collapsing makes it work: T& && → T&, T&& && → T&&.\n• A named rvalue reference parameter is itself an LVALUE inside the function — that's exactly why you still need move/forward to pass it along as an rvalue."} code={`template <class T>
+    <Q d="hard" q="What is the difference between std::move and std::forward? When is each correct?" a={"Both are zero-code casts; the difference is what they cast. std::move(x) UNCONDITIONALLY casts to T&& — use it when you're done with a concrete lvalue and want to move from it.\n\nstd::forward<T>(x) CONDITIONALLY preserves value category and is correct ONLY inside a template taking a forwarding reference T&& (deduced T), to pass an argument onward as the same lvalue/rvalue the caller supplied (perfect forwarding). The gotcha that ties it together: a named rvalue-reference parameter is itself an LVALUE inside the function — which is exactly why you still need move/forward to pass it along, and why reference collapsing (T& && → T&, T&& && → T&&) makes forward work."} deep={{g:"05",t:"C++ Advanced Guide"}} code={`template <class T>
 void wrapper(T&& arg) {                 // forwarding reference (T deduced)
     callee(std::forward<T>(arg));       // preserve lvalue/rvalue-ness
 }
@@ -1186,7 +1249,7 @@ cpp_misc:()=>(
     <Q d="medium" q="What is the static initialization order fiasco? How to fix it?" a={"Static local variables in different translation units: initialization order is UNDEFINED across TUs.\n\nIf global A (in a.cpp) is initialized using global B (in b.cpp), B might not be initialized yet → UB.\n\nFixes:\n1. Function-local static: wrap in a function. Guaranteed initialized on first call.\n  int& get_global() { static int x = 42; return x; }\n2. constinit: ensures compile-time initialization (no runtime dependency)\n3. Design: avoid cross-TU global dependencies entirely"}/>
     <Q d="hard" q="When does vector reallocation copy instead of move?" a={"vector push_back triggers reallocation when size == capacity. It needs to move all elements to the new buffer.\n\nIf element's move ctor is noexcept: use move. O(1) per element.\nIf element's move ctor might throw: use COPY (for strong exception guarantee).\n\nWhy? If move throws midway: elements partially moved, partially not → inconsistent state → unrecoverable. But if copying: original buffer intact → can abort and maintain consistency.\n\nstd::move_if_noexcept implements this check. This is the whole reason noexcept on move matters so much for containers."}/>
     <Q d="medium" q="Which STL containers invalidate iterators/references on insertion and erasure? Why does it matter?" a={"You must know this cold — it's the source of countless UB bugs:\n\nstd::vector: insertion past capacity invalidates ALL iterators/pointers/references (reallocation). erase invalidates everything from the erased element onward (elements shift left).\nstd::deque: insertion at either end invalidates iterators but NOT references; insertion in the middle invalidates both.\nstd::list / forward_list: NEVER invalidates other nodes — only the erased node's own iterators. Splice is O(1) and pointer-stable.\nstd::map/set (RB-tree): insertion never invalidates anything; erase invalidates only the erased node. References to other elements stay valid.\nstd::unordered_map/set: REHASH (on insertion crossing max_load_factor) invalidates all ITERATORS but NOT references/pointers to elements (the nodes themselves don't move). erase invalidates only the erased element.\n\nWhy it matters: holding an iterator/reference across a mutation that invalidates it is UB. Node-based containers (list/map) give pointer stability — that's often why you pick them over vector even when vector is faster, e.g., when other structures hold references to the elements."}/>
-    <Q d="hard" q="What exactly is an ODR violation, and why is it often silent and dangerous?" a={"The One Definition Rule: every entity needs exactly ONE definition program-wide; inline functions, templates, and class types may be defined in multiple translation units BUT every definition must be token-for-token IDENTICAL (and bind the same entities).\n\nClassic violations:\n1. Two different struct layouts with the SAME name in two .cpp files (e.g., an extra member, or compiled with different -DFLAG values). Each TU is internally consistent, so it COMPILES; the linker merges them arbitrarily and the program reads the struct with two different layouts → memory corruption.\n2. A non-inline function defined in a header included by multiple TUs → multiple-definition link error (the NOISY, lucky case).\n3. Mixing translation units built with different ABI-affecting flags (e.g., _GLIBCXX_DEBUG, NDEBUG changing an inline's body, different struct packing).\n\nWhy silent: the standard says ODR violations are 'IFNDR' — ill-formed, NO DIAGNOSTIC REQUIRED. The compiler sees one TU at a time and the linker often just picks one definition (COMDAT folding), so you get UB with no error.\n\nDefenses: single source of truth in headers, mark header-defined free functions inline, build everything with one consistent set of flags, and use LTO (it can sometimes catch mismatches)."}/>
+    <Q d="hard" q="What exactly is an ODR violation, and why is it often silent and dangerous?" a={"The One Definition Rule: every entity needs exactly one definition program-wide; inline functions, templates, and class types may repeat across translation units but every definition must be token-for-token IDENTICAL.\n\nThe dangerous case is silent: two different struct layouts with the SAME name in two .cpp files (an extra member, or different -DFLAG) each compile fine, then the linker picks one arbitrarily via COMDAT folding → memory corruption. It's UB with NO diagnostic required (the standard calls it IFNDR), because the compiler only sees one TU at a time. Defend with a single source of truth in headers, inline on header-defined free functions, and one consistent set of ABI-affecting build flags."} deep={{g:"16",t:"C++ Code Lab"}}/>
   </S>
 </div>
 ),
@@ -1255,7 +1318,7 @@ arch:()=>(
     <Q d="medium" q="What is branch misprediction cost? How does the compiler mitigate it?" a={"Branch misprediction: the CPU fetched/decoded wrong instructions. Must flush 12-20 stages. Cost: 12-20 cycles penalty.\n\nPipeline width: modern CPUs may have wasted up to 6 instructions/cycle × 16 cycles = 96 wasted instruction-issue slots.\n\nCompiler mitigations:\n1. __builtin_expect(expr, 0/1): hints branch direction for better code layout\n2. If-conversion: convert if-else to conditional move (CSEL/cmov) — no branch at all\n3. Loop unrolling: fewer branches in hot loops\n4. PGO: profile-driven layout puts hot path sequential (no branch needed for fall-through)\n5. Profile-guided inlining: inline hot paths to eliminate call branches"}/>
     <Q d="hard" q="What is VLIW and why is it relevant for Qualcomm?" a={"VLIW (Very Long Instruction Word): the instruction word encodes multiple independent operations that execute in parallel. On Hexagon: a 'packet' contains up to 4 instructions executing simultaneously.\n\nKey difference from superscalar OOO:\n• Superscalar OOO: hardware dynamically finds independent instructions to execute in parallel at runtime.\n• VLIW: compiler statically identifies independent instructions and bundles them. NO OOO hardware.\n\nWhy Qualcomm uses VLIW for Hexagon DSP:\n• No OOO hardware = simpler, smaller chip = less power = fits in mobile SoC\n• Battery life critical for always-on DSP (audio, sensors, camera)\n• Compiler does the scheduling work offline (once at compile time, not at runtime per cycle)\n• 4 slots/packet × high clock → significant parallel throughput\n\nImplication: Hexagon's compiler IS the performance. Wrong scheduling = 4× performance loss."}/>
     <Q d="hard" q="What is software pipelining? How does it relate to VLIW?" a={"Software pipelining: overlap multiple loop iterations to expose instruction-level parallelism across iteration boundaries.\n\nNormal loop body (3-stage):  [fetch A] [compute] [store]\n  iter1: F  C  S\n  iter2:       F  C  S    ← couldn't overlap with iter1's compute!\n\nSoftware pipelined:\n  iter1:    F1\n  iter2:    F2  C1\n  iter3:    F3  C2  S1    ← 3 operations per cycle (steady state)\n  ...\n\nFor VLIW (Hexagon): software pipelining fills packet slots with operations from different iterations. The LLVM MachinePipeliner implements this for Hexagon.\n\nResult: 3× throughput improvement for perfectly software-pipelined loops. Critical for DSP audio/image processing kernels."}/>
-    <Q d="hard" q="Why does x86 (TSO) still reorder memory, and what is a store buffer?" a={"Even x86's relatively STRONG memory model (Total Store Order) permits exactly one reordering: a later LOAD can pass an earlier STORE to a DIFFERENT address. The cause is the STORE BUFFER.\n\nA store buffer is a small per-core queue that holds committed stores before they drain to L1/the coherent memory system. The core does this so it doesn't stall waiting for a write to become globally visible — it puts the store in the buffer and keeps executing. Loads can then complete (reading from cache) BEFORE an older buffered store has drained, which is the StoreLoad reordering.\n\nObservable consequence — the classic 'Dekker' / store-buffer litmus test: two threads each store to their own flag then load the other's; both can read 0 because each store is still sitting in its own store buffer when the load executes. This is why a seq_cst store on x86 needs an MFENCE (or a locked instruction) — to drain the store buffer and forbid that StoreLoad reorder.\n\nStore-to-load FORWARDING is related but different: if a load matches an address still in the buffer, the core forwards the value directly from the buffer (fast), without going to cache. Contrast with ARM's weak model, where StoreStore, LoadLoad, and LoadStore can ALL reorder, so you need explicit DMB/LDAR/STLR, not just for StoreLoad. The store buffer is also why 'volatile' is not a thread-sync tool — it never drains the buffer."}/>
+    <Q d="hard" q="Why does x86 (TSO) still reorder memory, and what is a store buffer?" a={"x86's Total Store Order permits exactly ONE reordering — a later load can pass an earlier store to a different address — because of the per-core store buffer that holds committed stores before they drain to coherent memory.\n\nThat StoreLoad reorder is the classic Dekker/store-buffer litmus test (both threads read 0), which is why a seq_cst store needs an MFENCE to drain the buffer. ARM's weak model is looser still — StoreStore, LoadLoad, and LoadStore can all reorder — so you need explicit DMB/LDAR/STLR, not just a StoreLoad fence. (Aside: this is also why 'volatile' is not a sync tool — it never drains the buffer.)"} deep={{g:"07",a:"part-5-why-weak-memory-models-matter",t:"Memory Models & Concurrency"}}/>
   </S>
 </div>
 ),
@@ -1304,8 +1367,8 @@ arm:()=>(
     <Q d="easy" q="What is the barrel shifter in AArch64? Give an example." a={"AArch64 has a barrel shifter built into the ALU — you can shift one operand for FREE as part of any arithmetic or logical instruction.\n\nadd x0, x1, x2, lsl #3   = x0 = x1 + x2*8 in ONE instruction!\n\nThis eliminates separate shift instructions for array indexing (base + index*sizeof). Critical for RISC performance — in x86 you need a separate SHL or use LEA."}/>
     <Q d="medium" q="Walk through virtual dispatch in AArch64 assembly." a={"For: Animal* a = new Dog(); a->speak();\n\n// a is in x0 (first argument = 'this')\nldr x8, [x0]          // load vptr: first 8 bytes of Dog object\nldr x8, [x8, #16]     // index vtable: skip 8B offset-to-top + 8B RTTI* = slot at offset 16\nblr x8                // indirect call: jumps to Dog::speak\n\nTotal: 2 loads + 1 indirect branch. ~10-30 cycles depending on branch predictor and cache state."}/>
     <Q d="hard" q="Why must the stack be 16-byte aligned at call boundaries?" a={"AArch64 ABI requirement: SP must be 16-byte aligned at any BL/BLR instruction.\n\nReasons:\n1. SIMD/FP instructions (LDP/STP with v registers) require 16-byte aligned memory\n2. Consistent alignment enables reliable stack unwinding (debuggers, exception handling)\n3. Some hardware platforms raise alignment exceptions for unaligned accesses\n\nImplementation: callee's prologue typically does stp x29,x30,[sp,#-16]! which allocates 16 bytes. If additional locals needed: sub sp, sp, #N where N is rounded up to 16."}/>
-    <Q d="hard" q="What are LSE atomics and why did ARMv8.1 add them over the original LL/SC?" a={"The original AArch64 way to do an atomic RMW is a LOAD-EXCLUSIVE / STORE-EXCLUSIVE loop (LDXR/STXR): load with a reservation, modify, conditionally store; if another core touched the line, STXR fails and you retry.\n\nProblem under contention: every contending core keeps stealing the cache line and failing each other's STXR, so the loop can livelock or scale terribly — throughput collapses as cores increase.\n\nLSE (Large System Extensions, ARMv8.1-A) adds SINGLE-INSTRUCTION atomics: LDADD (atomic add), SWP (swap), CAS/CASP (compare-and-swap), LDSET/LDCLR, etc. These are no longer a retry loop — and crucially they can be executed 'near memory' / in the interconnect (far atomics), so under heavy contention the operation happens at a shared point instead of bouncing the line between cores. Much better many-core scaling, which matters for big server-class and Oryon-class ARM.\n\nCompiler angle: clang picks LDADD-style LSE ops when you target a CPU that has them (e.g. -mcpu=… or +lse); without LSE it falls back to the LDXR/STXR loop. So the SAME std::atomic<int>::fetch_add lowers very differently depending on -march/-mcpu — a great concrete example of target-dependent codegen for the Qualcomm role. Note _weak CAS still maps naturally to the LL/SC form where LSE isn't available."}/>
-    <Q d="hard" q="How do SVE/SVE2 scalable vectors differ from NEON, and what is 'vector-length agnostic' code?" a={"NEON is FIXED-WIDTH: every vector register is exactly 128 bits, so the vector width is baked into the binary. To use a wider unit you'd recompile with different intrinsics.\n\nSVE (Scalable Vector Extension) is VECTOR-LENGTH AGNOSTIC (VLA): the hardware vector length is an implementation choice anywhere from 128 to 2048 bits (in 128-bit steps), and the SAME binary runs correctly on any of them. You never hard-code the width; instead you:\n• Use the WHILELT/WHILELE instructions to generate a PREDICATE for the current iteration ('which lanes are still in range?'), so the loop tail is handled by predication instead of a separate scalar remainder loop.\n• Use INCB/the vector-length register to advance the induction variable by 'however many lanes this chip has' each iteration.\n\nSVE2 extends this with more integer/DSP/crypto ops, targeting general-purpose SIMD and the kind of media/ML kernels Qualcomm cares about.\n\nWhy it matters for a compiler engineer: SVE makes the LOOP VECTORIZER's job different — it emits predicated, length-agnostic loops (LLVM's vectorizer + the 'scalable vector type' <vscale x 4 x i32>) rather than picking a fixed VF. Predication also lets it vectorize loops with conditional bodies and awkward trip counts that NEON would leave scalar. The trade-off: VLA codegen is more complex and not every loop benefits, so the cost model still decides NEON vs SVE vs scalar."}/>
+    <Q d="hard" q="What are LSE atomics and why did ARMv8.1 add them over the original LL/SC?" a={"The original AArch64 RMW is an LDXR/STXR (load-exclusive/store-exclusive) retry loop, which under contention can livelock and scale terribly as cores steal the line and fail each other's STXR.\n\nLSE (Large System Extensions, ARMv8.1) adds single-instruction atomics — LDADD, SWP, CAS/CASP — that need no retry loop and can execute near memory, giving far better many-core scaling. The compiler angle: clang picks LSE when the target has it (-mcpu/+lse) and otherwise falls back to LL/SC, so the SAME fetch_add lowers very differently by -march — a clean target-dependent-codegen example for the Qualcomm role."} deep={{g:"13",a:"atomics-exclusives-vs-lse",t:"AArch64 Architecture"}}/>
+    <Q d="hard" q="How do SVE/SVE2 scalable vectors differ from NEON, and what is 'vector-length agnostic' code?" a={"NEON is fixed-width — every vector is exactly 128 bits, baked into the binary. SVE is vector-length-agnostic (VLA): the hardware width is an implementation choice from 128–2048 bits and the SAME binary runs at any of them.\n\nInstead of hard-coding a width you use WHILELT to build a per-iteration predicate (so the loop tail is handled by predication, not a scalar remainder) and INCB to advance by 'however many lanes this chip has.' For a compiler engineer that means the vectorizer emits predicated, length-agnostic loops over scalable <vscale x N x T> types rather than picking a fixed VF — and the cost model still decides NEON vs SVE vs scalar."} deep={{g:"14",a:"part-2-sve-scalable-vectors-the-headline-act",t:"NEON & SVE Vectorization"}}/>
   </S>
 </div>
 ),
@@ -1942,6 +2005,92 @@ hft:()=>(
 }; /* ══ END content ══ */
 
 /* ══════════════════════════════════════════════════════════════
+   GLOBAL SEARCH (⌘K) — Library headers + Prep Q&A + DSA problems
+   ══════════════════════════════════════════════════════════════ */
+function GlobalSearch({open,onClose,nav}){
+  const[q,setQ]=useState("");
+  const[sel,setSel]=useState(0);
+  const inputRef=useRef(null);
+
+  useEffect(()=>{ if(open){ setQ(""); setSel(0); setTimeout(()=>inputRef.current?.focus(),0); } },[open]);
+
+  const results=useMemo(()=>{
+    const query=q.trim().toLowerCase();
+    if(query.length<2) return [];
+    const out=[];
+    let n=0;
+    for(const p of PREP_INDEX){
+      if(n>=8) break;
+      if(p.question.toLowerCase().includes(query)){
+        out.push({kind:"Prep",color:tk.accent,label:p.question,sub:PREP_MODULE_LABELS[p.module]||p.module,run:()=>nav.goToModule(p.module)});
+        n++;
+      }
+    }
+    for(const g of LIBRARY_INDEX){
+      if(g.title.toLowerCase().includes(query))
+        out.push({kind:"Library",color:"#10b981",label:g.title,sub:`Guide ${g.num} · open`,run:()=>nav.goToGuide(g.num)});
+      let c=0;
+      for(const h of g.headings){
+        if(c>=3) break;
+        if(h.text.toLowerCase().includes(query)){
+          out.push({kind:"Library",color:"#10b981",label:h.text,sub:g.title,run:()=>nav.goToGuide(g.num,h.id)});
+          c++;
+        }
+      }
+    }
+    let d=0;
+    for(const it of DSA_INDEX){
+      if(d>=8) break;
+      if(it.title.toLowerCase().includes(query)||it.pattern.toLowerCase().includes(query)||it.section.toLowerCase().includes(query)){
+        out.push({kind:"DSA",color:tk.violet,label:it.title,sub:`${it.pattern} · ${it.section}`,run:()=>nav.goToDsa("problems",it.id)});
+        d++;
+      }
+    }
+    return out.slice(0,40);
+  },[q,nav]);
+
+  useEffect(()=>{ setSel(0); },[q]);
+  if(!open) return null;
+
+  const activate=(r)=>{ if(!r) return; r.run(); onClose(); };
+  const onKey=(e)=>{
+    if(e.key==="Escape") onClose();
+    else if(e.key==="ArrowDown"){ e.preventDefault(); setSel(s=>Math.min(s+1,results.length-1)); }
+    else if(e.key==="ArrowUp"){ e.preventDefault(); setSel(s=>Math.max(s-1,0)); }
+    else if(e.key==="Enter"){ e.preventDefault(); activate(results[sel]); }
+  };
+
+  return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(0,0,0,0.66)",backdropFilter:"blur(2px)",display:"flex",justifyContent:"center",alignItems:"flex-start",paddingTop:"11vh"}}>
+      <div onClick={e=>e.stopPropagation()} onKeyDown={onKey} style={{width:"min(92vw,640px)",background:tk.bg2,border:`1px solid ${tk.borderLight}`,borderRadius:12,boxShadow:"0 24px 80px rgba(0,0,0,0.6)",overflow:"hidden"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 18px",borderBottom:`1px solid ${tk.border}`}}>
+          <span style={{color:tk.textDim,fontSize:18}}>⌕</span>
+          <input ref={inputRef} value={q} onChange={e=>setQ(e.target.value)} placeholder="Search guides, Prep Q&A, DSA problems…"
+            style={{flex:1,background:"transparent",border:"none",outline:"none",color:tk.text,fontSize:16,fontFamily:tk.sans}}/>
+          <span style={{fontSize:10,color:tk.textDim,fontFamily:tk.mono,border:`1px solid ${tk.border}`,borderRadius:4,padding:"2px 6px"}}>ESC</span>
+        </div>
+        <div style={{maxHeight:"60vh",overflowY:"auto",padding:8}}>
+          {q.trim().length<2 && <div style={{padding:"24px 16px",color:tk.textDim,fontSize:13,fontFamily:tk.sans,textAlign:"center"}}>Type to search across <span style={{color:"#10b981"}}>Library</span> · <span style={{color:tk.accent}}>Prep Q&A</span> · <span style={{color:tk.violet}}>DSA</span></div>}
+          {q.trim().length>=2 && results.length===0 && <div style={{padding:"24px 16px",color:tk.textDim,fontSize:13,textAlign:"center"}}>No matches for "{q}".</div>}
+          {results.map((r,i)=>(
+            <div key={i} onMouseEnter={()=>setSel(i)} onClick={()=>activate(r)}
+              style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:8,cursor:"pointer",
+                background:i===sel?tk.bg3:"transparent",border:`1px solid ${i===sel?tk.border:"transparent"}`}}>
+              <span style={{fontSize:9,fontWeight:800,fontFamily:tk.mono,color:r.color,background:r.color+"22",borderRadius:4,padding:"3px 0",flexShrink:0,width:56,textAlign:"center"}}>{r.kind.toUpperCase()}</span>
+              <div style={{minWidth:0,flex:1}}>
+                <div style={{fontSize:13.5,color:tk.text,fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.label}</div>
+                <div style={{fontSize:11,color:tk.textDim,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.sub}</div>
+              </div>
+              <span style={{color:tk.textDim,fontSize:12,flexShrink:0}}>↵</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
    APP COMPONENT
    ══════════════════════════════════════════════════════════════ */
 export default function App(){
@@ -1949,11 +2098,27 @@ export default function App(){
   const[active,setActive]=useState("assess");
   const[collapsed,setCollapsed]=useState({});
   const[appSidebarOpen, setAppSidebarOpen]=useState(false);
+  const[libTarget,setLibTarget]=useState(null);
+  const[dsaTarget,setDsaTarget]=useState(null);
+  const[searchOpen,setSearchOpen]=useState(false);
+  const mainRef=useRef(null);
+
+  const goToGuide=useCallback((num,anchor=null)=>{ setLibTarget({num,anchor,n:Date.now()}); setMode("library"); },[]);
+  const goToModule=useCallback((id)=>{ setActive(id); setMode("compiler"); requestAnimationFrame(()=>{ if(mainRef.current) mainRef.current.scrollTop=0; }); },[]);
+  const goToDsa=useCallback((tab="problems",problemId=null)=>{ setDsaTarget({tab,problemId,n:Date.now()}); setMode("dsa"); },[]);
+  const nav=useMemo(()=>({goToGuide,goToModule,goToDsa,setMode}),[goToGuide,goToModule,goToDsa]);
+
+  useEffect(()=>{
+    const h=(e)=>{ if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){ e.preventDefault(); setSearchOpen(o=>!o); } };
+    window.addEventListener("keydown",h);
+    return ()=>window.removeEventListener("keydown",h);
+  },[]);
 
   const toggle=(g)=>setCollapsed(p=>({...p,[g]:!p[g]}));
   const Fn=content[active];
 
   return(
+    <NavCtx.Provider value={nav}>
     <div className="library-layout" style={{background:tk.bg,color:tk.text,fontFamily:tk.sans}}>
       {/* ─── SIDEBAR ─── */}
       {mode === "compiler" && (
@@ -1975,6 +2140,12 @@ export default function App(){
               <div onClick={()=>setMode("dsa")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:10, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="dsa"?tk.violet+"22":"transparent", color:mode==="dsa"?tk.violet:tk.textDim, fontWeight:mode==="dsa"?800:400}}>DSA</div>
               <div onClick={()=>setMode("library")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:10, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="library"?"#10b98122":"transparent", color:mode==="library"?"#10b981":tk.textDim, fontWeight:mode==="library"?800:400}}>LIBRARY</div>
             </div>
+            <button onClick={()=>setSearchOpen(true)} style={{marginTop:12, width:"100%", display:"flex", alignItems:"center", gap:8, background:tk.bg, border:`1px solid ${tk.border}`, borderRadius:6, color:tk.textDim, cursor:"pointer", padding:"7px 10px", fontSize:12, fontFamily:tk.sans, transition:"all .15s"}}
+              onMouseOver={e=>{e.currentTarget.style.borderColor=tk.borderLight; e.currentTarget.style.color=tk.text;}}
+              onMouseOut={e=>{e.currentTarget.style.borderColor=tk.border; e.currentTarget.style.color=tk.textDim;}}>
+              <span style={{fontSize:13}}>⌕</span> Search everything
+              <span style={{marginLeft:"auto", fontSize:9, fontFamily:tk.mono, border:`1px solid ${tk.border}`, borderRadius:4, padding:"1px 5px"}}>⌘K</span>
+            </button>
           </div>
           <div style={{flex:1, overflowY:"auto", minHeight:0}}>
           {GROUPS.map(g=>(
@@ -2001,20 +2172,36 @@ export default function App(){
       )}
 
       {/* ─── CONTENT ─── */}
-      <main className="library-main app-main-content" style={{
+      <main ref={mainRef} className="library-main app-main-content" style={{
         padding:mode==="compiler" ? "28px 36px 60px" : "0",
         maxWidth:mode==="compiler" ? 880 : "100%",
         margin:mode==="compiler" ? "0 auto" : "0",
         overflow:mode==="library" ? "hidden" : "auto"
       }}>
         {mode === "compiler" ? (
-            Fn ? <Fn/> : <div style={{color:tk.textDim,fontFamily:tk.mono,padding:40}}>Select a topic from the sidebar.</div>
+            <>
+              <TabBanner mode="compiler" setMode={setMode}/>
+              {Fn ? <Fn/> : <div style={{color:tk.textDim,fontFamily:tk.mono,padding:40}}>Select a topic from the sidebar.</div>}
+            </>
         ) : mode === "dsa" ? (
-            <DsaGuide setMode={setMode} />
+            <DsaGuide setMode={setMode} target={dsaTarget} />
         ) : (
-            <LibrarySource setMode={setMode} />
+            <LibrarySource setMode={setMode} target={libTarget} />
         )}
       </main>
+
+      {/* ─── Global search: floating trigger (all tabs) + overlay ─── */}
+      <button onClick={()=>setSearchOpen(true)} title="Search everything (⌘K)"
+        style={{position:"fixed", bottom:20, right:20, zIndex:90, display:"flex", alignItems:"center", gap:8,
+          background:tk.bg2, border:`1px solid ${tk.borderLight}`, borderRadius:999, color:tk.textDim, cursor:"pointer",
+          padding:"9px 16px", fontSize:12.5, fontFamily:tk.sans, boxShadow:"0 6px 24px rgba(0,0,0,0.45)", transition:"all .15s"}}
+        onMouseOver={e=>{e.currentTarget.style.color=tk.textBright; e.currentTarget.style.borderColor=tk.accent;}}
+        onMouseOut={e=>{e.currentTarget.style.color=tk.textDim; e.currentTarget.style.borderColor=tk.borderLight;}}>
+        <span style={{fontSize:14}}>⌕</span> Search
+        <span style={{fontSize:9, fontFamily:tk.mono, border:`1px solid ${tk.border}`, borderRadius:4, padding:"1px 5px"}}>⌘K</span>
+      </button>
+      <GlobalSearch open={searchOpen} onClose={()=>setSearchOpen(false)} nav={nav}/>
     </div>
+    </NavCtx.Provider>
   );
 }

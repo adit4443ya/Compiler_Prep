@@ -7,6 +7,9 @@ readTime: 50 min
 
 # Hands-On C++ Code Lab
 
+> [!IMPORTANT]
+> **TL;DR — what you must remember:** A run-it-yourself gallery: each topic (CRTP, move semantics, smart pointers, SFINAE/concepts, atomics, lock-free, ODR, sanitizers) is a **self-contained program** with the compile command, expected output, and the one sentence an interviewer wants to hear. Build with `g++ -std=c++20 -O2`. The point is to *see* the behavior in front of you, not just recite it.
+
 A curated gallery of **compile-and-run** C++ programs — one per interview topic. Every entry shows **what it proves**, the **full source**, the exact **compile + run command**, the **expected output**, and the **key takeaways** an interviewer wants to hear.
 
 > [!TIP]

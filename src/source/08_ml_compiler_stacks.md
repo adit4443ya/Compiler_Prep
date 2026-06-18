@@ -5,6 +5,8 @@ difficulty: Advanced
 readTime: 45 min
 -->
 
+> [!IMPORTANT]
+> **TL;DR — what you must remember:** Modern ML compilers lower a high-level graph to fused hardware kernels through a stack of IRs: **TF → XLA** (HLO), **PyTorch 2.0** (Dynamo → AOTAutograd → Inductor), **Triton** (block-level Python → PTX), and **MLIR** (the dialect-based meta-framework everything is converging on). The shared idea is **progressive lowering**, with **operator fusion** and **tiling** as the dominant performance wins.
 
 ## TensorFlow / XLA Pipeline
 

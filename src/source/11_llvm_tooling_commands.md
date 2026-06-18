@@ -7,6 +7,9 @@ readTime: 25 min
 
 # LLVM Developer Tooling: Commands Reference
 
+> [!IMPORTANT]
+> **TL;DR — what you must remember:** Know the loop cold — `clang -emit-llvm -S` to get IR, `opt -passes=...` to run/inspect passes, `llc` to lower IR to target asm, `llvm-mc` for assembly, and `-print-after-all` / `-mllvm` to watch the pipeline. **FileCheck** is how every codegen test is written, driven by `lit`. These commands *are* your day-one debugging workflow.
+
 Everything an LLVM compiler engineer uses day-to-day. Organized by workflow stage. These are the exact commands that interviewers expect you to know cold.
 
 ---

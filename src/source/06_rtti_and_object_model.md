@@ -7,6 +7,9 @@ readTime: 35 min
 
 # RTTI and Dynamic Cast Deep Dive
 
+> [!IMPORTANT]
+> **TL;DR — what you must remember:** RTTI is the runtime type machinery: each polymorphic class has a vtable whose slot **−1** points to a `type_info`. `dynamic_cast` walks that to do checked down/cross-casts, and `typeid` reads it. It only works on **polymorphic types** (≥1 virtual function), costs a runtime lookup, and is exactly what `-fno-rtti` strips. Contrast: `static_cast` is unchecked and compile-time; `dynamic_cast` is checked and runtime.
+
 ## Part 1: Memory Layout Fundamentals
 
 ### Simple Single Inheritance

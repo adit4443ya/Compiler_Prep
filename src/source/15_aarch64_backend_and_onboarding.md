@@ -7,6 +7,9 @@ readTime: 45 min
 
 # The AArch64 Backend in LLVM + Your First 90 Days on the ARM Team
 
+> [!IMPORTANT]
+> **TL;DR — what you must remember:** The AArch64 backend (`llvm/lib/Target/AArch64/`) is LLVM's **GlobalISel flagship**: TableGen describes instructions, the **NZCV flag register must be scheduled around**, **SchedModels** encode per-core CPU tuning, and **TTI cost models** are a product surface. The daily loop is `edit → llc → update_llc_test_checks → FileCheck`. Onboarding = read codegen tests until you know the house style.
+
 Guide 03 gave you the target-independent backend pipeline. This guide is the **AArch64-specific layer**: where the code lives, what makes this target unusual, the workflow tools you'll use daily at Qualcomm, and a concrete week-by-week ramp-up plan so you walk in on July 7th already knowing the terrain.
 
 ---

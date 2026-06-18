@@ -7,6 +7,9 @@ readTime: 30 min
 
 # PART 1 — NVIDIA Compiler Verification Engineer: Role Reframe
 
+> [!IMPORTANT]
+> **TL;DR — what you must remember:** Compiler verification answers *"is the compiler correct?"*, not *"write a pass."* The toolbox: **differential / fuzz testing** (Csmith, random IR), **translation validation** (Alive2 proving InstCombine peepholes), **sanitizers** (compute-sanitizer for GPU), and **shrinking** failures with `creduce` / `bugpoint`. You're paid to break the compiler methodically and file minimal, reproducible bugs.
+
 ## What This Role Actually Is
 
 Compiler verification is NOT writing compiler passes. It's answering the hardest question in compilers: **"Is this compiler correct?"**

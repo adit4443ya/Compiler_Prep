@@ -7,6 +7,9 @@ readTime: 25 min
 
 # The Systems Interview Scenario Playbook
 
+> [!IMPORTANT]
+> **TL;DR — what you must remember:** Systems interviews reward a **structured spoken process**: restate the problem, state assumptions, reason from invariants, narrate trade-offs out loud. Treat *"why is this slow?"*, *"is this code correct?"*, and *"design X"* as scripts you can walk through. The real skill being graded is clear technical communication under uncertainty — not trivia recall.
+
 In senior systems interviews, you won't just be asked "what is vectorization?" You'll be given a snippet and asked: **"How do you make this 10x faster?"**
 
 ---

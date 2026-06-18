@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { tk, Card, B, P, G } from "./App.jsx";
+import { tk, Card, B, P, G, TabBanner } from "./App.jsx";
 import { PROBLEMS, CHEATSHEET, TIPS, CPP_CONCEPTS, NVIDIA_PROBLEMS, NVIDIA_BUG_HUNT, NVIDIA_OUTPUT_QUIZ, NVIDIA_TIPS } from "./dsaData";
 
 // Merge NVIDIA_PROBLEMS into the full set
@@ -9,6 +9,9 @@ const ALL_PROBLEMS = [...PROBLEMS, ...NVIDIA_PROBLEMS];
 
 // ── Difficulty colors ──────────────────────────────────────────────
 const DC = { Easy: "#22c55e", Medium: "#eab308", Hard: "#ef4444" };
+
+// ── Frequency colors (interview probability — orthogonal to difficulty) ──
+const FC = { High: "#f43f5e", Medium: "#f59e0b", Low: "#64748b" };
 
 // ── Section accent colors ─────────────────────────────────────────
 const SC = {
@@ -57,10 +60,36 @@ const CodeBlock = ({ code, label, color = tk.accent }) => (
   </div>
 );
 
+// ── Segmented filter chips (used for difficulty × frequency) ──────
+const FilterChips = ({ label, value, onChange, options, colorMap }) => (
+  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+    <span style={{ fontSize: 9, fontWeight: 800, color: tk.textDim, fontFamily: tk.mono, letterSpacing: 1, width: 30, flexShrink: 0 }}>{label}</span>
+    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+      {options.map(opt => {
+        const active = value === opt;
+        const c = opt === "All" ? tk.accent : (colorMap[opt] || tk.accent);
+        return (
+          <button
+            key={opt}
+            onClick={() => onChange(opt)}
+            style={{
+              padding: "3px 9px", borderRadius: 5, fontSize: 10, fontWeight: 700,
+              fontFamily: tk.mono, cursor: "pointer", transition: "all 0.12s",
+              background: active ? c + "22" : "transparent",
+              border: `1px solid ${active ? c + "88" : tk.border}`,
+              color: active ? c : tk.textDim,
+            }}
+          >{opt}</button>
+        );
+      })}
+    </div>
+  </div>
+);
+
 // ─────────────────────────────────────────────────────────────────
 //  MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────
-const DsaGuideComponent = ({ setMode }) => {
+const DsaGuideComponent = ({ setMode, target }) => {
   const [selectedProblem, setSelectedProblem] = useState(ALL_PROBLEMS[0]);
   const [expandedBug, setExpandedBug] = useState(null);
   const [expandedQuiz, setExpandedQuiz] = useState(null);
@@ -69,6 +98,8 @@ const DsaGuideComponent = ({ setMode }) => {
   const [viewMode, setViewMode] = useState("sidebar");
   const [expandedCpp, setExpandedCpp] = useState(null);
   const [expandedQA, setExpandedQA] = useState({});
+  const [diffFilter, setDiffFilter] = useState("All");   // Easy / Medium / Hard
+  const [freqFilter, setFreqFilter] = useState("All");   // High / Medium / Low
 
   const categories = useMemo(() => {
     const cats = {};
@@ -79,12 +110,26 @@ const DsaGuideComponent = ({ setMode }) => {
     return cats;
   }, []);
 
-  const filteredProblems = useMemo(() => ALL_PROBLEMS.filter(p =>
-    p.title.toLowerCase().includes(search.toLowerCase()) ||
-    p.section.toLowerCase().includes(search.toLowerCase()) ||
-    (p.company && p.company.toLowerCase().includes(search.toLowerCase())) ||
-    p.pattern.toLowerCase().includes(search.toLowerCase())
-  ), [search]);
+  // Respond to a cross-tab jump (from global search): open a tab / problem.
+  useEffect(() => {
+    if (!target) return;
+    if (target.tab) setActiveTab(target.tab);
+    if (target.problemId != null) {
+      const p = ALL_PROBLEMS.find(x => x.id === target.problemId);
+      if (p) { setSelectedProblem(p); setViewMode("sidebar"); setSearch(""); }
+    }
+  }, [target]);
+
+  const filteredProblems = useMemo(() => ALL_PROBLEMS.filter(p => {
+    const matchesSearch =
+      p.title.toLowerCase().includes(search.toLowerCase()) ||
+      p.section.toLowerCase().includes(search.toLowerCase()) ||
+      (p.company && p.company.toLowerCase().includes(search.toLowerCase())) ||
+      p.pattern.toLowerCase().includes(search.toLowerCase());
+    const matchesDiff = diffFilter === "All" || p.difficulty === diffFilter;
+    const matchesFreq = freqFilter === "All" || (p.frequency || "Medium") === freqFilter;
+    return matchesSearch && matchesDiff && matchesFreq;
+  }), [search, diffFilter, freqFilter]);
 
   const TABS = [
     { key: "problems",  label: "Problems",      count: ALL_PROBLEMS.length },
@@ -162,6 +207,9 @@ const DsaGuideComponent = ({ setMode }) => {
         </div>
       </div>
 
+      {/* Three-tab mental model: Learn → Revise → Practice */}
+      <TabBanner mode="dsa" setMode={setMode} />
+
       {/* ══════════════ PROBLEMS TAB ══════════════ */}
       {activeTab === "problems" && (
         <div className="dsa-main-grid" style={{ display: "grid", gridTemplateColumns: viewMode === "sidebar" ? "300px 1fr" : "1fr", gap: "28px" }}>
@@ -188,6 +236,25 @@ const DsaGuideComponent = ({ setMode }) => {
               >
                 {viewMode === "sidebar" ? "⊞" : "▥"}
               </button>
+            </div>
+
+            {/* Independent filters: difficulty (hardness) × frequency (interview probability) */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <FilterChips label="DIFF" value={diffFilter} onChange={setDiffFilter}
+                options={["All", "Easy", "Medium", "Hard"]} colorMap={DC} />
+              <FilterChips label="FREQ" value={freqFilter} onChange={setFreqFilter}
+                options={["All", "High", "Medium", "Low"]} colorMap={FC} />
+              {(diffFilter !== "All" || freqFilter !== "All") && (
+                <div style={{ fontSize: 10, color: tk.textDim, fontFamily: tk.mono, paddingLeft: 2 }}>
+                  {filteredProblems.length} match
+                  {(diffFilter !== "All" || freqFilter !== "All") && (
+                    <button onClick={() => { setDiffFilter("All"); setFreqFilter("All"); }}
+                      style={{ marginLeft: 8, background: "transparent", border: "none", color: tk.accent, cursor: "pointer", fontSize: 10, fontFamily: tk.mono, textDecoration: "underline" }}>
+                      clear
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {viewMode === "sidebar" && (
@@ -248,8 +315,11 @@ const DsaGuideComponent = ({ setMode }) => {
                     onMouseOver={e => { e.currentTarget.style.borderColor = SC[p.section] || tk.accent; e.currentTarget.style.transform = "translateY(-3px)"; }}
                     onMouseOut={e => { e.currentTarget.style.borderColor = tk.border; e.currentTarget.style.transform = "none"; }}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-                      <Badge color={DC[p.difficulty] + "22"} textColor={DC[p.difficulty]}>{p.difficulty}</Badge>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <Badge color={DC[p.difficulty] + "22"} textColor={DC[p.difficulty]}>{p.difficulty}</Badge>
+                        <Badge color={FC[p.frequency || "Medium"] + "22"} textColor={FC[p.frequency || "Medium"]}>{(p.frequency || "Medium")[0]}</Badge>
+                      </div>
                       <span style={{ fontSize: 10, opacity: 0.35, fontFamily: tk.mono }}>LC #{p.leetcode}</span>
                     </div>
                     <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6, color: tk.textBright }}>{p.title}</div>
@@ -268,6 +338,9 @@ const DsaGuideComponent = ({ setMode }) => {
                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
                           <Badge color={DC[selectedProblem.difficulty] + "22"} textColor={DC[selectedProblem.difficulty]}>
                             {selectedProblem.difficulty}
+                          </Badge>
+                          <Badge color={FC[selectedProblem.frequency || "Medium"] + "22"} textColor={FC[selectedProblem.frequency || "Medium"]}>
+                            {selectedProblem.frequency || "Medium"} Freq
                           </Badge>
                           <span style={{ opacity: 0.35, fontSize: 11, fontFamily: tk.mono }}>LEETCODE #{selectedProblem.leetcode}</span>
                           <span style={{ opacity: 0.35, fontSize: 11, fontFamily: tk.mono }}>#{selectedProblem.id} of {PROBLEMS.length}</span>

@@ -7,6 +7,9 @@ readTime: 50 min
 
 # Deep Dive: Compiler Optimizations — Vectorization, SIMD, Inlining, Unrolling & More
 
+> [!IMPORTANT]
+> **TL;DR — what you must remember:** Every optimization is a two-part bet — it must be **legal** (preserves semantics) *and* **profitable** (the cost model says it pays). Vectorization (loop + SLP) needs independent iterations, no aliasing, and a positive verdict; **inlining is the great enabler** that exposes everything downstream; LICM, GVN, unrolling, and PGO each trade size for speed. When in doubt, reason about legality first, profitability (TTI/SchedModel) second.
+
 ---
 
 # PART 1 — VECTORIZATION & SIMD
@@ -45,6 +48,8 @@ This is the fundamental idea. Everything else is details about when it's legal, 
 
 **Key interview point:** SVE (Scalable Vector Extension) is architecturally different — the vector length is not fixed at compile time. The compiler generates code that works for any vector length. This is the direction ARM is pushing for HPC. Qualcomm's Hexagon HVX at 1024-bit is extremely wide — this is why their compiler team cares deeply about vectorization.
 
+> → **Deep dive:** how vectorization actually lowers on ARM — fixed-width NEON vs vector-length-agnostic SVE, predication, and `<vscale x N x T>` types — in [NEON & SVE Vectorization](#guide/14/part-2-sve-scalable-vectors-the-headline-act).
+
 ---
 
 ## Types of Vectorization
@@ -77,6 +82,8 @@ for (int i = 0; i < N; i += 8) {
 5. Choose vectorization factor (VF): how many elements per SIMD instruction
 6. Choose unroll factor (UF): how many SIMD iterations to unroll
 7. Generate vector loop + scalar prologue/epilogue for non-aligned/remainder elements
+
+> The **profitability check** (step 4) isn't a heuristic guess — it's driven by `TargetTransformInfo` (TTI) cost queries plus the target's `SchedModel`. → **Deep dive:** why the AArch64 cost model is treated as a *product surface* (and where TTI/SchedModel live in the backend) in [The AArch64 Backend + Onboarding](#guide/15/4-the-cost-model-is-a-product-surface).
 
 ---
 

@@ -7,6 +7,9 @@ readTime: 40 min
 
 # The Ultimate C++ Advanced Preparation Guide
 
+> [!IMPORTANT]
+> **TL;DR — what you must remember:** Senior C++ lives in four places: the **object model** (vtable layout, virtual dispatch, slicing), **value categories + move semantics** (`std::move` vs `std::forward`, RVO/NRVO), **templates** (SFINAE, CRTP, concepts), and **RAII/smart-pointer ownership**. The low-latency mindset tying them together: zero-cost abstractions, cache-friendly layout, and no hidden allocations or copies on the hot path.
+
 This is an exhaustive, jumbo preparation guide engineered for senior-level C++ roles (including HFT and Systems Engineering). It consolidates all advanced object-oriented paradigms, low-latency optimizations, template metaprogramming tricks, modern core mechanics, and memory safety rules into a single, high-yield document.
 
 ---

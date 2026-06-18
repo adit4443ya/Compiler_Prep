@@ -7,6 +7,9 @@ readTime: 40 min
 
 # NEON & SVE: ARM Vectorization for the LLVM Backend Engineer
 
+> [!IMPORTANT]
+> **TL;DR — what you must remember:** **NEON** is fixed-width 128-bit SIMD (you hardcode "4 floats"); **SVE** is **vector-length-agnostic** — the *same binary* runs at any 128–2048-bit width, with **predication** replacing the scalar remainder loop. LLVM models this with scalable **`<vscale x N x T>`** types. The headline interview point: SVE moves vector width from **compile time to run time**, which ripples through the type system and codegen.
+
 You already know loop/SLP/auto-vectorization in the abstract (Guide 02) and you used Godbolt to *make* a loop vectorize in your Qualcomm interview. This guide is the ARM-specific layer: how NEON and SVE actually work, and — critically — how LLVM models **scalable vectors**, which is the single most distinctive thing about vectorizing for modern ARM.
 
 ---
