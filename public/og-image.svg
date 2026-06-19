@@ -13,7 +13,7 @@
       <stop offset="0" stop-color="#3b82f6" stop-opacity="0.30"/>
       <stop offset="1" stop-color="#3b82f6" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="title" x1="90" y1="230" x2="760" y2="330" gradientUnits="userSpaceOnUse">
+    <linearGradient id="title" x1="90" y1="220" x2="760" y2="320" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#ffffff"/>
       <stop offset="1" stop-color="#c4b5fd"/>
     </linearGradient>
@@ -21,6 +21,11 @@
       <stop offset="0" stop-color="#a78bfa"/>
       <stop offset="0.5" stop-color="#60a5fa"/>
       <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="cta" x1="92" y1="520" x2="472" y2="594" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset="0.5" stop-color="#7da9fb"/>
+      <stop offset="1" stop-color="#38bdf8"/>
     </linearGradient>
   </defs>
 
@@ -32,38 +37,41 @@
   <rect x="16" y="16" width="1168" height="6" rx="3" fill="url(#accent)"/>
 
   <!-- brand mark (bolt from favicon) -->
-  <g transform="translate(92 86) scale(1.5)">
+  <g transform="translate(92 84) scale(1.5)">
     <path fill="#863bff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z"/>
   </g>
 
   <!-- eyebrow -->
-  <text x="180" y="118" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="26" font-weight="700" letter-spacing="3" fill="#a78bfa">COMPILER-INTERVIEW PREP &#183; FREE &amp; OPEN</text>
+  <text x="180" y="116" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="26" font-weight="700" letter-spacing="3" fill="#a78bfa">COMPILER-INTERVIEW PREP &#183; FREE &amp; OPEN</text>
 
   <!-- headline -->
-  <text x="88" y="290" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="116" font-weight="800" letter-spacing="-2" fill="url(#title)">Compiler Prep</text>
+  <text x="88" y="282" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="116" font-weight="800" letter-spacing="-2" fill="url(#title)">Compiler Prep</text>
 
   <!-- tagline -->
-  <text x="92" y="362" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="48" font-weight="700" letter-spacing="1" fill="url(#accent)">Learn &#183; Revise &#183; Practice</text>
+  <text x="92" y="350" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" letter-spacing="1" fill="url(#accent)">Learn &#183; Revise &#183; Practice</text>
 
   <!-- description -->
-  <text x="92" y="424" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="30" font-weight="400" fill="#a1a1aa">LLVM &#183; C++ &#183; GPU/ML compiler stacks &#183; DSA</text>
-  <text x="92" y="464" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="30" font-weight="400" fill="#71717a">Theory, worked examples, and timed drills.</text>
+  <text x="92" y="408" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="27" font-weight="400" fill="#a1a1aa">LLVM &#183; C++ &#183; GPU/ML compiler stacks &#183; DSA &#8212; with worked examples.</text>
 
   <!-- stat chips -->
   <g font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="24" font-weight="700">
-    <rect x="92"  y="512" width="190" height="56" rx="12" fill="#15131f" stroke="#332f45" stroke-width="1.5"/>
-    <text x="187" y="549" text-anchor="middle" fill="#c4b5fd">29 Modules</text>
+    <rect x="92"  y="436" width="190" height="56" rx="12" fill="#15131f" stroke="#332f45" stroke-width="1.5"/>
+    <text x="187" y="473" text-anchor="middle" fill="#c4b5fd">29 Modules</text>
 
-    <rect x="298" y="512" width="172" height="56" rx="12" fill="#101622" stroke="#27354d" stroke-width="1.5"/>
-    <text x="384" y="549" text-anchor="middle" fill="#93c5fd">120+ Q&amp;A</text>
+    <rect x="298" y="436" width="172" height="56" rx="12" fill="#101622" stroke="#27354d" stroke-width="1.5"/>
+    <text x="384" y="473" text-anchor="middle" fill="#93c5fd">120+ Q&amp;A</text>
 
-    <rect x="486" y="512" width="244" height="56" rx="12" fill="#0e1a1d" stroke="#234048" stroke-width="1.5"/>
-    <text x="608" y="549" text-anchor="middle" fill="#67e8f9">97 DSA Problems</text>
+    <rect x="486" y="436" width="244" height="56" rx="12" fill="#0e1a1d" stroke="#234048" stroke-width="1.5"/>
+    <text x="608" y="473" text-anchor="middle" fill="#67e8f9">97 DSA Problems</text>
 
-    <rect x="746" y="512" width="206" height="56" rx="12" fill="#15131f" stroke="#332f45" stroke-width="1.5"/>
-    <text x="849" y="549" text-anchor="middle" fill="#c4b5fd">16 Deep Guides</text>
+    <rect x="746" y="436" width="206" height="56" rx="12" fill="#15131f" stroke="#332f45" stroke-width="1.5"/>
+    <text x="849" y="473" text-anchor="middle" fill="#c4b5fd">16 Deep Guides</text>
   </g>
 
+  <!-- call to action -->
+  <rect x="92" y="520" width="360" height="74" rx="37" fill="url(#cta)"/>
+  <text x="272" y="567" text-anchor="middle" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="30" font-weight="800" letter-spacing="0.3" fill="#0a0a12">Start prepping &#8594;</text>
+
   <!-- url -->
-  <text x="1108" y="602" text-anchor="end" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" fill="#60a5fa">compiler-prep.vercel.app</text>
+  <text x="1108" y="567" text-anchor="end" font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="25" font-weight="700" fill="#60a5fa">compiler-prep.vercel.app</text>
 </svg>
