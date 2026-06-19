@@ -1067,7 +1067,7 @@ Beneficial for loop overhead, but dangerous for code size and branch prediction.
 
 ---
 
-# PART 9 — THE SCENARIO PLAYBOOK (INTERVIEW FORGE)
+# PART 9 — THE SCENARIO PLAYBOOK
 
 In senior systems interviews, you won't just be asked "what is vectorization?" You'll be given a snippet and asked: **"How do you make this 10x faster?"**
 

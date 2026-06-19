@@ -8,8 +8,8 @@ import { LIBRARY_INDEX, DSA_INDEX, PREP_INDEX, PREP_MODULE_LABELS } from "./sear
 export const NavCtx = createContext(null);
 
 /* ══════════════════════════════════════════════════════════════════════════
-   COMPILER INTERVIEW FORGE v5.0 — Aditya Trivedi → Qualcomm
-   Union of both guides · 29 Modules · 120+ Q&A · Premium Design
+   COMPILER PREP — Learn → Revise → Practice
+   A free, deep compiler-interview prep system · 29 Modules · 120+ Q&A
    ══════════════════════════════════════════════════════════════════════════ */
 
 export const tk = {
@@ -237,7 +237,7 @@ const Table=({headers,rows})=>(
 /* ─── navigation groups ─── */
 const GROUPS=[
   {label:"STRATEGY",items:[
-    {id:"assess",label:"Mission & Battle Plan",icon:"◎"},
+    {id:"assess",label:"Start Here & Battle Plan",icon:"◎"},
   ]},
   {label:"COMPILER CORE",items:[
     {id:"ssa",label:"SSA & Phi Nodes",icon:"φ"},
@@ -277,110 +277,231 @@ const GROUPS=[
     {id:"hft",label:"HFT Playbook & Ops",icon:"⚡"},
   ]},
   {label:"INTERVIEW",items:[
-    {id:"resume",label:"Resume Deep Q&A",icon:"▤"},
+    {id:"resume",label:"Present Your Background",icon:"▤"},
     {id:"mock",label:"120+ Mock Questions",icon:"?"},
     {id:"fullmock",label:"Full Mock Interview",icon:"▶"},
     {id:"behav",label:"Behavioral Prep",icon:"◉"},
   ]},
 ];
 
+/* ─── home command-center helpers (clickable navigation) ─── */
+export const NavTile=({title,sub,meta,color=tk.accent,onClick})=>(
+  <button onClick={onClick} style={{textAlign:"left",cursor:"pointer",background:tk.bg2,font:"inherit",
+    border:`1px solid ${tk.border}`,borderLeft:`3px solid ${color}`,borderRadius:10,padding:"15px 18px",
+    display:"flex",flexDirection:"column",gap:6,transition:"all .15s",width:"100%"}}
+    onMouseOver={e=>{e.currentTarget.style.background=tk.bg3;e.currentTarget.style.borderColor=color;e.currentTarget.style.borderLeftColor=color;e.currentTarget.style.transform="translateY(-2px)";}}
+    onMouseOut={e=>{e.currentTarget.style.background=tk.bg2;e.currentTarget.style.borderColor=tk.border;e.currentTarget.style.borderLeftColor=color;e.currentTarget.style.transform="none";}}>
+    <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:8}}>
+      <span style={{color:tk.textBright,fontWeight:700,fontSize:15,fontFamily:tk.sans}}>{title}</span>
+      {meta&&<span style={{color,fontFamily:tk.mono,fontSize:10,fontWeight:700,flexShrink:0,letterSpacing:".04em"}}>{meta}</span>}
+    </div>
+    {sub&&<span style={{color:tk.textDim,fontSize:13,lineHeight:1.55,fontFamily:tk.sans}}>{sub}</span>}
+  </button>
+);
+
+const Chip=({children,color=tk.accent,onClick,title})=>(
+  <button onClick={onClick} title={title} style={{cursor:"pointer",background:color+"14",font:"inherit",
+    border:`1px solid ${color}3a`,borderRadius:6,color,fontFamily:tk.mono,fontSize:11,fontWeight:600,
+    padding:"4px 9px",transition:"all .12s",whiteSpace:"nowrap"}}
+    onMouseOver={e=>{e.currentTarget.style.background=color+"28";e.currentTarget.style.borderColor=color+"77";}}
+    onMouseOut={e=>{e.currentTarget.style.background=color+"14";e.currentTarget.style.borderColor=color+"3a";}}>
+    {children}
+  </button>
+);
+
 /* ══════════════════════════════════════════════════════════════
    CONTENT
    ══════════════════════════════════════════════════════════════ */
 const content={
 
-/* ── MISSION BRIEF ── */
-assess:()=>(
-<div>
-  <div style={{background:`linear-gradient(135deg,${tk.bg2},#0a1a2e)`,border:`1px solid ${tk.accent}44`,borderRadius:14,padding:28,marginBottom:28}}>
-    <div style={{fontFamily:tk.mono,color:tk.accent,fontSize:11,letterSpacing:".1em",marginBottom:8}}>◎ MISSION BRIEF · COMPILER INTERVIEW FORGE v5.0</div>
-    <h2 style={{color:tk.textBright,fontFamily:tk.sans,margin:"0 0 8px",fontSize:24,fontWeight:800}}>Aditya Trivedi → Qualcomm Senior Compiler Engineer</h2>
-    <p style={{color:tk.textDim,margin:0,fontSize:14,fontFamily:tk.sans}}>29 topic modules · 120+ practice questions · GPU & ML stack coverage · Resume-integrated</p>
-  </div>
+/* ── COMMAND CENTER (home) ── */
+assess:()=>{
+  const nav=useContext(NavCtx)||{};
+  const goM=(id)=>nav.goToModule&&nav.goToModule(id);
+  const goG=(n)=>nav.goToGuide&&nav.goToGuide(n);
+  const goD=(t)=>nav.goToDsa&&nav.goToDsa(t);
+  const setM=(m)=>nav.setMode&&nav.setMode(m);
 
-  <S title="Your Competitive Edge">
-    <G items={[
-      {t:"Merged LLVM Upstream PR",d:"CIR codegen for rdtsc/rdtscp — navigated MLIR-based CIR, intrinsic lowering, triple FileCheck. Proves you can survive community review in a 20M+ LOC codebase."},
-      {t:"GSoC 2025 — LFortran",d:"Redesigned OMPRegion ASR: 13+ constructs, 8+ clauses, GPU offloading with <250 LOC emulator. Compiler IR design, not toy projects."},
-      {t:"POT3D MPI Compilation",d:"20K-line astrophysics Fortran. 30+ MPI wrappers. 0.95× GFortran compile-time parity. Shows you handle real messy codebases."},
-      {t:"4 Publications (Undergrad)",d:"HiPC, EuroMicro PDP, FGCS Elsevier. MPI vs OpenMP study on RISC-V with 3.42× speedup. Research maturity rare at this stage."},
-    ]}/>
-  </S>
+  const LIB="#10b981", PREP=tk.accent, DSA=tk.violet;
 
-  <S title="Know Your Target: Qualcomm Compiler Team" c={tk.blue}>
-    <G items={[
-      {t:"Hexagon DSP (VLIW)",d:"Custom DSP for always-on audio/camera/ML. VLIW = compiler bundles 4 ops/packet. No out-of-order hardware — compiler IS the scheduler. HVX = 1024-bit vector unit."},
-      {t:"Oryon CPU (Custom ARM)",d:"Snapdragon X Elite. Custom ARM microarch. Compiler exploits wide OoO, SVE2, large caches. Performance-per-watt is the optimization target."},
-      {t:"Mobile Trade-offs",d:"Code size matters (tiny Hexagon icache). Power matters (battery life). Os/O2 preferred over O3 on mobile. Every byte and cycle counts."},
-      {t:"Top LLVM Upstream Contributor",d:"QuIC is a top-5 upstream contributor. They want engineers who can write production-quality patches that survive community review — you already have one."},
-    ]} cols={2}/>
-    <B type="interview">When asked 'why Qualcomm?' → 'You design both the silicon AND the compiler. Hexagon is VLIW where the compiler IS the scheduler — that's one of the hardest and most interesting unsolved problems in compilers. You can't just buy faster hardware.'</B>
-  </S>
+  // num → short guide title (the 16 Library deep-dives)
+  const GUIDES={
+    "01":"SSA construction & destruction","02":"Optimizations: vectorize, inline, unroll",
+    "03":"LLVM backend: ISel & regalloc","04":"Pass infrastructure & New PM",
+    "05":"C++ advanced guide","06":"RTTI & dynamic_cast","07":"Concurrency, atomics & memory models",
+    "08":"ML compiler stacks (full-stack code)","09":"NVIDIA compiler verification","10":"Qualcomm systems interview",
+    "11":"LLVM developer tooling","12":"Systems-interview playbook","13":"AArch64 architecture",
+    "14":"NEON & SVE vectorization","15":"AArch64 backend + first 90 days","16":"Hands-on C++ code lab",
+  };
+  // prep module id → label (built from the sidebar groups so it stays in sync)
+  const ML={}; GROUPS.forEach(g=>g.items.forEach(it=>{ML[it.id]=it.label;}));
+  // dsa tab key → label
+  const DL={problems:"Problems",patterns:"Patterns",cpp:"C++ Deep Dive",tips:"Tips",bughunt:"Bug Hunt",cppquiz:"C++ Quiz",nvidiatips:"NVIDIA Tips"};
 
-  <S title="4-Day Battle Plan" c={tk.red}>
-    <B type="danger">If your interview is in 4 days, treat each row as a full day. Work in 2-hour blocks. Practice code and answers OUT LOUD — reading is 30% as effective as speaking.</B>
-    {[
-      {day:"DAY 1 — Compiler Theory",color:tk.red,slots:[
-        {t:"3h",d:"SSA tab: trace Cytron on all 3 worked CFGs. Draw dominator trees BY HAND on paper. Quiz yourself on phi placement rules."},
-        {t:"3h",d:"LLVM IR + Passes: every instruction type, key passes and their ordering, instcombine patterns. Connect to your PR."},
-        {t:"2h",d:"Pipeline + ISel: narrate complete flow from C source to AArch64 assembly verbally. Time yourself to 3 minutes."},
-        {t:"2h",d:"Review your LLVM PR diff. Reread andykaylor's comments. Prepare 2-min spoken walkthrough."},
-      ]},
-      {day:"DAY 2 — C++ & Backend",color:tk.amber,slots:[
-        {t:"3h",d:"C++ Object Model: draw vtable layouts, trace virtual dispatch in assembly, multiple inheritance with thunks."},
-        {t:"2h",d:"C++ Templates + Memory/Move: SFINAE, CRTP, move semantics, smart pointer internals, noexcept rules."},
-        {t:"2h",d:"RegAlloc: trace interference graph coloring by hand with a 4-register example. Understand spill/split."},
-        {t:"2h",d:"Vectorization + ARM: 5 prerequisites, 5 blockers, Neon vs SVE predicates, AArch64 calling convention."},
-        {t:"1h",d:"Concurrency: acquire-release pattern, false sharing fix with alignas, lock-free queue sketch."},
-      ]},
-      {day:"DAY 3 — GPU & ML Stack",color:tk.cyan,slots:[
-        {t:"2h",d:"CUDA: thread hierarchy, coalescing rules, tiled matmul walkthrough, occupancy math."},
-        {t:"2h",d:"Triton: block programming model, compile pipeline, autotuning, how layouts work."},
-        {t:"2h",d:"PyTorch: autograd graph, torch.compile pipeline (Dynamo→AOTAutograd→Inductor), operator fusion."},
-        {t:"2h",d:"Mojo/MAX: language features, MLIR connection, comparison table with CUDA/Triton."},
-        {t:"2h",d:"Architecture: cache hierarchy numbers cold, Roofline model, pipeline hazards and mitigations."},
-      ]},
-      {day:"DAY 4 — Mock & Polish",color:tk.accent,slots:[
-        {t:"3h",d:"Resume Q&A: practice every project as 90-second spoken story. Record on phone, listen back critically."},
-        {t:"2h",d:"Full Mock Interview tab: entire simulation OUT LOUD, timed, in a quiet room."},
-        {t:"2h",d:"Random 20 questions from Mock tab: answer each in under 3 minutes. Mark weak spots."},
-        {t:"1h",d:"Behavioral: 'why Qualcomm', 'hardest bug', 'code review disagreement', 'tight deadline'."},
-        {t:"2h",d:"REST. Sleep by 10 PM. Rested brain > cramming on night before."},
-      ]},
-    ].map((day,i)=>(
-      <div key={i} style={{border:`1px solid ${day.color}28`,borderRadius:10,overflow:"hidden",marginBottom:14}}>
-        <div style={{background:day.color+"10",padding:"11px 16px",borderBottom:`1px solid ${day.color}18`}}>
-          <span style={{color:day.color,fontFamily:tk.mono,fontWeight:800,fontSize:13}}>{day.day}</span>
+  const GuideChip=(n)=><Chip key={"g"+n} color={LIB} onClick={()=>goG(n)} title={GUIDES[n]}><span style={{opacity:.55}}>{n}</span> {GUIDES[n]}</Chip>;
+  const ModChip=(id)=><Chip key={"m"+id} color={PREP} onClick={()=>goM(id)}>{ML[id]||id}</Chip>;
+  const DsaChip=(t)=><Chip key={"d"+t} color={DSA} onClick={()=>goD(t)}>{DL[t]||t}</Chip>;
+  const Row=({label,color,children})=>(
+    <div style={{display:"flex",gap:8,alignItems:"baseline",flexWrap:"wrap",marginTop:8}}>
+      <span style={{fontFamily:tk.mono,fontSize:9,fontWeight:800,letterSpacing:".12em",color,minWidth:62,flexShrink:0}}>{label}</span>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{children}</div>
+    </div>
+  );
+
+  const PATHS=[
+    {name:"Qualcomm — AArch64 & Hexagon backend",color:DSA,
+     why:"Custom ARM (Oryon) + a VLIW DSP (Hexagon) where the compiler IS the scheduler. Codegen, scheduling, AArch64 weak memory.",
+     guides:["13","14","15","10","03"],modules:["arm","isel","regalloc","vec"],dsa:["cpp","bughunt"]},
+    {name:"NVIDIA — GPU / ML compiler & verification",color:LIB,
+     why:"CUDA model, Triton/MLIR, torch.compile, and the code-reading / bug-hunt verification round.",
+     guides:["08","09","01","02"],modules:["cuda","triton","mlir","pytorch"],dsa:["bughunt","cppquiz"]},
+    {name:"C++-heavy systems round",color:PREP,
+     why:"Object model, templates, move/RAII, atomics and UB — plus reasoning about live C++ output.",
+     guides:["05","06","07","16"],modules:["cpp_obj","cpp_tpl","cpp_mem","cpp_con","cpp_misc"],dsa:["cpp","cppquiz"]},
+    {name:"HFT / low-latency",color:tk.orange,
+     why:"Cache, branch prediction, lock-free structures and cycle-level optimization on the hot path.",
+     guides:["02","07"],modules:["hft","arch","cpp_mem","cpp_con"],dsa:["patterns","problems"]},
+    {name:"LLVM fundamentals crash course",color:tk.cyan,
+     why:"The compiler spine end-to-end: SSA → IR → passes → pipeline, with the tooling to inspect each stage.",
+     guides:["01","02","03","11"],modules:["ssa","llvm","passes","pipeline"],dsa:["patterns"]},
+  ];
+
+  const PLAN=[
+    {day:"DAY 1",theme:"Compiler core & SSA",color:tk.red,
+     learn:["01","04"],revise:["ssa","llvm","passes","pipeline"],practice:["patterns"],
+     focus:"Trace SSA construction by hand; narrate C → IR → optimized IR. Know every IR instruction class cold."},
+    {day:"DAY 2",theme:"Backend & codegen",color:tk.amber,
+     learn:["03","13"],revise:["isel","regalloc","arm"],practice:["problems"],
+     focus:"SelectionDAG → register allocation → scheduling; AArch64 calling convention, CSEL, addressing modes."},
+    {day:"DAY 3",theme:"Optimizations & C++ internals",color:tk.cyan,
+     learn:["02","05","06","07"],revise:["opts","vec","dataflow","alias","cpp_obj","cpp_tpl","cpp_mem","cpp_con","cpp_misc"],practice:["cpp","cppquiz"],
+     focus:"Vectorization legality, alias analysis, vtables, move semantics and the C++ memory model."},
+    {day:"DAY 4",theme:"Your domain — GPU/ML · ARM · HFT",color:LIB,
+     learn:["08","09","10","14","15"],revise:["cuda","triton","mlir","pytorch","mojo","hft"],practice:["bughunt"],
+     focus:"Go deep on the stack your target team owns — pick the guides + modules that match the role (see paths above)."},
+    {day:"DAY 5",theme:"Mock, story & behavioral",color:DSA,
+     learn:["12"],revise:["resume","mock","fullmock","behav"],practice:["nvidiatips"],
+     focus:"Run a full timed mock out loud; lock your contribution walkthrough and four STAR stories."},
+  ];
+
+  return(
+  <div>
+    <div style={{background:`linear-gradient(135deg,${tk.bg2},#0a1a2e)`,border:`1px solid ${tk.accent}44`,borderRadius:14,padding:28,marginBottom:28}}>
+      <div style={{fontFamily:tk.mono,color:tk.accent,fontSize:11,letterSpacing:".1em",marginBottom:8}}>◎ COMMAND CENTER · COMPILER PREP</div>
+      <h2 style={{color:tk.textBright,fontFamily:tk.sans,margin:"0 0 8px",fontSize:24,fontWeight:800}}>A free, deep prep system for compiler-engineer interviews</h2>
+      <p style={{color:tk.textDim,margin:0,fontSize:14,fontFamily:tk.sans,lineHeight:1.6}}>
+        <strong style={{color:LIB}}>Learn</strong> the theory → <strong style={{color:PREP}}>revise</strong> it as rapid Q&amp;A → <strong style={{color:DSA}}>practice</strong> under pressure.
+        <br/>16 deep-dive guides · 29 Prep modules · 120+ Q&amp;A · 97 DSA problems — everything below is clickable.
+      </p>
+    </div>
+
+    <S title="Start here — Learn → Revise → Practice">
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:12}}>
+        <NavTile color={LIB} meta="16 GUIDES" title="① Library — Learn" sub="Long-form deep-dive guides. Build real understanding the first time through." onClick={()=>setM("library")}/>
+        <NavTile color={PREP} meta="29 MODULES" title="② Prep — Revise" sub="Rapid Q&A recall across compiler core, C++, GPU/ML and interview prep. You're here." onClick={()=>goM("ssa")}/>
+        <NavTile color={DSA} meta="97 PROBLEMS" title="③ DSA — Practice" sub="Curated coding problems, patterns, C++ quizzes and bug-hunt drills." onClick={()=>setM("dsa")}/>
+      </div>
+    </S>
+
+    <S title="Choose your path" c={tk.violet}>
+      <B type="interview">Short on time? Pick the path that matches your target team and follow its guides → modules → drills in order. Every chip jumps straight to the content.</B>
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        {PATHS.map((p,i)=>(
+          <div key={i} style={{background:tk.bg2,border:`1px solid ${tk.border}`,borderLeft:`3px solid ${p.color}`,borderRadius:10,padding:"15px 18px"}}>
+            <div style={{color:tk.textBright,fontWeight:700,fontSize:14.5,fontFamily:tk.sans,marginBottom:4}}>{p.name}</div>
+            <div style={{color:tk.textDim,fontSize:13,lineHeight:1.55,fontFamily:tk.sans}}>{p.why}</div>
+            <Row label="LEARN" color={LIB}>{p.guides.map(GuideChip)}</Row>
+            <Row label="REVISE" color={PREP}>{p.modules.map(ModChip)}</Row>
+            <Row label="PRACTICE" color={DSA}>{p.dsa.map(DsaChip)}</Row>
+          </div>
+        ))}
+      </div>
+    </S>
+
+    <S title="The complete 5-day plan" c={tk.red}>
+      <B type="danger">Each day pairs <strong style={{color:LIB}}>Learn</strong> (guides) + <strong style={{color:PREP}}>Revise</strong> (Prep modules) + <strong style={{color:DSA}}>Practice</strong> (DSA). Work in 2-hour blocks and rehearse answers OUT LOUD — reading is ~30% as effective as speaking. Fewer days? Compress: Day&nbsp;1+2 → core, Day&nbsp;3 → your language/optos, Day&nbsp;4 → your domain, Day&nbsp;5 → mock. Night before = recall only (no new material).</B>
+      {PLAN.map((d,i)=>(
+        <div key={i} style={{border:`1px solid ${d.color}28`,borderRadius:10,overflow:"hidden",marginBottom:12}}>
+          <div style={{background:d.color+"10",padding:"10px 16px",borderBottom:`1px solid ${d.color}18`,display:"flex",alignItems:"baseline",gap:10,flexWrap:"wrap"}}>
+            <span style={{color:d.color,fontFamily:tk.mono,fontWeight:800,fontSize:13}}>{d.day}</span>
+            <span style={{color:tk.textBright,fontSize:13,fontWeight:600,fontFamily:tk.sans}}>{d.theme}</span>
+          </div>
+          <div style={{padding:"12px 16px"}}>
+            <div style={{color:tk.text,fontSize:13,lineHeight:1.6,fontFamily:tk.sans,marginBottom:4}}>{d.focus}</div>
+            <Row label="LEARN" color={LIB}>{d.learn.map(GuideChip)}</Row>
+            <Row label="REVISE" color={PREP}>{d.revise.map(ModChip)}</Row>
+            <Row label="PRACTICE" color={DSA}>{d.practice.map(DsaChip)}</Row>
+          </div>
         </div>
-        <div style={{padding:"12px 16px"}}>
-          {day.slots.map((sl,j)=>(
-            <div key={j} style={{display:"flex",gap:12,marginBottom:6,alignItems:"flex-start"}}>
-              <span style={{color:day.color,fontFamily:tk.mono,fontSize:10,minWidth:28,flexShrink:0,opacity:.8,marginTop:2}}>[{sl.t}]</span>
-              <span style={{color:tk.text,fontSize:13,lineHeight:1.6,fontFamily:tk.sans}}>{sl.d}</span>
-            </div>
-          ))}
+      ))}
+    </S>
+
+    <S title="Full content index" c={tk.blue}>
+      <P>Every module, guide and drill in one place — click to jump.</P>
+
+      <div style={{marginBottom:18}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+          <span style={{width:8,height:8,borderRadius:2,background:LIB,display:"inline-block"}}/>
+          <span style={{color:LIB,fontFamily:tk.mono,fontSize:11,fontWeight:800,letterSpacing:".1em"}}>LIBRARY · LEARN</span>
+          <span style={{color:tk.textDim,fontSize:11}}>16 deep-dive guides</span>
+        </div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{Object.keys(GUIDES).map(GuideChip)}</div>
+      </div>
+
+      <div style={{marginBottom:18}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+          <span style={{width:8,height:8,borderRadius:2,background:PREP,display:"inline-block"}}/>
+          <span style={{color:PREP,fontFamily:tk.mono,fontSize:11,fontWeight:800,letterSpacing:".1em"}}>PREP · REVISE</span>
+          <span style={{color:tk.textDim,fontSize:11}}>29 Q&amp;A modules</span>
+        </div>
+        {GROUPS.filter(g=>g.label!=="STRATEGY").map(g=>(
+          <Row key={g.label} label={g.label} color={PREP}>{g.items.map(it=>ModChip(it.id))}</Row>
+        ))}
+      </div>
+
+      <div>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+          <span style={{width:8,height:8,borderRadius:2,background:DSA,display:"inline-block"}}/>
+          <span style={{color:DSA,fontFamily:tk.mono,fontSize:11,fontWeight:800,letterSpacing:".1em"}}>DSA · PRACTICE</span>
+          <span style={{color:tk.textDim,fontSize:11}}>97 problems · 15 patterns · 12 C++ concepts</span>
+        </div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{Object.keys(DL).map(DsaChip)}</div>
+      </div>
+    </S>
+
+    <S title="About the author" c={tk.cyan}>
+      <div style={{display:"flex",gap:18,alignItems:"flex-start",flexWrap:"wrap",
+        background:tk.bg2,border:`1px solid ${tk.border}`,borderRadius:12,padding:"18px 20px"}}>
+        <div style={{width:48,height:48,borderRadius:10,flexShrink:0,
+          background:`linear-gradient(135deg,${tk.accent},${tk.violet})`,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          color:"#fff",fontWeight:800,fontSize:17,fontFamily:tk.sans,letterSpacing:".02em"}}>AT</div>
+        <div style={{flex:1,minWidth:240}}>
+          <div style={{color:tk.textBright,fontWeight:700,fontSize:16,fontFamily:tk.sans}}>Aditya Trivedi</div>
+          <div style={{color:tk.textDim,fontSize:13.5,lineHeight:1.65,fontFamily:tk.sans,margin:"5px 0 14px"}}>
+            Compiler engineer. I built <strong style={{color:tk.text}}>Compiler Prep</strong> as a free, open resource — the guide I wish I'd had while prepping for compiler-engineering interviews. Feedback, issues and PRs are very welcome.
+          </div>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+            {[
+              {label:"GitHub",href:"https://github.com/adit4443ya",c:tk.text},
+              {label:"LinkedIn",href:"https://www.linkedin.com/in/adit4443ya",c:tk.accent},
+            ].map(l=>(
+              <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
+                style={{display:"inline-flex",alignItems:"center",gap:7,textDecoration:"none",
+                  background:tk.bg,border:`1px solid ${tk.border}`,borderRadius:8,
+                  padding:"7px 13px",fontSize:12.5,fontWeight:600,fontFamily:tk.sans,color:l.c,transition:"all .15s"}}
+                onMouseOver={e=>{e.currentTarget.style.borderColor=l.c;e.currentTarget.style.background=tk.bg3;}}
+                onMouseOut={e=>{e.currentTarget.style.borderColor=tk.border;e.currentTarget.style.background=tk.bg;}}>
+                {l.label} <span style={{fontFamily:tk.mono,fontSize:11,opacity:.7}}>↗</span>
+              </a>
+            ))}
+          </div>
         </div>
       </div>
-    ))}
-  </S>
-
-  <S title="Readiness Tracker" c={tk.blue}>
-    <Table headers={["Topic Area","Coverage","Priority","Key Focus"]} rows={[
-      ["SSA & Phi Nodes","●●●●●","Critical","Trace Cytron, IDF, loop phis"],
-      ["LLVM IR & Passes","●●●●●","Critical","Your PR narrative + pass ordering"],
-      ["C++ Internals","●●●●○","High","Strict aliasing, vtable, move"],
-      ["Register Allocation","●●●●○","High","Greedy allocator, spill/split"],
-      ["Vectorization","●●●○○","High","5 prerequisites, HVX context"],
-      ["Architecture / Cache","●●●○○","High","Roofline, cache line math"],
-      ["CUDA / GPU","●●●○○","Medium","Coalescing, tiling, occupancy"],
-      ["Triton","●●○○○","Medium","Block model, pipeline, autotuning"],
-      ["PyTorch","●●○○○","Medium","torch.compile pipeline"],
-      ["Mojo / MAX","●○○○○","Medium","MLIR link, language features"],
-      ["Behavioral","●●●●●","Critical","STAR format, 90s stories"],
-    ]}/>
-  </S>
-</div>
-),
+    </S>
+  </div>
+  );
+},
 
 /* ── SSA ── */
 ssa:()=>(
@@ -569,8 +690,8 @@ llvm:()=>(
       {t:"Instruction Attributes", d: "nounwind (no exceptions thrown), readonly (pure read, CSE eligible), willreturn (guaranteed to not infinite loop). Optimizer aggressively prunes based on these."},
       {t:"TBAA (Type-Based Alias Analysis)", d: "C's strict aliasing rule: int* and float* CANNOT point to the same memory. LLVM encodes this as metadata. Different TBAA tags = NoAlias = optimizer can reorder memory instructions!"}
     ]} cols={2} />
-    <Card title="Real World Example: Your CIR PR" icon="⚙️" color={tk.accent}>
-      When implementing <code>__rdtsc()</code>:<br/>
+    <Card title="Worked Example: Lowering __rdtsc() through ClangIR" icon="⚙️" color={tk.accent}>
+      A merged ClangIR contribution added codegen for <code>__rdtsc()</code>. The lowering chain:<br/>
       <ol style={{margin:0, paddingLeft:20, lineHeight:1.8}}>
         <li>Clang AST translates the builtin to CIR: <code style={{color:tk.cyan}}>cir.call_llvm_intrinsic "x86.rdtsc"</code></li>
         <li>CIR lowers to LLVM IR: <code style={{color:tk.cyan}}>@llvm.x86.rdtsc() : i64</code></li>
@@ -593,7 +714,7 @@ llvm:()=>(
     <Q d="easy" q="What does GEP do? What does it NOT do?" a={"GEP (GetElementPtr) computes an ADDRESS — pointer arithmetic. It NEVER loads memory.\n\n%ptr = getelementptr i32, ptr %arr, i64 3   → gives &arr[3]\n\nTo actually read the value you need a LOAD afterwards:\n%val = load i32, ptr %ptr\n\nCommon misconception: 'GEP accesses memory.' FALSE. GEP is pure mathematical pointer computation."}/>
     <Q d="easy" q="What does 'add nsw' mean? Why does it matter for optimization?" a={"nsw = No Signed Wrap. If the addition overflows, the result is POISON.\n\nThis tells the optimizer: 'assume this addition does not overflow.' Enables:\n• SCEV to compute loop trip counts without modular arithmetic\n• Induction variable widening (i32 → i64 for 64-bit addressing)\n• Loop vectorization (need to know trip count fits)\n• Strength reduction (i*N where N is constant)"}/>
     <Q d="medium" q="What is 'select' and how is it different from 'phi'?" a={"phi: SSA merge at a control flow join point. Multiple predecessor blocks each supply a value based on which block was actually executed.\n\nselect i1 %cond, i32 %a, i32 %b: branchless conditional — like a ternary operator. No control flow at all. Maps to CSEL on AArch64, CMOV on x86.\n\nWhen to use select: when both branches are cheap and branch prediction would be poor. The compiler's if-conversion pass converts suitable if-else to select."}/>
-    <Q d="medium" q="Walk through your LLVM CIR PR end-to-end." a={"Context: ClangIR inserts MLIR-based CIR dialect between Clang AST and LLVM IR, enabling higher-level analysis.\n\nMy PR:\n1. CIRGenBuiltinX86.cpp: recognize __rdtsc/__rdtscp builtins\n2. Emit cir.call_llvm_intrinsic 'x86.rdtsc' → returns i64 in CIR\n3. For rdtscp: returns struct{i64,i32}. Use ExtractMemberOp for each field. Store processor_id to aux argument.\n4. CIR-to-LLVM lowering: cir.call_llvm_intrinsic → @llvm.x86.rdtsc()\n5. Testing: triple FileCheck — CHECK-CIR, CHECK-LLVM, CHECK-OGCG (old codegen parity)\n\nCode review feedback from andykaylor:\n• Remove hardcoded alignment (framework computes it)\n• Fix test file prefix conventions\n\nLesson: In large codebases, trust existing infrastructure for cross-cutting concerns."}/>
+    <Q d="medium" q="Worked example: how does a builtin like __rdtsc() get lowered through ClangIR end-to-end?" a={"Context: ClangIR (CIR) inserts an MLIR-based dialect between Clang AST and LLVM IR, enabling higher-level analysis.\n\nThe flow (from a merged CIR contribution that added __rdtsc/__rdtscp codegen):\n1. CIRGenBuiltinX86.cpp: recognize the __rdtsc/__rdtscp builtins from the AST\n2. Emit cir.call_llvm_intrinsic 'x86.rdtsc' → returns i64 in CIR\n3. For rdtscp: returns struct{i64,i32}. Use ExtractMemberOp for each field. Store processor_id to the aux argument.\n4. CIR-to-LLVM lowering: cir.call_llvm_intrinsic → @llvm.x86.rdtsc()\n5. Testing: triple FileCheck — CHECK-CIR, CHECK-LLVM, CHECK-OGCG (old-codegen parity)\n\nIn review, two things surfaced:\n• Remove hardcoded alignment (the framework computes it)\n• Fix test-file prefix conventions\n\nGeneral lesson: in large codebases, trust existing infrastructure for cross-cutting concerns rather than hand-rolling them."}/>
     <Q d="medium" q="What is the difference between 'unreachable' and a dead block?" a={"unreachable: a terminator instruction that explicitly marks the current point as UB if reached. The optimizer uses this as license to assume this path CANNOT occur, enabling aggressive pruning.\n\nDead block: a basic block with no predecessors (unreachable from entry). SimplifyCFG eliminates these. Different from blocks that are provably not reached but still have CFG edges."}/>
     <Q d="hard" q="How does alias analysis work in LLVM? List the main layers." a={"Alias analysis answers: 'do these two memory operations access the same location?'\nResults: NoAlias, MayAlias, MustAlias, PartialAlias.\n\nLayers (combined via chained AAResults):\n1. BasicAA: distinct allocas can't alias. GEP analysis (different struct fields). Argument attributes (noalias).\n2. TBAA: type-based. float* and int* → different TBAA types → NoAlias (strict aliasing rule).\n3. GlobalsAA: globals with internal linkage and no address taken → NoAlias with each other.\n4. SCEV-AA: loop induction variables. &a[i] vs &a[j] where |i-j| is provably non-zero → NoAlias.\n5. ScopedNoAliasAA: from restrict / __restrict__ annotations.\n\nWeak alias analysis = blocked hoisting/reordering = many missed optimizations."}/>
     <Q d="hard" q="What is the difference between function attributes and parameter attributes?" a={"Function attributes describe the entire call (readnone, nounwind, willreturn, nosync).\nParameter attributes describe individual arguments (noalias, readonly, nonnull, align(N)).\n\nKey examples:\nnounwind → optimizer can omit exception table entries for this call\nreadnone → doesn't read or write memory → pure function, can be CSE'd/DCE'd\nnoalias → (on pointer return) returned pointer doesn't alias any existing pointer\nnonnull → pointer argument is never null → optimizer can remove null checks\n\nLLVM uses these heavily for optimizing calls to standard library functions."}/>
@@ -1763,40 +1884,46 @@ mojo:()=>(
     <Q d="medium" q="How does Mojo's ownership model compare to C++ and Rust?" a={"Mojo's ownership is closest to Rust but with Python-like ergonomics:\n\n• owned: function takes ownership. Original variable becomes invalid (like Rust move).\n• borrowed: immutable reference (default for 'def' functions). Like const& in C++.\n• inout: mutable reference. Like T& in C++, &mut T in Rust.\n\nKey differences from Rust:\n• No borrow checker as strict as Rust's (simpler lifetime rules)\n• 'def' functions use borrowed by default (Python-like feel)\n• 'fn' functions require explicit annotations\n\nKey differences from C++:\n• No dangling references (ownership tracked at compile time)\n• No raw pointers by default\n• Deterministic destruction (like C++ RAII, unlike Rust's more complex drop semantics)"}/>
     <Q d="medium" q="What is the difference between 'fn' and 'def' in Mojo?" a={"def: Python-compatible. Dynamic typing allowed. Arguments are borrowed by default. Can raise exceptions. For prototyping and Python interop.\n\nfn: Strict mode. All types must be declared. Arguments are 'borrowed' by default but ownership explicit. Cannot raise exceptions (unless decorated with 'raises'). For performance-critical code.\n\nPractical pattern:\n  def research_prototype(model, data):  # quick iteration, Python-like\n      ...\n  fn optimized_kernel[T: DType](data: Tensor[T]) -> Tensor[T]:  # production\n      ...  # compiler can fully optimize with known types"}/>
     <Q d="medium" q="How does SIMD work as a first-class type in Mojo?" a={"In Mojo, SIMD is a built-in parameterized type:\n  var v = SIMD[DType.float32, 8](1.0)  # 8-wide f32 vector\n  var u = SIMD[DType.float32, 8](2.0)\n  var w = v * u + v  # compiles to: vfmadd or vmul+vadd instructions\n\nNo intrinsics! No _mm256_mul_ps(). The language type directly maps to hardware SIMD.\n\nWidth adapts to hardware:\n  alias simd_width = simdwidthof[DType.float32]()  # 4 on Neon, 8 on AVX2, 16 on AVX-512\n  # Write once, optimal SIMD width everywhere.\n\nThis is much cleaner than C++ intrinsics or LLVM vector types."}/>
-    <Q d="hard" q="How does Mojo's compilation pipeline compare to ClangIR (your PR)?" a={"Both use the same architectural pattern: MLIR-based progressive lowering.\n\nClangIR (CIR):\n  C/C++ → Clang AST → CIR (MLIR dialect) → LLVM IR → machine code\n  CIR sits between AST and LLVM IR. Enables source-level optimizations.\n\nMojo:\n  Mojo source → Mojo IR (MLIR dialect) → [affine/scf/tensor/memref dialects] → LLVM IR → machine code\n  Mojo has MORE MLIR levels (affine loops, tensor ops) because it needs higher-level optimizations.\n\nKey similarity: both use MLIR's dialect infrastructure for type-safe IR transformations.\nKey difference: CIR is one dialect above LLVM IR. Mojo uses multiple progressive levels.\n\nYour PR experience (cir.call_llvm_intrinsic, lowering patterns) directly transfers to understanding Mojo's compiler architecture."}/>
+    <Q d="hard" q="How does Mojo's compilation pipeline compare to ClangIR (CIR)?" a={"Both use the same architectural pattern: MLIR-based progressive lowering.\n\nClangIR (CIR):\n  C/C++ → Clang AST → CIR (MLIR dialect) → LLVM IR → machine code\n  CIR sits between AST and LLVM IR. Enables source-level optimizations.\n\nMojo:\n  Mojo source → Mojo IR (MLIR dialect) → [affine/scf/tensor/memref dialects] → LLVM IR → machine code\n  Mojo has MORE MLIR levels (affine loops, tensor ops) because it needs higher-level optimizations.\n\nKey similarity: both use MLIR's dialect infrastructure for type-safe IR transformations.\nKey difference: CIR is one dialect above LLVM IR. Mojo uses multiple progressive levels.\n\nIf you've worked with CIR's lowering patterns (cir.call_llvm_intrinsic and friends), that mental model transfers directly to reasoning about Mojo's compiler architecture."}/>
     <Q d="hard" q="What is MAX Engine and how does it compare to TensorRT?" a={"MAX Engine: Modular's inference engine. Deploys ML models across hardware.\n\nTensorRT (NVIDIA): optimizes and deploys models specifically on NVIDIA GPUs.\n  • Pros: best NVIDIA GPU performance, mature, production-proven\n  • Cons: NVIDIA-only, complex calibration for INT8, version compatibility issues\n\nMAX Engine:\n  • Pros: hardware-agnostic (CPU + GPU + accelerators via MLIR), simpler API, Mojo custom ops\n  • Cons: newer, smaller ecosystem, less production track record\n\nFor Qualcomm: MAX's hardware-agnostic approach is interesting because it could target Qualcomm's AI Engine/Hexagon via custom MLIR backends — without requiring CUDA."}/>
     <Q d="hard" q="What are Mojo's compile-time features? How do they compare to C++ templates?" a={"Mojo has three compile-time mechanisms:\n\n1. alias: compile-time constants (like constexpr in C++)\n   alias PI = 3.14159  # substituted at compile time\n\n2. Parameters (square brackets): like C++ template parameters\n   fn process[T: DType, N: Int](data: SIMD[T, N]):  # monomorphized per (T, N)\n\n3. @parameter if: compile-time conditional (like if constexpr in C++17)\n   @parameter\n   if N > 256: use_tiled()  # dead branch completely eliminated\n\nAdvantages over C++:\n• Much cleaner syntax (no template<typename T> boilerplate)\n• Better error messages (no SFINAE maze)\n• Integrated with the ownership system\n• @parameter for (compile-time loops) — unrolls at compile time\n\nSimilar power to C++ templates but far more readable."}/>
   </S>
 </div>
 ),
 
-/* ── RESUME DEEP Q&A ── */
+/* ── PRESENTING YOUR BACKGROUND (worked examples) ── */
 resume:()=>(
 <div>
-  <S title="1. Tell Me About Yourself — 90-Second Script">
-    <Card title="The Elevator Pitch" color={tk.teal}>
-      "I'm Aditya Trivedi, a compiler engineer with experience spanning LLVM backend development, Fortran frontend work, and HPC compilation.<br/><br/>
-      Most recently, I contributed a MERGED patch to LLVM upstream — implementing rdtsc/rdtscp builtins for ClangIR, the new MLIR-based frontend. This involved navigating a 20-million-line codebase, MLIR dialect lowering, and surviving community code review.<br/><br/>
-      I'm also a GSoC 2025 contributor for LFortran, where I redesigned the OpenMP region ASR with 13+ constructs and GPU offloading support. Before that, I compiled POT3D — a 20K-line astrophysics Fortran codebase — achieving 0.95× parity with GFortran.<br/><br/>
-      On the research side, I have 4 publications including HiPC and an Elsevier journal paper studying MPI vs OpenMP on RISC-V, demonstrating a 3.42× speedup.<br/><br/>
-      I'm excited about Qualcomm because you own both the silicon and the compiler — Hexagon's VLIW architecture means the compiler IS the performance. That's the hardest and most interesting challenge in compilers."
+  <B type="interview">This module is a <strong>template, not a script</strong>. The structures and scaffolds are what to reuse; the projects in each <strong>Example</strong> are illustrations of the right level of specificity — swap in your own.</B>
+
+  <S title="1. 'Tell Me About Yourself' — the 90-second structure">
+    <P>Open with a tight, four-beat self-intro, then close on why this team. Keep it to ~90 seconds and rehearse it out loud until it sounds natural, not memorized.</P>
+    <G items={[
+      {t:"1 · One-line identity",d:"Who you are as an engineer in a sentence: your domain plus the 2–3 areas you're strongest in."},
+      {t:"2 · Headline proof",d:"Your single most impressive, relevant artifact — a merged contribution, a shipped system, a measured result. Concrete beats broad."},
+      {t:"3 · Supporting depth",d:"One or two more projects that show range (frontend↔backend, research↔production, breadth of stack)."},
+      {t:"4 · Why this team",d:"A specific reason tied to what THIS company uniquely does — not generic praise anyone could give."},
+    ]} cols={2}/>
+    <Card title="Example — a compiler-engineer pitch" color={tk.accent}>
+      <em>(An illustration of the four beats — substitute your own projects.)</em><br/><br/>
+      "I'm a compiler engineer with experience spanning LLVM backend development, Fortran frontend work, and HPC compilation.<br/><br/>
+      Most recently I landed a merged patch in LLVM upstream — adding rdtsc/rdtscp builtins to ClangIR, the new MLIR-based frontend. That meant navigating a 20-million-line codebase, MLIR dialect lowering, and community code review.<br/><br/>
+      Before that I redesigned a Fortran compiler's OpenMP region IR — 13+ constructs and GPU offloading — and compiled POT3D, a 20K-line astrophysics codebase, to about 0.95× GFortran parity.<br/><br/>
+      I'm drawn to Qualcomm because you own both the silicon and the compiler — Hexagon's VLIW means the compiler IS the performance. That's the hardest, most interesting problem in compilers."
     </Card>
   </S>
 
-  <S title="2. LLVM PR Deep Dive — CIR rdtsc/rdtscp" c={tk.blue}>
-    <Q d="must" q="Walk me through your LLVM PR. What did you implement?" a={"I implemented the __rdtsc() and __rdtscp() compiler builtins for ClangIR (CIR), the new MLIR-based intermediate representation being developed for Clang.\n\nWhat I did:\n1. In CIRGenBuiltinX86.cpp: recognized __rdtsc/__rdtscp builtins from the Clang AST\n2. Emitted cir.call_llvm_intrinsic for 'x86.rdtsc' returning i64 in CIR\n3. For rdtscp (returns struct{uint64_t tsc, uint32_t proc_id}): used ExtractMemberOp to extract each field, stored processor_id to the aux uint32_t* argument\n4. CIR-to-LLVM lowering: cir.call_llvm_intrinsic lowers to @llvm.x86.rdtsc()\n5. Testing: triple FileCheck — CHECK-CIR (CIR output correct), CHECK-LLVM (LLVM lowering correct), CHECK-OGCG (old CodeGen parity)\n\nThe PR went through community review by andykaylor, who caught:\n• Hardcoded alignment that should use framework-computed alignment\n• Test file naming convention issues\n\nKey lesson: in a 20M LOC codebase, trust existing infrastructure for cross-cutting concerns."}/>
-    <Q d="must" q="What was the hardest part of your LLVM PR?" a={"Two hard parts:\n\n1. Understanding CIR's MLIR-based architecture. CIR sits between Clang AST and LLVM IR using MLIR dialects. I had to understand how cir.call_llvm_intrinsic works — it's not a simple function call, it's an MLIR operation that carries the intrinsic name as a string attribute and gets lowered through the CIR→LLVM dialect lowering.\n\n2. The rdtscp struct return: rdtscp returns both the timestamp counter AND a processor ID. In CIR, this required creating a struct type, emitting the intrinsic call returning the struct, using ExtractMemberOp to pull out individual fields, and storing the processor ID through the pointer argument. Getting the types and lowering right required tracing through multiple layers of the CIR type system."}/>
-    <Q d="hard" q="If you had to extend your PR to support a new x86 intrinsic, what would you do?" a={"Step-by-step:\n1. Identify the intrinsic: e.g., __rdpmc (performance counter). Check x86 SDM for semantics.\n2. CIRGenBuiltinX86.cpp: add a case in the switch for BUILTIN(__rdpmc).\n3. Emit cir.call_llvm_intrinsic with the correct LLVM intrinsic name.\n4. Handle return types: simple i64 return? struct? Match Clang's builtin semantics.\n5. Write FileCheck tests: CHECK-CIR, CHECK-LLVM, CHECK-OGCG for triple verification.\n6. Build locally: ninja check-clang-cir to run CIR test suite.\n7. Code review: follow CIR coding conventions, match existing builtin patterns.\n8. If the intrinsic doesn't exist in LLVM's intrinsic table: would need to add it to IntrinsicsX86.td first."}/>
+  <S title="2. Walking an interviewer through an open-source contribution" c={tk.blue}>
+    <B type="tip"><strong>The reusable 5-beat structure.</strong> Whatever your contribution is, narrate it as: (1) <strong>Context</strong> — what the project/subsystem is and why the change was needed. (2) <strong>What changed</strong> — the specific code path, top-down. (3) <strong>The hard part</strong> — the one genuinely tricky thing you had to understand. (4) <strong>Testing</strong> — how you proved it correct. (5) <strong>Review &amp; lesson</strong> — feedback you got and what you took from it. Keep it to ~2 minutes and let the interviewer pull the threads they care about.</B>
+    <Q d="must" q="Example: walking through a ClangIR builtin contribution" a={"(A worked example of the 5-beat structure above — substitute your own contribution.)\n\nContext: ClangIR (CIR) is a new MLIR-based IR sitting between Clang AST and LLVM IR. It needed codegen for the __rdtsc()/__rdtscp() x86 builtins.\n\nWhat changed:\n1. CIRGenBuiltinX86.cpp: recognize __rdtsc/__rdtscp from the AST\n2. Emit cir.call_llvm_intrinsic for 'x86.rdtsc' returning i64 in CIR\n3. For rdtscp (returns struct{uint64_t tsc, uint32_t proc_id}): ExtractMemberOp per field, store processor_id through the aux uint32_t* argument\n4. CIR-to-LLVM lowering: cir.call_llvm_intrinsic → @llvm.x86.rdtsc()\n\nThe hard part: cir.call_llvm_intrinsic isn't a plain call — it's an MLIR op that carries the intrinsic name as a string attribute and is lowered through the CIR→LLVM dialect conversion. Getting the struct-return types right meant tracing several layers of the CIR type system.\n\nTesting: triple FileCheck — CHECK-CIR (CIR correct), CHECK-LLVM (lowering correct), CHECK-OGCG (parity with old codegen).\n\nReview & lesson: a reviewer flagged a hardcoded alignment that should come from the framework, plus test-naming conventions. The lesson — in a 20M-LOC codebase, trust existing infrastructure for cross-cutting concerns instead of hand-rolling them."}/>
+    <Q d="hard" q="Follow-up they'll ask: how would you extend it to a new x86 intrinsic?" a={"Step-by-step (the same approach works for most builtins):\n1. Identify the intrinsic, e.g. __rdpmc (performance counter). Check the x86 SDM for semantics.\n2. CIRGenBuiltinX86.cpp: add a case in the switch for the builtin.\n3. Emit cir.call_llvm_intrinsic with the correct LLVM intrinsic name.\n4. Handle the return type: simple i64? a struct? Match Clang's builtin semantics.\n5. Write FileCheck tests: CHECK-CIR, CHECK-LLVM, CHECK-OGCG.\n6. Build locally: ninja check-clang-cir.\n7. Follow existing builtin patterns and coding conventions for review.\n8. If the intrinsic isn't in LLVM's table yet, add it to IntrinsicsX86.td first."}/>
   </S>
 
-  <S title="3. GSoC — LFortran OpenMP" c={tk.blue}>
-    <Q d="must" q="What did you do in GSoC with LFortran?" a={"I redesigned LFortran's OpenMP support at the ASR (Abstract Semantic Representation) level — LFortran's core IR.\n\nWhat I built:\n• OMPRegion ASR node: a new IR construct representing an OpenMP parallel region\n• Support for 13+ OpenMP constructs: parallel, do, sections, critical, atomic, barrier, etc.\n• 8+ clause types: private, shared, firstprivate, reduction, schedule, etc.\n• GPU offloading: OpenMP target/teams/distribute for GPU offloading\n• GPU emulator: <250 LOC emulator for testing GPU offloading without hardware\n\nWhy it matters: LFortran targets scientific computing where OpenMP is the dominant parallelization model. My design allows the compiler to analyze and optimize OpenMP regions at the IR level — loop interchange, data movement optimization, device selection — before lowering to LLVM OpenMP runtime calls."}/>
-    <Q d="medium" q="How did you design the OMPRegion ASR node?" a={"Key design decisions:\n\n1. Region-based: an OMPRegion wraps a subtree of the ASR, representing the scope of the parallel region. All data-sharing attributes (private/shared/reduction) are properties of the region node.\n\n2. Clause representation: each clause is a typed child node of the region. Reduction clauses carry both the operator (sum/max/min) and the variable list.\n\n3. GPU target: target regions carry device information and map clauses (map(to:x), map(from:y)) that describe data movement between host and device.\n\n4. Nesting: regions can nest (parallel inside target), forming a tree. Analysis passes can walk the nesting to detect invalid combinations per the OpenMP spec.\n\nThis mirrors how LLVM's OpenMP IR (OMPIRBuilder) works — but at a higher level, enabling Fortran-specific optimizations before lowering."}/>
-  </S>
-
-  <S title="4. POT3D & Publications" c={tk.blue}>
-    <Q d="must" q="What was the POT3D compilation project?" a={"POT3D is a 20K-line astrophysics Fortran codebase that simulates solar coronal magnetic fields using MPI for parallelism.\n\nMy contribution: compiled POT3D with LFortran — a new Fortran compiler. This required:\n• Implementing 30+ MPI wrapper functions (MPI_Send, MPI_Recv, MPI_Allreduce, etc.)\n• Handling Fortran-specific MPI calling conventions (Fortran passes everything by reference)\n• Debugging compilation of complex Fortran features: array slicing, implicit interfaces, module dependencies\n• Achieving 0.95× compile-time parity with GFortran\n\nWhy it matters: compiling a real 20K-line production codebase proves LFortran can handle messy, real-world code — not just toy examples."}/>
-    <Q d="must" q="Tell me about your MPI vs OpenMP on RISC-V paper." a={"Published in FGCS (Future Generation Computer Systems) by Elsevier.\n\nStudy: compared MPI and OpenMP parallelization strategies on RISC-V hardware (SiFive Unmatched boards) for matrix operations and stencil computations.\n\nKey findings:\n• OpenMP achieved 3.42× speedup over serial baseline on 4-core RISC-V\n• MPI had higher overhead on RISC-V (process creation cost high on the simple RISC-V microarchitecture)\n• Hybrid MPI+OpenMP gave best results for multi-node configurations\n• RISC-V's simple in-order pipeline makes compiler optimization MORE important\n\nCompiler relevance: the results directly motivate why compiler optimizations matter more on simpler architectures — exactly like Qualcomm's Hexagon DSP."}/>
+  <S title="3. Explaining a substantial project (worked examples)" c={tk.blue}>
+    <B type="tip">Same shape as a PR walkthrough, one level up: <strong>what the system is → what you designed → why that design → why it matters</strong>. Lead with the design decision, not a feature list.</B>
+    <Q d="must" q="Example: redesigning a compiler's OpenMP support (GSoC-style project)" a={"(Worked example — frame your own large project the same way.)\n\nWhat it was: redesigning a Fortran compiler's OpenMP support at the ASR (Abstract Semantic Representation) level — the compiler's core IR.\n\nWhat was built:\n• OMPRegion ASR node: a new IR construct for an OpenMP parallel region\n• 13+ constructs (parallel, do, sections, critical, atomic, barrier, …)\n• 8+ clause types (private, shared, firstprivate, reduction, schedule, …)\n• GPU offloading via target/teams/distribute, plus a <250-LOC emulator to test offloading without hardware\n\nKey design decision: make the region IR-level rather than a runtime-call expansion, so the compiler can analyze and optimize OpenMP regions (loop interchange, data-movement, device selection) BEFORE lowering to runtime calls — mirroring LLVM's OMPIRBuilder, one level higher.\n\nWhy it matters: scientific Fortran lives on OpenMP; representing it in the IR is what makes those optimizations possible at all."}/>
+    <Q d="medium" q="Example: porting a real 20K-line codebase to a new compiler" a={"(Worked example.)\n\nProject: compiling POT3D — a 20K-line astrophysics Fortran code (solar coronal fields, MPI-parallel) — with a new Fortran compiler.\n\nWhat it took:\n• 30+ MPI wrapper functions (MPI_Send/Recv/Allreduce, …)\n• Fortran's pass-everything-by-reference calling conventions\n• Debugging real-world features: array slicing, implicit interfaces, module dependency cycles\n• ~0.95× compile-time parity with GFortran\n\nWhy it works as a story: compiling a messy real codebase — not toy examples — is the strongest evidence you can handle production code in an unfamiliar compiler."}/>
+    <Q d="medium" q="Example: discussing a research result" a={"(Worked example.)\n\nA study comparing MPI vs OpenMP parallelization on RISC-V hardware (SiFive boards) for matrix and stencil workloads, published in FGCS (Elsevier).\n\nFindings:\n• OpenMP hit 3.42× over a serial baseline on 4-core RISC-V\n• MPI carried higher process-creation overhead on the simple in-order microarchitecture\n• Hybrid MPI+OpenMP won for multi-node configurations\n\nWhy it's a good hook: simpler in-order pipelines make compiler optimization matter MORE — which is exactly the argument for DSPs like Hexagon. Lead a research story with the single finding that connects to the team you're talking to."}/>
   </S>
 </div>
 ),
@@ -1877,7 +2004,7 @@ fullmock:()=>(
     <G items={[
       {t:"Q1: Explain SSA form. Why does LLVM use it?", d:"Hit: single def per variable, O(1) def-use, enables SCCP/GVN/LICM/DCE. Draw phi examples. Trace Cytron on a loop CFG."},
       {t:"Q2: Walk me through the complete compilation pipeline.", d:"Preprocessor → Lexer → Parser → Sema → Clang CodeGen (alloca) → SROA/mem2reg → Optimizer passes → ISel → RegAlloc → Schedule → Emit. Highlight: Clang emits simple alloca-based IR. SROA elevates to SSA."},
-      {t:"Q3: You submitted an LLVM PR. Walk me through it.", d:"Use the CIR rdtsc/rdtscp story (2 minutes, practiced). Mention: MLIR-based CIR, intrinsic lowering, triple FileCheck. Mention code review feedback and what you learned."},
+      {t:"Q3: You've contributed to an open-source project. Walk me through it.", d:"Use the 5-beat contribution walkthrough (Resume tab): context → what changed → the hard part → testing → review & lesson. Aim for ~2 minutes; mention the testing strategy and one piece of review feedback you learned from."},
       {t:"Q4: What is alias analysis? Why does it matter for vectorization?", d:"NoAlias/MayAlias/MustAlias. 5 layers. Without strong AA, the vectorizer must assume all pointers alias → can't vectorize anything. On HVX with 1024-bit vectors, that wastes 31 of 32 compute slots."}
     ]} cols={2}/>
   </S>
@@ -1902,8 +2029,8 @@ fullmock:()=>(
 
   <S title="Round 5: Behavioral (10 min)" c={tk.rose}>
     <G items={[
-      {t:"Q13: Tell me about a time you dealt with a hard bug.", d:"STAR: LFortran/POT3D module dependency cycle causing ICE. Traced ASR dump, found circular import, implemented lazy resolution."},
-      {t:"Q14: How do you handle code review disagreements?", d:"STAR: LLVM PR. andykaylor flagged hardcoded alignment. Traced framework code, found he was right. Lesson: trust infrastructure in large codebases."},
+      {t:"Q13: Tell me about a time you dealt with a hard bug.", d:"STAR shape (example): a module dependency cycle causing an internal compiler error. Traced the IR dump, found the circular import, implemented lazy resolution. Use your own hardest-bug story."},
+      {t:"Q14: How do you handle code review disagreements?", d:"STAR shape (example): a reviewer flagged a hardcoded alignment on a contribution. Traced the framework code, found they were right. Lesson: trust infrastructure in large codebases. Use your own example."},
       {t:"Q15: Why Qualcomm specifically?", d:"(1) Silicon+compiler synergy. (2) Hexagon VLIW = compiler IS performance. (3) Top LLVM upstream contributor — I want to shape open-source tools."}
     ]} cols={2}/>
   </S>
@@ -1924,23 +2051,25 @@ behav:()=>(
     <B type="tip"><strong>TEMPLATE:</strong> "When I was working on [PROJECT] at [CONTEXT], we needed to [TASK]. I specifically [ACTION 1], [ACTION 2], and [ACTION 3]. The result was [QUANTIFIED OUTCOME]."</B>
   </S>
 
-  <S title="2. Your STAR Stories — Ready to Use" c={tk.blue}>
+  <S title="2. STAR in Action — Worked Examples" c={tk.blue}>
+    <B type="tip">These four are <strong>illustrations of the STAR shape</strong>, not stories to claim — they show the level of specificity and the measurable result to aim for. Build one of each type from your own experience.</B>
     <G items={[
-      {t:"Hardest Bug Story",d:"SITUATION: Compiling POT3D (20K-line Fortran) with LFortran. TASK: Fix ICE on module compilation. ACTION: Traced ASR dump, identified circular module dependency, implemented lazy module resolution. RESULT: Unblocked full POT3D compilation, contributed fix upstream."},
-      {t:"Code Review Story",d:"SITUATION: LLVM PR for rdtsc builtins. TASK: Address reviewer feedback. ACTION: andykaylor flagged hardcoded alignment. Traced framework code, found he was right — alignment computed from TargetDataLayout. RESULT: Cleaner code, learned to trust infrastructure."},
-      {t:"Tight Deadline Story",d:"SITUATION: GSoC midterm for LFortran OpenMP. TASK: implement 8 clause types in 3 weeks. ACTION: Prioritized by usage frequency, TDD with LIT tests, daily progress tracking. RESULT: 13 constructs + 8 clauses merged before deadline with full test coverage."},
-      {t:"Leadership Story",d:"SITUATION: MPI vs OpenMP on RISC-V paper. TASK: Lead 3-person team. ACTION: Built CI pipeline for benchmarking, designed experiment matrix, wrote analysis scripts. RESULT: Accepted at HiPC + FGCS Elsevier. 3.42× speedup finding."},
+      {t:"Hardest Bug (example)",d:"SITUATION: compiling a 20K-line Fortran codebase with a new compiler. TASK: fix an internal compiler error on module compilation. ACTION: traced the IR dump, identified a circular module dependency, implemented lazy module resolution. RESULT: unblocked the full build, contributed the fix upstream."},
+      {t:"Code Review (example)",d:"SITUATION: a contribution adding rdtsc builtins. TASK: address reviewer feedback. ACTION: a reviewer flagged a hardcoded alignment; traced the framework code, confirmed it should come from TargetDataLayout. RESULT: cleaner code, learned to trust framework infrastructure."},
+      {t:"Tight Deadline (example)",d:"SITUATION: a GSoC midterm for compiler OpenMP support. TASK: implement 8 clause types in 3 weeks. ACTION: prioritized by usage frequency, test-driven with LIT tests, tracked progress daily. RESULT: 13 constructs + 8 clauses merged before the deadline with full coverage."},
+      {t:"Leadership (example)",d:"SITUATION: an MPI vs OpenMP study on RISC-V. TASK: lead a 3-person team. ACTION: built a benchmarking CI pipeline, designed the experiment matrix, wrote the analysis scripts. RESULT: published (HiPC + FGCS Elsevier), 3.42× speedup finding."},
     ]} cols={2}/>
   </S>
 
   <S title="3. Common Behavioral Questions" c={tk.amber}>
-    <Q d="must" q="Why Qualcomm?" a={"Three pillars:\n\n1. Silicon + Compiler synergy: Qualcomm designs both the hardware AND the compiler. This tight feedback loop doesn't exist at pure software companies.\n\n2. Hexagon VLIW: The compiler IS the performance. No out-of-order hardware to hide bad scheduling. Getting packets right = 4× performance difference.\n\n3. Open-source commitment: Qualcomm is a top-5 LLVM upstream contributor. I've already contributed merged code to LLVM. I want to work on a team that shapes the open-source tools the whole industry uses."}/>
-    <Q d="must" q="What's your greatest strength?" a={"I can navigate very large complex codebases quickly and contribute meaningfully. LLVM is 20M+ lines — I went from zero familiarity to a merged patch in weeks. POT3D is 20K lines of legacy Fortran — compiled it with a new compiler. I'm comfortable being the person who reads the code nobody else wants to read.\n\nThis is directly relevant for compiler engineering where you're ALWAYS working in massive, complex, under-documented codebases."}/>
+    <B type="interview">The answers below are <strong>example answers</strong> — they model the structure and the level of specificity to aim for. The projects referenced are illustrations; substitute your own.</B>
+    <Q d="must" q="Why Qualcomm?" a={"Three pillars:\n\n1. Silicon + Compiler synergy: Qualcomm designs both the hardware AND the compiler. This tight feedback loop doesn't exist at pure software companies.\n\n2. Hexagon VLIW: The compiler IS the performance. No out-of-order hardware to hide bad scheduling. Getting packets right = 4× performance difference.\n\n3. Open-source commitment: Qualcomm is a top-5 LLVM upstream contributor. If you've contributed to LLVM, this is the place to say so — it's a team that shapes the open-source tools the whole industry uses."}/>
+    <Q d="must" q="What's your greatest strength?" a={"(Example.) Navigating very large, complex codebases quickly and contributing meaningfully. LLVM is 20M+ lines — going from zero familiarity to a merged patch in weeks. A 20K-line legacy Fortran code — compiling it with a brand-new compiler. The throughline: being comfortable as the person who reads the code nobody else wants to read.\n\nThis is directly relevant to compiler engineering, where you're ALWAYS working in massive, under-documented codebases. Frame your own version around a concrete 'I got productive fast in something huge' story."}/>
     <Q d="must" q="What's a weakness you're working on?" a={"I sometimes spend too long trying to understand something deeply before asking for help. In the LLVM PR, I spent two days understanding CIR's type system when a 30-minute conversation with the maintainer would have answered my questions.\n\nI'm actively improving: I now timebox deep dives to 2 hours, then reach out. In the GSoC project, I established weekly sync calls instead of only reaching out when stuck."}/>
     <Q d="medium" q="Tell me about a time you failed." a={"Early in the POT3D project, I assumed Fortran's COMPLEX type would work identically to LFortran's implementation. I wrote 500 lines of MPI wrappers using that assumption. When testing, all COMPLEX-type communications produced wrong results.\n\nRoot cause: Fortran COMPLEX is {real, imaginary} interleaved, but my wrapper was using separate real arrays.\n\nLesson: verify assumptions with tests FIRST, especially when bridging between different compilers' representations. I now always prototype with test cases before committing."}/>
     <Q d="medium" q="How do you stay current with compiler technology?" a={"Four channels:\n1. LLVM Discourse + weekly patches: I follow the CIR and backend discussions\n2. Conference talks: LLVM Dev Meeting, CGO, PLDI proceedings\n3. Papers: recent work on MLIR, Triton compiler, torch.compile internals\n4. By building: contributing to LLVM and LFortran forces me to learn the latest APIs\n\nContributing code teaches me 10× faster than just reading about it."}/>
     <Q d="medium" q="How do you handle working with different skill levels?" a={"In my research group, I worked with students ranging from freshman to PhD candidates.\n\nApproach: I pair on specific tasks rather than just answering questions. For the RISC-V benchmarking, I set up the infrastructure so less experienced members could contribute by running experiments.\n\nResult: everyone contributed to the paper. The freshman learned MPI through guided experiments. The PhD student handled analysis with my data infrastructure."}/>
-    <Q d="hard" q="Where do you see yourself in 5 years?" a={"In 5 years, I want to be the engineer other compiler engineers come to for complex backend interactions or subtle miscompilations.\n\nSpecifically: deep expertise in VLIW scheduling and vector compiler technology — the problems at the heart of Hexagon and HVX.\n\nLong-term: I want to contribute to LLVM upstream on behalf of Qualcomm, like the engineers whose code review I went through for my PR."}/>
+    <Q d="hard" q="Where do you see yourself in 5 years?" a={"(Example.) Becoming the engineer other compiler engineers come to for complex backend interactions or subtle miscompilations.\n\nSpecifically: deep expertise in VLIW scheduling and vector compiler technology — the problems at the heart of Hexagon and HVX.\n\nLong-term: contributing to LLVM upstream on behalf of the company, shaping the tools the whole industry depends on. Anchor your own answer to a direction the team actually works in."}/>
   </S>
 </div>
 ),
@@ -2132,8 +2261,8 @@ export default function App(){
         />
         <nav className={`library-sidebar ${appSidebarOpen ? 'open' : ''}`}>
           <div style={{padding:"20px 16px 12px",borderBottom:`1px solid ${tk.border}`,flexShrink:0}}>
-            <div style={{fontFamily:tk.mono,color:tk.accent,fontSize:11,letterSpacing:".12em",fontWeight:800}}>COMPILER FORGE</div>
-            <div style={{color:tk.textDim,fontSize:10,fontFamily:tk.mono,marginTop:3, marginBottom:16}}>v5.0 · 29 modules · 120+ Q&A</div>
+            <div style={{fontFamily:tk.mono,color:tk.accent,fontSize:11,letterSpacing:".12em",fontWeight:800}}>COMPILER PREP</div>
+            <div style={{color:tk.textDim,fontSize:10,fontFamily:tk.mono,marginTop:3, marginBottom:16}}>Learn → Revise → Practice · 29 modules</div>
 
             <div style={{display:"flex", background:tk.bg, borderRadius:6, padding:2, border:`1px solid ${tk.border}`}}>
               <div onClick={()=>setMode("compiler")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:10, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="compiler"?tk.accentDim:"transparent", color:mode==="compiler"?tk.accent:tk.textDim, fontWeight:mode==="compiler"?800:400}}>PREP</div>
@@ -2166,6 +2295,19 @@ export default function App(){
               ))}
             </div>
           ))}
+          </div>
+          <div style={{flexShrink:0,borderTop:`1px solid ${tk.border}`,padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+            <span style={{fontSize:10,color:tk.textDim,fontFamily:tk.sans}}>by <span style={{color:tk.text,fontWeight:600}}>Aditya Trivedi</span></span>
+            <span style={{display:"flex",gap:6}}>
+              <a href="https://github.com/adit4443ya" target="_blank" rel="noopener noreferrer" title="GitHub"
+                style={{color:tk.textDim,fontSize:10,fontFamily:tk.mono,textDecoration:"none",border:`1px solid ${tk.border}`,borderRadius:4,padding:"2px 7px",transition:"all .15s"}}
+                onMouseOver={e=>{e.currentTarget.style.color=tk.text;e.currentTarget.style.borderColor=tk.borderLight;}}
+                onMouseOut={e=>{e.currentTarget.style.color=tk.textDim;e.currentTarget.style.borderColor=tk.border;}}>GitHub ↗</a>
+              <a href="https://www.linkedin.com/in/adit4443ya" target="_blank" rel="noopener noreferrer" title="LinkedIn"
+                style={{color:tk.textDim,fontSize:10,fontFamily:tk.mono,textDecoration:"none",border:`1px solid ${tk.border}`,borderRadius:4,padding:"2px 7px",transition:"all .15s"}}
+                onMouseOver={e=>{e.currentTarget.style.color=tk.accent;e.currentTarget.style.borderColor=tk.accent;}}
+                onMouseOut={e=>{e.currentTarget.style.color=tk.textDim;e.currentTarget.style.borderColor=tk.border;}}>LinkedIn ↗</a>
+            </span>
           </div>
         </nav>
         </>

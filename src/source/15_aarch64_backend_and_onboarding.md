@@ -171,7 +171,7 @@ MIR round-tripping (`-stop-after` + `-run-pass`) is how backend passes get unit-
 
 1. Build LLVM with the AArch64-only config above. Get `llc` running.
 2. Read Guides 13 + 14 of this site until the register file, AAPCS64, CSEL/CCMP, and `vscale` feel native.
-3. Godbolt drills (you already proved this method works in your interview): compile small C functions at `-O2` for `armv8-a` vs `armv9-a+sve`, and *predict the assembly before looking*. Targets: struct passing (HFA!), a ternary (expect CSEL), a 64-bit constant, a reduction loop, a tail-folded SVE loop.
+3. Godbolt drills (a proven prep method): compile small C functions at `-O2` for `armv8-a` vs `armv9-a+sve`, and *predict the assembly before looking*. Targets: struct passing (HFA!), a ternary (expect CSEL), a 64-bit constant, a reduction loop, a tail-folded SVE loop.
 4. Skim `AArch64SchedOryon.td` and run `llvm-mca -mcpu=oryon-1` on one of your Godbolt outputs.
 5. Read 10 random tests in `test/CodeGen/AArch64/` to absorb test style.
 

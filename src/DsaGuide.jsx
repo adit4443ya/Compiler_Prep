@@ -145,70 +145,46 @@ const DsaGuideComponent = ({ setMode, target }) => {
     <div className="dsa-container" style={{
       display: "flex", flexDirection: "column", gap: "24px",
       color: tk.text, fontFamily: tk.sans, minHeight: "100vh",
-      background: tk.bg, padding: "24px 32px"
+      background: tk.bg, padding: "28px 36px 60px"
     }}>
-      {/* ── Header ── */}
-      <div className="dsa-header-flex" style={{
-        display: "flex", justifyContent: "space-between", alignItems: "flex-end",
-        borderBottom: `1px solid ${tk.border}`, paddingBottom: "20px",
-      }}>
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
-            <h1 style={{ fontSize: "2.6rem", fontWeight: 900, margin: 0, color: tk.textBright, letterSpacing: "-0.02em" }}>
-              DSA <span style={{ color: tk.accent }}>FORGE</span>
-            </h1>
-            <Badge color={tk.accent + "33"} textColor={tk.accent}>Elite Edition</Badge>
-          </div>
-          <P style={{ opacity: 0.55, fontSize: 14, margin: 0 }}>
-            {ALL_PROBLEMS.length} Problems · {CHEATSHEET.length} Patterns · {CPP_CONCEPTS.length} C++ Concepts · {NVIDIA_BUG_HUNT.length} Bug Exercises · {NVIDIA_OUTPUT_QUIZ.length} Quiz | <span style={{color:'#ef4444',fontWeight:900}}>NVIDIA Round 1 Ready</span>
-          </P>
-        </div>
+      {/* Three-tab mental model: Learn → Revise → Practice (sibling-tab nav) */}
+      <TabBanner mode="dsa" setMode={setMode} />
 
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 12 }}>
-          <button
-            onClick={() => setMode("compiler")}
-            style={{
-              background: "transparent", border: `1px solid ${tk.border}`, color: tk.textDim,
-              padding: "6px 14px", borderRadius: 6, fontSize: 11, fontFamily: tk.mono,
-              cursor: "pointer",
-            }}
-            onMouseOver={e => { e.currentTarget.style.color = tk.text; e.currentTarget.style.borderColor = tk.textDim; }}
-            onMouseOut={e => { e.currentTarget.style.color = tk.textDim; e.currentTarget.style.borderColor = tk.border; }}
-          >
-            ← EXIT TO COMPILER FORGE
-          </button>
-
-          {/* Tab Bar */}
-          <div className="dsa-tabs-scroll" style={{ display: "flex", background: tk.bg2, padding: 3, borderRadius: 8, border: `1px solid ${tk.border}`, gap: 2 }}>
-            {TABS.map(t => (
-              <button
-                key={t.key}
-                onClick={() => setActiveTab(t.key)}
-                style={{
-                  background: activeTab === t.key ? tk.accent : "transparent",
-                  color: activeTab === t.key ? tk.bg : tk.textDim,
-                  border: "none", padding: "6px 14px", borderRadius: 6,
-                  fontSize: 11, fontWeight: 800, fontFamily: tk.mono,
-                  cursor: "pointer", transition: "all 0.2s",
-                  display: "flex", alignItems: "center", gap: 6,
-                }}
-              >
-                {t.label}
-                {t.count && (
-                  <span style={{
-                    fontSize: 9, padding: "1px 5px", borderRadius: 8,
-                    background: activeTab === t.key ? "rgba(0,0,0,0.2)" : tk.border,
-                    color: activeTab === t.key ? tk.bg : tk.textDim,
-                  }}>{t.count}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* ── Header — same brief-box treatment as the Prep tab ── */}
+      <div style={{ background: `linear-gradient(135deg,${tk.bg2},#0a1a2e)`, border: `1px solid ${tk.accent}44`, borderRadius: 14, padding: 28 }}>
+        <div style={{ fontFamily: tk.mono, color: tk.accent, fontSize: 11, letterSpacing: ".1em", marginBottom: 8 }}>◆ PRACTICE · DSA</div>
+        <h2 style={{ color: tk.textBright, fontFamily: tk.sans, margin: "0 0 8px", fontSize: 24, fontWeight: 800 }}>Drill the patterns under interview pressure</h2>
+        <p style={{ color: tk.textDim, margin: 0, fontSize: 14, fontFamily: tk.sans }}>
+          {ALL_PROBLEMS.length} problems · {CHEATSHEET.length} patterns · {CPP_CONCEPTS.length} C++ concepts · {NVIDIA_BUG_HUNT.length} bug-hunt exercises · {NVIDIA_OUTPUT_QUIZ.length} output quizzes
+        </p>
       </div>
 
-      {/* Three-tab mental model: Learn → Revise → Practice */}
-      <TabBanner mode="dsa" setMode={setMode} />
+      {/* ── Tab bar — full-width, sibling-style ── */}
+      <div className="dsa-tabs-scroll" style={{ display: "flex", background: tk.bg2, padding: 3, borderRadius: 8, border: `1px solid ${tk.border}`, gap: 2 }}>
+        {TABS.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setActiveTab(t.key)}
+            style={{
+              background: activeTab === t.key ? tk.accent : "transparent",
+              color: activeTab === t.key ? tk.bg : tk.textDim,
+              border: "none", padding: "8px 16px", borderRadius: 6,
+              fontSize: 11, fontWeight: 800, fontFamily: tk.mono,
+              cursor: "pointer", transition: "all 0.2s",
+              display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
+            }}
+          >
+            {t.label}
+            {t.count && (
+              <span style={{
+                fontSize: 9, padding: "1px 5px", borderRadius: 8,
+                background: activeTab === t.key ? "rgba(0,0,0,0.2)" : tk.border,
+                color: activeTab === t.key ? tk.bg : tk.textDim,
+              }}>{t.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
 
       {/* ══════════════ PROBLEMS TAB ══════════════ */}
       {activeTab === "problems" && (
@@ -393,7 +369,7 @@ const DsaGuideComponent = ({ setMode, target }) => {
 
                     {/* Code */}
                     <div style={{ marginTop: 20 }}>
-                      <Label>Elite C++ Implementation</Label>
+                      <Label>C++ Implementation</Label>
                       <div style={{ display: "grid", gridTemplateColumns: selectedProblem.memoCode ? "1fr 1fr" : "1fr", gap: 16 }}>
                         {selectedProblem.memoCode && (
                           <CodeBlock code={selectedProblem.memoCode} label="// TOP-DOWN · MEMOIZATION" color={tk.violet} />
@@ -615,7 +591,7 @@ Subarray condition → Sliding Window / Prefix+HashMap  |  Sorted → Binary Sea
       {activeTab === "bughunt" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div>
-            <h2 style={{ color: tk.textBright, fontSize: 20, margin: "0 0 4px", fontWeight: 900 }}>
+            <h2 style={{ color: tk.textBright, fontSize: 18, margin: "0 0 4px", fontWeight: 800 }}>
               🐛 Bug Hunt — <span style={{ color: "#ef4444" }}>NVIDIA Code Reading Exercises</span>
             </h2>
             <P style={{ opacity: 0.55, fontSize: 13, margin: 0 }}>
@@ -704,7 +680,7 @@ Subarray condition → Sliding Window / Prefix+HashMap  |  Sorted → Binary Sea
       {activeTab === "cppquiz" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div>
-            <h2 style={{ color: tk.textBright, fontSize: 20, margin: "0 0 4px", fontWeight: 900 }}>
+            <h2 style={{ color: tk.textBright, fontSize: 18, margin: "0 0 4px", fontWeight: 800 }}>
               ⚡ C++ Output Quiz — <span style={{ color: tk.accent }}>Tricky Snippets</span>
             </h2>
             <P style={{ opacity: 0.55, fontSize: 13, margin: 0 }}>
@@ -767,7 +743,7 @@ Subarray condition → Sliding Window / Prefix+HashMap  |  Sorted → Binary Sea
       {activeTab === "nvidiatips" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div>
-            <h2 style={{ color: tk.textBright, fontSize: 20, margin: "0 0 4px", fontWeight: 900 }}>
+            <h2 style={{ color: tk.textBright, fontSize: 18, margin: "0 0 4px", fontWeight: 800 }}>
               🎯 NVIDIA Compiler Verification — <span style={{ color: "#ef4444" }}>Interview Strategy</span>
             </h2>
             <P style={{ opacity: 0.55, fontSize: 13, margin: 0 }}>

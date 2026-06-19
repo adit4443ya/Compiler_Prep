@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-//  DSA FORGE — Complete Data File
+//  DSA Practice — Complete Data File
 //  97 problems | 12 C++ deep-dive concepts | 15 patterns | 6 tip sets
 //  Each problem has TWO orthogonal axes:
 //    difficulty: "Easy" | "Medium" | "Hard"   (intrinsic problem hardness)

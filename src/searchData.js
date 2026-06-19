@@ -83,7 +83,7 @@ export const PREP_INDEX = buildPrepIndex();
 
 // Human-readable labels for Prep module ids (for result subtitles).
 export const PREP_MODULE_LABELS = {
-  assess: 'Mission & Battle Plan', ssa: 'SSA & Phi Nodes', llvm: 'LLVM IR Deep Dive',
+  assess: 'Start Here & Battle Plan', ssa: 'SSA & Phi Nodes', llvm: 'LLVM IR Deep Dive',
   passes: 'Pass Manager & Passes', pipeline: 'Full Pipeline', isel: 'Instruction Selection',
   regalloc: 'Register Allocation', opts: 'Loop & Scalar Opts', vec: 'Vectorization & SIMD',
   dataflow: 'Dataflow Analysis', alias: 'Alias Analysis', cpp_obj: 'Object Model & OOP',
@@ -91,6 +91,6 @@ export const PREP_MODULE_LABELS = {
   cpp_misc: 'STL, Storage & ODR', arch: 'Architecture & Cache', arm: 'ARM / AArch64',
   link: 'Linking & ABI', test: 'Testing & Debugging', cuda: 'CUDA & GPU Model',
   triton: 'Triton & Block Model', mlir: 'MLIR & AI Workloads', pytorch: 'PyTorch & torch.compile',
-  mojo: 'Mojo & MAX Platform', hft: 'HFT Playbook & Ops', resume: 'Resume Deep Q&A',
+  mojo: 'Mojo & MAX Platform', hft: 'HFT Playbook & Ops', resume: 'Present Your Background',
   mock: 'Mock Questions', fullmock: 'Full Mock Interview', behav: 'Behavioral Prep',
 };

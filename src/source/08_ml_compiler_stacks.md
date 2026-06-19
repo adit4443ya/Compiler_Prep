@@ -295,7 +295,7 @@ linalg.matmul
 -   A first-class language primitive representing a hardware vector.
 -   `SIMD[DType.float32, 8]` represents an 8-wide float32 vector, which the compiler maps directly to AVX or NEON instructions.
 
-**On vectorization (your Round 1 gap — they WILL revisit):**
+**On vectorization (a commonly probed topic — expect follow-ups):**
 **Q: What is loop vectorization? What conditions must hold for it to be legal?**
 -   **Loop Vectorization**: Turning multiple scalar loop iterations into a single SIMD instruction.
 -   **Legality Conditions**:

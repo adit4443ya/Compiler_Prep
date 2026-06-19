@@ -68,8 +68,8 @@ This is the hardest problem in compiler verification:
 
 **Q: How would you build a regression test suite for OpenMP target offloading?**
 
-This is where YOUR work is directly relevant:
-- You built OpenMP target offloading infrastructure — you know the exact construct space
+Candidates with an OpenMP/GPU-offloading background map naturally onto this question — knowing the construct space first-hand helps:
+- If you've worked on OpenMP target offloading infrastructure, you already know the exact construct space to enumerate
 - Test dimensions: every construct (target, teams, distribute, parallel for, simd), every clause (num_teams, num_threads, map variants), every combination
 - Edge cases: nested parallelism, device data lifetime across multiple target regions, async offloading (nowait + taskwait)
 - Correctness vs performance: functional tests (right answer) + performance regression tests (right speedup)
