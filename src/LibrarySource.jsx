@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { tk, TabBanner } from './App';
+import { alpha, useSyntaxTheme } from './theme.jsx';
 
 const mdModules = import.meta.glob('./source/*.md', { query: '?raw', import: 'default', eager: true });
 
@@ -75,11 +75,11 @@ const shortTitle = (f) => f.title.split(/[:—]/)[0].trim();
 
 // ── Task 3: suggested learning tracks ──────────────────────────────
 const TRACKS = [
-  { name: "Fundamentals First", color: "#10b981", nums: ["01", "02", "03", "04"], blurb: "The compiler spine — read in order." },
-  { name: "C++ Depth", color: "#3b82f6", nums: ["05", "06", "07", "16"], blurb: "Language internals interviewers probe hard." },
-  { name: "ARM / AArch64 Specialization", color: "#8b5cf6", nums: ["13", "14", "15"], blurb: "The Qualcomm / Apple-Silicon track." },
-  { name: "Domain Specializations", color: "#f59e0b", nums: ["08", "09", "10"], blurb: "Pick the one matching your target team." },
-  { name: "Tooling & Interview", color: "#06b6d4", nums: ["11", "12"], blurb: "Commands + scenario playbook for the night before." },
+  { name: "Fundamentals First", color: tk.emerald, nums: ["01", "02", "03", "04"], blurb: "The compiler spine — read in order." },
+  { name: "C++ Depth", color: tk.accent, nums: ["05", "06", "07", "16"], blurb: "Language internals interviewers probe hard." },
+  { name: "ARM / AArch64 Specialization", color: tk.violet, nums: ["13", "14", "15"], blurb: "The Qualcomm / Apple-Silicon track." },
+  { name: "Domain Specializations", color: tk.amber, nums: ["08", "09", "10"], blurb: "Pick the one matching your target team." },
+  { name: "Tooling & Interview", color: tk.cyan, nums: ["11", "12"], blurb: "Commands + scenario playbook for the night before." },
 ];
 
 // "Prepping for X in 5 days? read these 4"
@@ -91,6 +91,7 @@ const QUICKPICKS = [
 ];
 
 export default function LibrarySource({ setMode, target }) {
+  const syn = useSyntaxTheme();   // syntax highlighting follows the app theme
   const [search, setSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -232,21 +233,21 @@ export default function LibrarySource({ setMode, target }) {
     code({ node, inline, className, children, ...props }) {
       const match = /language-(\w+)/.exec(className || '');
       return !inline && match ? (
-        <div style={{ margin: '24px 0', borderRadius: 10, overflow: 'hidden', border: `1px solid ${tk.border}`, boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
-          <div style={{ background: '#111', borderBottom: `1px solid ${tk.border}`, padding: '8px 16px', fontSize: 11, color: tk.textDim, fontFamily: tk.mono, letterSpacing: .5, display: 'flex', alignItems: 'center' }}>
-            <span style={{ marginRight: 8, color: '#10b981' }}>■</span>{match[1].toUpperCase()}
+        <div style={{ margin: '24px 0', borderRadius: 10, overflow: 'hidden', border: `1px solid ${tk.border}`, boxShadow: tk.shadowMd }}>
+          <div style={{ background: tk.codeTitleBg, borderBottom: `1px solid ${tk.border}`, padding: '8px 16px', fontSize:"var(--fs-xs)", color: tk.textDim, fontFamily: tk.mono, letterSpacing: .5, display: 'flex', alignItems: 'center' }}>
+            <span style={{ marginRight: 8, color: tk.emerald }}>■</span>{match[1].toUpperCase()}
           </div>
           <SyntaxHighlighter
             {...props}
             children={String(children).replace(/\n$/, '')}
-            style={vscDarkPlus}
+            style={syn}
             language={match[1]}
             PreTag="div"
-            customStyle={{ margin: 0, background: '#0a0a0a', padding: '16px 20px', fontSize: 13, lineHeight: 1.7, fontFamily: tk.mono }}
+            customStyle={{ margin: 0, background: tk.codeBg, padding: '16px 20px', fontSize:"var(--fs-code)", lineHeight: 1.7, fontFamily: tk.mono }}
           />
         </div>
       ) : (
-        <code {...props} className={className} style={{ background: '#1a1a1a', padding: '3px 6px', borderRadius: 4, color: tk.cyan, fontFamily: tk.mono, fontSize: '0.9em', border: `1px solid ${tk.border}` }}>
+        <code {...props} className={className} style={{ background: tk.bg3, padding: '3px 6px', borderRadius: 4, color: tk.cyan, fontFamily: tk.mono, fontSize: '0.9em', border: `1px solid ${tk.border}` }}>
           {children}
         </code>
       );
@@ -266,7 +267,7 @@ export default function LibrarySource({ setMode, target }) {
           <a
             href={href}
             onClick={(e) => { e.preventDefault(); openGuide(target, anchor); }}
-            style={{ color: '#10b981', cursor: 'pointer', textDecoration: 'none', fontWeight: 700 }}
+            style={{ color: tk.emerald, cursor: 'pointer', textDecoration: 'none', fontWeight: 700 }}
             title={target ? `Open ${target.title}` : undefined}
             {...props}
           >
@@ -282,7 +283,7 @@ export default function LibrarySource({ setMode, target }) {
           <a
             href={href}
             onClick={(e) => { e.preventDefault(); scrollToHeader(resolvedId); }}
-            style={{ color: '#10b981', cursor: 'pointer', textDecoration: 'none', fontWeight: 600 }}
+            style={{ color: tk.emerald, cursor: 'pointer', textDecoration: 'none', fontWeight: 600 }}
             {...props}
           >
             {children}
@@ -291,7 +292,7 @@ export default function LibrarySource({ setMode, target }) {
       }
       return (
         <a href={href} target="_blank" rel="noopener noreferrer"
-          style={{ color: '#10b981', textDecoration: 'none', fontWeight: 600 }}
+          style={{ color: tk.emerald, textDecoration: 'none', fontWeight: 600 }}
           {...props}
         >
           {children}
@@ -328,15 +329,15 @@ export default function LibrarySource({ setMode, target }) {
       );
     },
     // eslint-disable-next-line no-unused-vars
-  }), [anchorMapping, scrollToHeader, openGuide]);
+  }), [anchorMapping, scrollToHeader, openGuide, syn]);
 
   const trackChipStyle = {
     background: tk.bg, border: `1px solid ${tk.border}`, borderRadius: 6,
-    color: tk.text, fontSize: 11.5, fontFamily: tk.sans, cursor: 'pointer',
+    color: tk.text, fontSize:"var(--fs-xs)", fontFamily: tk.sans, cursor: 'pointer',
     padding: '5px 10px', transition: 'all .12s', display: 'inline-flex', alignItems: 'center', gap: 6,
   };
   const chipHover = (on, color) => (e) => {
-    e.currentTarget.style.borderColor = on ? (color || '#10b981') : tk.border;
+    e.currentTarget.style.borderColor = on ? (color || tk.emerald) : tk.border;
     e.currentTarget.style.color = on ? tk.textBright : tk.text;
   };
 
@@ -345,30 +346,30 @@ export default function LibrarySource({ setMode, target }) {
       <TabBanner mode="library" setMode={setMode} />
 
       <div style={{ marginBottom: 28, borderBottom: `1px solid ${tk.border}`, paddingBottom: 20 }}>
-        <div style={{ fontFamily: tk.mono, color: '#10b981', fontSize: 11, letterSpacing: '.12em', fontWeight: 800, marginBottom: 8 }}>◆ LIBRARY · LEARN</div>
-        <h1 style={{ margin: '0 0 10px', fontSize: '2rem', fontWeight: 900, color: tk.textBright, lineHeight: 1.2 }}>Deep-Dive Guides</h1>
-        <p style={{ color: tk.textDim, fontSize: 14, margin: 0, lineHeight: 1.65, maxWidth: 700 }}>
+        <div style={{ fontFamily: tk.mono, color: tk.emerald, fontSize:"var(--fs-xs)", letterSpacing: '.12em', fontWeight: 800, marginBottom: 8 }}>◆ LIBRARY · LEARN</div>
+        <h1 style={{ margin: '0 0 10px', fontSize:"var(--fs-3xl)", fontWeight: 900, color: tk.textBright, lineHeight: 1.2 }}>Deep-Dive Guides</h1>
+        <p style={{ color: tk.textDim, fontSize:"var(--fs-base)", margin: 0, lineHeight: 1.65, maxWidth: 760 }}>
           {files.length} long-form references. New here? Follow a track in order. Short on time? Take a 5-day quick-pick. Every guide opens with a <strong style={{ color: tk.text }}>TL;DR</strong> so you can decide in 10 seconds whether to (re)read it.
         </p>
       </div>
 
       {/* Suggested Tracks */}
-      <div style={{ fontSize: 11, color: tk.textDim, fontFamily: tk.mono, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 14 }}>Suggested Tracks</div>
+      <div style={{ fontSize:"var(--fs-xs)", color: tk.textDim, fontFamily: tk.mono, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 14 }}>Suggested Tracks</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16, marginBottom: 36 }}>
         {TRACKS.map(tr => (
           <div key={tr.name} style={{ background: tk.bg2, border: `1px solid ${tk.border}`, borderTop: `3px solid ${tr.color}`, borderRadius: 10, padding: '16px 18px' }}>
-            <div style={{ color: tr.color, fontWeight: 800, fontSize: 14, marginBottom: 4 }}>{tr.name}</div>
-            <div style={{ color: tk.textDim, fontSize: 12, marginBottom: 14, lineHeight: 1.5 }}>{tr.blurb}</div>
+            <div style={{ color: tr.color, fontWeight: 800, fontSize:"var(--fs-base)", marginBottom: 4 }}>{tr.name}</div>
+            <div style={{ color: tk.textDim, fontSize:"var(--fs-sm)", marginBottom: 14, lineHeight: 1.5 }}>{tr.blurb}</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
               {tr.nums.map((n, i) => {
                 const f = guideByNum(n);
                 if (!f) return null;
                 return (
                   <span key={n} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    {i > 0 && <span style={{ color: tk.border, fontSize: 12 }}>→</span>}
+                    {i > 0 && <span style={{ color: tk.border, fontSize:"var(--fs-sm)" }}>→</span>}
                     <button onClick={() => openGuide(f)} style={trackChipStyle}
                       onMouseEnter={chipHover(true, tr.color)} onMouseLeave={chipHover(false)}>
-                      <span style={{ opacity: 0.5, fontFamily: tk.mono, fontSize: 10 }}>{n}</span>{shortTitle(f)}
+                      <span style={{ opacity: 0.5, fontFamily: tk.mono, fontSize:"var(--fs-caption)" }}>{n}</span>{shortTitle(f)}
                     </button>
                   </span>
                 );
@@ -379,21 +380,21 @@ export default function LibrarySource({ setMode, target }) {
       </div>
 
       {/* 5-day quick-picks */}
-      <div style={{ background: '#062817', border: '1px solid #10b98140', borderLeft: '4px solid #10b981', borderRadius: 8, padding: '18px 20px' }}>
-        <div style={{ color: '#10b981', fontWeight: 800, fontSize: 14, marginBottom: 4 }}>✦ Prepping for one team in 5 days? Read these 4.</div>
-        <div style={{ color: tk.textDim, fontSize: 12, marginBottom: 14 }}>Curated crash paths — one guide a day, with a re-skim on day 5.</div>
+      <div style={{ background: tk.calloutTip, border: `1px solid ${alpha(tk.emerald,"40")}`, borderLeft: `4px solid ${tk.emerald}`, borderRadius: 8, padding: '18px 20px' }}>
+        <div style={{ color: tk.emerald, fontWeight: 800, fontSize:"var(--fs-base)", marginBottom: 4 }}>✦ Prepping for one team in 5 days? Read these 4.</div>
+        <div style={{ color: tk.textDim, fontSize:"var(--fs-sm)", marginBottom: 14 }}>Curated crash paths — one guide a day, with a re-skim on day 5.</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12 }}>
           {QUICKPICKS.map(qp => (
             <div key={qp.name} style={{ background: tk.bg, border: `1px solid ${tk.border}`, borderRadius: 8, padding: '12px 14px' }}>
-              <div style={{ color: tk.text, fontWeight: 700, fontSize: 12.5, marginBottom: 10 }}>{qp.name}</div>
+              <div style={{ color: tk.text, fontWeight: 700, fontSize:"var(--fs-sm)", marginBottom: 10 }}>{qp.name}</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {qp.nums.map(n => {
                   const f = guideByNum(n);
                   if (!f) return null;
                   return (
                     <button key={n} onClick={() => openGuide(f)} title={f.title}
-                      style={{ ...trackChipStyle, fontFamily: tk.mono, fontSize: 11 }}
-                      onMouseEnter={chipHover(true, '#10b981')} onMouseLeave={chipHover(false)}>
+                      style={{ ...trackChipStyle, fontFamily: tk.mono, fontSize:"var(--fs-xs)" }}
+                      onMouseEnter={chipHover(true, tk.emerald)} onMouseLeave={chipHover(false)}>
                       {n} · {shortTitle(f)}
                     </button>
                   );
@@ -410,7 +411,7 @@ export default function LibrarySource({ setMode, target }) {
     <div style={{ display: 'flex', height: '100%', width: '100%', flexDirection: 'column' }}>
       {/* Read progress bar */}
       <div style={{ height: 3, width: '100%', background: tk.bg2, flexShrink: 0 }}>
-        <div style={{ height: '100%', width: `${scrollProgress}%`, background: '#10b981', transition: 'width 0.1s' }} />
+        <div style={{ height: '100%', width: `${scrollProgress}%`, background: tk.emerald, transition: 'width 0.1s' }} />
       </div>
 
       <div className="library-layout">
@@ -424,11 +425,11 @@ export default function LibrarySource({ setMode, target }) {
         <nav className={`library-sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
           <div style={{ padding: '20px 16px 12px', borderBottom: `1px solid ${tk.border}`, flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <div style={{ fontFamily: tk.mono, color: '#10b981', fontSize: 11, letterSpacing: '.12em', fontWeight: 800 }}>LIBRARY SOURCE</div>
+              <div style={{ fontFamily: tk.mono, color: tk.emerald, fontSize:"var(--fs-xs)", letterSpacing: '.12em', fontWeight: 800 }}>LIBRARY SOURCE</div>
               <button
                 onClick={() => setSidebarCollapsed(true)}
                 title="Collapse sidebar"
-                style={{ background: 'transparent', border: `1px solid ${tk.border}`, borderRadius: 5, color: tk.textDim, cursor: 'pointer', padding: '3px 7px', fontSize: 12, fontFamily: tk.mono, transition: 'all 0.15s' }}
+                style={{ background: 'transparent', border: `1px solid ${tk.border}`, borderRadius: 5, color: tk.textDim, cursor: 'pointer', padding: '3px 7px', fontSize:"var(--fs-sm)", fontFamily: tk.mono, transition: 'all 0.15s' }}
                 onMouseEnter={e => { e.currentTarget.style.color = tk.textBright; e.currentTarget.style.borderColor = tk.borderLight; }}
                 onMouseLeave={e => { e.currentTarget.style.color = tk.textDim; e.currentTarget.style.borderColor = tk.border; }}
               >
@@ -444,17 +445,17 @@ export default function LibrarySource({ setMode, target }) {
                 onChange={e => setSearch(e.target.value)}
                 style={{
                   width: '100%', padding: '8px 32px 8px 12px', marginBottom: 12,
-                  background: '#0a0a0a', border: `1px solid ${tk.border}`, borderRadius: 6,
-                  color: tk.text, fontSize: 13, fontFamily: tk.sans, outline: 'none', boxSizing: 'border-box',
+                  background: tk.bg, border: `1px solid ${tk.border}`, borderRadius: 6,
+                  color: tk.text, fontSize:"var(--fs-md)", fontFamily: tk.sans, outline: 'none', boxSizing: 'border-box',
                   transition: 'border-color 0.15s',
                 }}
-                onFocus={e => e.target.style.borderColor = '#10b981'}
+                onFocus={e => e.target.style.borderColor = tk.emerald}
                 onBlur={e => e.target.style.borderColor = tk.border}
               />
               {search && (
                 <button
                   onClick={() => setSearch('')}
-                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-60%)', background: 'transparent', border: 'none', color: tk.textDim, cursor: 'pointer', fontSize: 14, padding: 0, lineHeight: 1 }}
+                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-60%)', background: 'transparent', border: 'none', color: tk.textDim, cursor: 'pointer', fontSize:"var(--fs-base)", padding: 0, lineHeight: 1 }}
                 >
                   ✕
                 </button>
@@ -467,10 +468,10 @@ export default function LibrarySource({ setMode, target }) {
                   key={mode}
                   onClick={() => setMode(mode)}
                   style={{
-                    flex: 1, textAlign: 'center', padding: '6px 0', fontSize: 10, fontFamily: tk.mono,
+                    flex: 1, textAlign: 'center', padding: '6px 0', fontSize:"var(--fs-caption)", fontFamily: tk.mono,
                     cursor: 'pointer', borderRadius: 4, transition: 'all 0.15s',
-                    background: mode === 'library' ? '#10b98122' : 'transparent',
-                    color: mode === 'library' ? '#10b981' : tk.textDim,
+                    background: mode === 'library' ? alpha(tk.emerald,"22") : 'transparent',
+                    color: mode === 'library' ? tk.emerald : tk.textDim,
                     fontWeight: mode === 'library' ? 800 : 400,
                   }}
                 >
@@ -487,23 +488,23 @@ export default function LibrarySource({ setMode, target }) {
               onClick={() => { setShowHome(true); setSidebarOpen(false); }}
               style={{
                 margin: '0 12px 12px', padding: '9px 12px', cursor: 'pointer', borderRadius: 6,
-                background: showHome ? '#10b98112' : 'transparent',
-                border: `1px solid ${showHome ? '#10b98155' : tk.border}`,
-                color: showHome ? '#10b981' : tk.textDim,
-                fontFamily: tk.mono, fontSize: 11, fontWeight: 700, letterSpacing: '.04em',
+                background: showHome ? alpha(tk.emerald,"12") : 'transparent',
+                border: `1px solid ${showHome ? alpha(tk.emerald,"55") : tk.border}`,
+                color: showHome ? tk.emerald : tk.textDim,
+                fontFamily: tk.mono, fontSize:"var(--fs-xs)", fontWeight: 700, letterSpacing: '.04em',
                 display: 'flex', alignItems: 'center', gap: 8, transition: 'all .12s',
               }}
-              onMouseEnter={e => { if (!showHome) { e.currentTarget.style.borderColor = '#10b98144'; e.currentTarget.style.color = tk.text; } }}
+              onMouseEnter={e => { if (!showHome) { e.currentTarget.style.borderColor = alpha(tk.emerald,"44"); e.currentTarget.style.color = tk.text; } }}
               onMouseLeave={e => { if (!showHome) { e.currentTarget.style.borderColor = tk.border; e.currentTarget.style.color = tk.textDim; } }}
             >
               ⌂ HOME · LEARNING TRACKS
             </div>
             {Object.keys(filteredCategories).length === 0 && (
-              <div style={{ padding: '20px 16px', color: tk.textDim, fontFamily: tk.sans, fontSize: 13 }}>No results for "{search}"</div>
+              <div style={{ padding: '20px 16px', color: tk.textDim, fontFamily: tk.sans, fontSize:"var(--fs-md)" }}>No results for "{search}"</div>
             )}
             {Object.keys(filteredCategories).map(cat => (
               <div key={cat} style={{ marginBottom: 16 }}>
-                <div style={{ padding: '0 16px', fontSize: 10, color: tk.textDim, fontFamily: tk.mono, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
+                <div style={{ padding: '0 16px', fontSize:"var(--fs-caption)", color: tk.textDim, fontFamily: tk.mono, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6 }}>
                   {cat}
                 </div>
                 {filteredCategories[cat].map(file => {
@@ -514,18 +515,18 @@ export default function LibrarySource({ setMode, target }) {
                       onClick={() => openGuide(file)}
                       style={{
                         padding: '9px 16px 9px 20px', cursor: 'pointer',
-                        background: isActive ? '#10b98112' : 'transparent',
-                        borderLeft: isActive ? '2px solid #10b981' : '2px solid transparent',
+                        background: isActive ? alpha(tk.emerald,"12") : 'transparent',
+                        borderLeft: isActive ? `2px solid ${tk.emerald}` : '2px solid transparent',
                         transition: 'all .12s',
                       }}
-                      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#ffffff08'; }}
+                      onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = alpha(tk.textBright,"08"); }}
                       onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                     >
-                      <div style={{ fontSize: 13, color: isActive ? tk.textBright : tk.text, fontFamily: tk.sans, lineHeight: 1.35, fontWeight: isActive ? 600 : 400 }}>
+                      <div style={{ fontSize:"var(--fs-md)", color: isActive ? tk.textBright : tk.text, fontFamily: tk.sans, lineHeight: 1.35, fontWeight: isActive ? 600 : 400 }}>
                         {file.title}
                       </div>
                       {file.metadata.readTime && (
-                        <div style={{ fontSize: 10, color: tk.textDim, fontFamily: tk.mono, marginTop: 3 }}>
+                        <div style={{ fontSize:"var(--fs-caption)", color: tk.textDim, fontFamily: tk.mono, marginTop: 3 }}>
                           ⏱ {file.metadata.readTime} · {file.metadata.difficulty}
                         </div>
                       )}
@@ -544,16 +545,16 @@ export default function LibrarySource({ setMode, target }) {
             title="Expand sidebar"
             style={{
               position: 'fixed', left: 0, top: '50%', transform: 'translateY(-50%)',
-              zIndex: 50, background: '#111111', border: `1px solid ${tk.border}`,
+              zIndex: 50, background: tk.bg2, border: `1px solid ${tk.border}`,
               borderLeft: 'none', borderRadius: '0 8px 8px 0',
-              color: '#10b981', cursor: 'pointer', padding: '14px 7px',
-              fontSize: 12, fontFamily: tk.mono, fontWeight: 700,
-              boxShadow: '4px 0 16px rgba(0,0,0,0.4)',
+              color: tk.emerald, cursor: 'pointer', padding: '14px 7px',
+              fontSize:"var(--fs-sm)", fontFamily: tk.mono, fontWeight: 700,
+              boxShadow: tk.shadowMd,
               writingMode: 'vertical-rl', textOrientation: 'mixed',
               letterSpacing: 1, transition: 'all 0.15s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#10b98122'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = '#111111'; }}
+            onMouseEnter={e => { e.currentTarget.style.background = alpha(tk.emerald,"22"); }}
+            onMouseLeave={e => { e.currentTarget.style.background = tk.bg2; }}
           >
             ▶ MENU
           </button>
@@ -570,26 +571,26 @@ export default function LibrarySource({ setMode, target }) {
                   {/* File header */}
                   <div style={{ marginBottom: 28, borderBottom: `1px solid ${tk.border}`, paddingBottom: 20 }}>
                     <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                      <span style={{ fontSize: 10, color: tk.textDim, fontFamily: tk.mono }}>{activeFile.metadata.category}</span>
+                      <span style={{ fontSize:"var(--fs-caption)", color: tk.textDim, fontFamily: tk.mono }}>{activeFile.metadata.category}</span>
                       {activeFile.metadata.difficulty && (
                         <>
                           <span style={{ color: tk.border }}>·</span>
-                          <span style={{ fontSize: 10, color: tk.amber, fontFamily: tk.mono }}>{activeFile.metadata.difficulty}</span>
+                          <span style={{ fontSize:"var(--fs-caption)", color: tk.amber, fontFamily: tk.mono }}>{activeFile.metadata.difficulty}</span>
                         </>
                       )}
                       {activeFile.metadata.readTime && (
                         <>
                           <span style={{ color: tk.border }}>·</span>
-                          <span style={{ fontSize: 10, color: tk.textDim, fontFamily: tk.mono }}>⏱ {activeFile.metadata.readTime}</span>
+                          <span style={{ fontSize:"var(--fs-caption)", color: tk.textDim, fontFamily: tk.mono }}>⏱ {activeFile.metadata.readTime}</span>
                         </>
                       )}
                     </div>
-                    <h1 style={{ margin: '0 0 12px', fontSize: '2.2rem', fontWeight: 900, color: tk.textBright, lineHeight: 1.2 }}>
+                    <h1 style={{ margin: '0 0 12px', fontSize:"var(--fs-3xl)", fontWeight: 900, color: tk.textBright, lineHeight: 1.2 }}>
                       {activeFile.title}
                     </h1>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       {activeFile.metadata.tags.split(',').map(t => t.trim()).filter(Boolean).map(tag => (
-                        <span key={tag} style={{ fontSize: 10, background: '#10b98120', color: '#10b981', padding: '2px 8px', borderRadius: 4, fontFamily: tk.mono, border: '1px solid #10b98130' }}>
+                        <span key={tag} style={{ fontSize:"var(--fs-caption)", background: alpha(tk.emerald,"20"), color: tk.emerald, padding: '2px 8px', borderRadius: 4, fontFamily: tk.mono, border: `1px solid ${alpha(tk.emerald,"30")}` }}>
                           {tag}
                         </span>
                       ))}
@@ -608,7 +609,7 @@ export default function LibrarySource({ setMode, target }) {
             {/* ── Right TOC ── */}
             {!showHome && toc.length > 0 && (
               <div className="library-toc">
-                <div style={{ fontSize: 10, color: tk.textDim, fontFamily: tk.mono, fontWeight: 800, letterSpacing: 1.5, marginBottom: 12, textTransform: 'uppercase' }}>
+                <div style={{ fontSize:"var(--fs-caption)", color: tk.textDim, fontFamily: tk.mono, fontWeight: 800, letterSpacing: 1.5, marginBottom: 12, textTransform: 'uppercase' }}>
                   On this page
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -620,14 +621,14 @@ export default function LibrarySource({ setMode, target }) {
                         onClick={() => scrollToHeader(item.id)}
                         style={{
                           display: 'block', width: '100%', textAlign: 'left',
-                          background: isActive ? '#10b98112' : 'transparent',
+                          background: isActive ? alpha(tk.emerald,"12") : 'transparent',
                           border: 'none',
-                          borderLeft: `2px solid ${isActive ? '#10b981' : 'transparent'}`,
+                          borderLeft: `2px solid ${isActive ? tk.emerald : 'transparent'}`,
                           borderRadius: '0 4px 4px 0',
                           padding: `5px 8px 5px ${6 + (item.level - 1) * 10}px`,
                           cursor: 'pointer',
-                          fontSize: item.level === 2 ? 12 : 11,
-                          color: isActive ? '#10b981' : tk.textDim,
+                          fontSize: item.level === 2 ? "var(--fs-sm)" : "var(--fs-xs)",
+                          color: isActive ? tk.emerald : tk.textDim,
                           fontFamily: tk.sans,
                           lineHeight: 1.45,
                           transition: 'all 0.12s',
@@ -649,12 +650,12 @@ export default function LibrarySource({ setMode, target }) {
                     marginTop: 20, width: '100%', padding: '7px 0',
                     background: 'transparent', border: `1px solid ${tk.border}`,
                     borderRadius: 6, color: tk.textDim, cursor: 'pointer',
-                    fontSize: 11, fontFamily: tk.mono, fontWeight: 600,
+                    fontSize:"var(--fs-xs)", fontFamily: tk.mono, fontWeight: 600,
                     letterSpacing: 0.5, transition: 'all 0.15s',
                     opacity: showBackToTop ? 1 : 0,
                     pointerEvents: showBackToTop ? 'auto' : 'none',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#10b98112'; e.currentTarget.style.color = '#10b981'; e.currentTarget.style.borderColor = '#10b98150'; }}
+                  onMouseEnter={e => { e.currentTarget.style.background = alpha(tk.emerald,"12"); e.currentTarget.style.color = tk.emerald; e.currentTarget.style.borderColor = alpha(tk.emerald,"50"); }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = tk.textDim; e.currentTarget.style.borderColor = tk.border; }}
                 >
                   ↑ BACK TO TOP

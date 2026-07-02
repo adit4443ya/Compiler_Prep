@@ -12,108 +12,111 @@ export const NavCtx = createContext(null);
    A free, deep compiler-interview prep system · 29 Modules · 120+ Q&A
    ══════════════════════════════════════════════════════════════════════════ */
 
-export const tk = {
-  // Sophisticated dark theme (Vercel/Linear inspired)
-  bg: "#0a0a0a", bg2: "#111111", bg3: "#1a1a1a",
-  border: "#333333", borderLight: "#404040",
-  text: "#ededed", textDim: "#a1a1aa", textBright: "#ffffff",
-  accent: "#3b82f6", accentDim: "#3b82f622",
-  amber: "#f59e0b", amberDim: "#f59e0b22",
-  red: "#ef4444", redDim: "#ef444422",
-  blue: "#3b82f6", blueDim: "#3b82f622",
-  cyan: "#06b6d4", violet: "#8b5cf6", rose: "#f43f5e", orange: "#f97316",
-  mono: "'Cascadia Code','Fira Code','JetBrains Mono',monospace",
-  sans: "'Inter','Segoe UI',system-ui,sans-serif",
-};
+// Theme-aware tokens: every tk.* value is a CSS var switched by data-theme.
+// alpha(c, hexAlpha) produces the translucent tints the old hex-suffix
+// concatenation used to, which cannot work on var() strings.
+import { tk, alpha, ThemeToggle } from "./theme.jsx";
+export { tk, alpha };
 
 /* ─── shared components ─── */
 export const C=({code,title})=>(
-  <div style={{margin:"16px 0", borderRadius: 8, overflow: "hidden", border: `1px solid ${tk.border}`, boxShadow: "0 4px 12px rgba(0,0,0,0.5)"}}>
-    {title&&<div style={{background:"#111111",borderBottom:`1px solid ${tk.border}`,padding:"8px 16px",fontSize:11,color:tk.textDim,fontFamily:tk.mono,letterSpacing:.5, display:"flex", alignItems:"center"}}><span style={{marginRight:8,color:tk.accent}}>■</span>{title}</div>}
-    <pre style={{background:"#0a0a0a",padding:"16px 20px",fontSize:13,lineHeight:1.7,overflowX:"auto",color:"#d4d4d8",fontFamily:tk.mono,margin:0,whiteSpace:"pre"}}>{code}</pre>
+  <div style={{margin:"16px 0", borderRadius: 8, overflow: "hidden", border: `1px solid ${tk.border}`, boxShadow: tk.shadowMd}}>
+    {title&&<div style={{background:tk.codeTitleBg,borderBottom:`1px solid ${tk.border}`,padding:"8px 16px",fontSize:"var(--fs-xs)",color:tk.textDim,fontFamily:tk.mono,letterSpacing:.5, display:"flex", alignItems:"center"}}><span style={{marginRight:8,color:tk.accent}}>■</span>{title}</div>}
+    <pre style={{background:tk.codeBg,padding:"16px 20px",fontSize:"var(--fs-code)",lineHeight:1.7,overflowX:"auto",color:tk.codeText,fontFamily:tk.mono,margin:0,whiteSpace:"pre"}}>{code}</pre>
   </div>
 );
 
 export const Card=({title, children, icon, color=tk.accent, highlighted=false}) => (
   <div style={{
-    background: highlighted ? `${color}0A` : tk.bg2,
-    border: `1px solid ${highlighted ? color+"80" : tk.border}`,
+    background: highlighted ? `${alpha(color,"0A")}` : tk.bg2,
+    border: `1px solid ${highlighted ? alpha(color,"80") : tk.border}`,
     borderRadius: 8,
     padding: "16px 20px",
     margin: "12px 0",
-    boxShadow: highlighted ? `0 4px 20px ${color}15` : "0 2px 8px rgba(0,0,0,0.2)",
+    boxShadow: highlighted ? `0 4px 20px ${alpha(color,"15")}` : tk.shadowSm,
     transition: "all 0.2s ease"
   }}>
     {(title || icon) && <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:12}}>
-      {icon && <span style={{fontSize:16, color}}>{icon}</span>}
-      {title && <h4 style={{margin:0, color: highlighted ? color : tk.textBright, fontSize:15, fontFamily:tk.sans, fontWeight:600}}>{title}</h4>}
+      {icon && <span style={{fontSize:"var(--fs-lg)", color}}>{icon}</span>}
+      {title && <h4 style={{margin:0, color: highlighted ? color : tk.textBright, fontSize:"var(--fs-lg)", fontFamily:tk.sans, fontWeight:600}}>{title}</h4>}
     </div>}
-    <div style={{color: tk.text, fontSize:14, lineHeight:1.75, fontFamily:tk.sans}}>
+    <div style={{color: tk.text, fontSize:"var(--fs-base)", lineHeight:1.75, fontFamily:tk.sans}}>
       {children}
     </div>
   </div>
 );
 
 const Diagram=({children, title, horizontal=false}) => (
-  <div style={{
-    background: "#111111",
+  <figure style={{
+    background: tk.diagramBg,
+    backgroundImage: `radial-gradient(${tk.diagramDot} 1px, transparent 1px)`,
+    backgroundSize: "18px 18px",
     border: `1px solid ${tk.border}`,
-    borderRadius: 8,
-    padding: "24px",
-    margin: "20px 0",
+    borderRadius: 12,
+    padding: "26px 24px",
+    margin: "22px 0",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: 16,
-    boxShadow: "inset 0 2px 10px rgba(0,0,0,0.2)"
+    gap: 18,
+    boxShadow: tk.shadowSm
   }}>
-    {title && <div style={{color: tk.textDim, fontFamily: tk.mono, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8}}>{title}</div>}
+    {title && <figcaption style={{display:"flex", alignItems:"center", gap:8, color: tk.textDim, fontFamily: tk.mono, fontSize:"var(--fs-xs)", letterSpacing: 1.5, fontWeight: 700, textTransform: "uppercase", background: tk.bg2, border: `1px solid ${tk.border}`, borderRadius: 999, padding: "4px 14px", boxShadow: tk.shadowSm}}>
+      <span style={{width:6, height:6, borderRadius:"50%", background: tk.accent, flexShrink:0}}/>{title}
+    </figcaption>}
     <div style={{display: "flex", flexDirection: horizontal ? "row" : "column", gap: 12, width: "100%", alignItems: "center", justifyContent: "center", flexWrap: horizontal ? "wrap" : "nowrap"}}>
       {children}
     </div>
-  </div>
+  </figure>
 );
 
-const Node=({label, desc, color=tk.textDim}) => (
+const Node=({label, desc, color=tk.accent}) => (
   <div style={{
-    background: tk.bg,
-    border: `1px solid ${color}55`,
-    borderRadius: 6,
-    padding: "12px 18px",
+    backgroundColor: tk.nodeBg,
+    backgroundImage: `linear-gradient(180deg, ${alpha(color,"14")}, transparent 70%)`,
+    border: `1px solid ${alpha(color,"45")}`,
+    borderRadius: 10,
+    padding: desc ? "13px 20px 12px" : "12px 20px",
     textAlign: "center",
     minWidth: 160,
-    boxShadow: `0 4px 12px ${color}10`
+    boxShadow: tk.shadowSm,
+    position: "relative",
+    overflow: "hidden"
   }}>
-    <div style={{color: tk.textBright, fontFamily: tk.mono, fontSize: 13, fontWeight: 700}}>{label}</div>
-    {desc && <div style={{color: tk.textDim, fontSize: 12, fontFamily: tk.sans, marginTop: 6, lineHeight: 1.4}}>{desc}</div>}
+    <div style={{position:"absolute", top:0, left:0, right:0, height:2, background:`linear-gradient(90deg, transparent, ${alpha(color,"AA")}, transparent)`}}/>
+    <div style={{color: tk.textBright, fontFamily: tk.mono, fontSize:"var(--fs-md)", fontWeight: 700, letterSpacing: ".01em"}}>{label}</div>
+    {desc && <div style={{color: tk.textDim, fontSize:"var(--fs-sm)", fontFamily: tk.sans, marginTop: 5, lineHeight: 1.45}}>{desc}</div>}
   </div>
 );
 
-const Arrow=({label, vertical=true}) => (
-  <div style={{display: "flex", flexDirection: vertical ? "column" : "row", alignItems: "center", gap: 4, color: tk.textDim}}>
-    {vertical ? (
-      <>
-        <div style={{width: 2, height: label?16:24, background: tk.borderLight}}></div>
-        {label && <div style={{fontSize: 11, fontFamily: tk.mono, background: tk.bg, padding: "2px 8px", borderRadius: 4, color: tk.accent, border:`1px solid ${tk.border}`}}>{label}</div>}
-        {label && <div style={{width: 2, height: 16, background: tk.borderLight}}></div>}
-        <div style={{fontSize: 14, marginTop: -8, color: tk.borderLight}}>▼</div>
-      </>
-    ) : (
-      <>
-        <div style={{height: 2, width: label?16:24, background: tk.borderLight}}></div>
-        {label && <div style={{fontSize: 11, fontFamily: tk.mono, background: tk.bg, padding: "2px 8px", borderRadius: 4, color: tk.accent, border:`1px solid ${tk.border}`}}>{label}</div>}
-        {label && <div style={{height: 2, width: 16, background: tk.borderLight}}></div>}
-        <div style={{fontSize: 14, marginLeft: -8, color: tk.borderLight}}>▶</div>
-      </>
-    )}
-  </div>
+// SVG chevron arrowheads — crisper than the old unicode ▼ / ▶ glyphs.
+const ArrowHead=({vertical})=>(
+  <svg width={vertical?14:9} height={vertical?9:14} viewBox={vertical?"0 0 14 9":"0 0 9 14"} style={{display:"block", flexShrink:0, marginTop:vertical?-1:0, marginLeft:vertical?0:-1}} aria-hidden="true">
+    {vertical
+      ? <path d="M2 1.5 L7 7 L12 1.5" fill="none" stroke={tk.connector} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+      : <path d="M1.5 2 L7 7 L1.5 12" fill="none" stroke={tk.connector} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>}
+  </svg>
 );
+
+const Arrow=({label, vertical=true}) => {
+  const line = vertical
+    ? (h)=><div style={{width:2, height:h, borderRadius:2, background:`linear-gradient(180deg, ${alpha(tk.connector,"66")}, ${tk.connector})`}}/>
+    : (w)=><div style={{height:2, width:w, borderRadius:2, background:`linear-gradient(90deg, ${alpha(tk.connector,"66")}, ${tk.connector})`}}/>;
+  return (
+    <div style={{display: "flex", flexDirection: vertical ? "column" : "row", alignItems: "center", gap: 5}}>
+      {line(label?14:20)}
+      {label && <div style={{fontSize:"var(--fs-xs)", fontFamily: tk.mono, fontWeight: 600, background: tk.bg2, padding: "3px 11px", borderRadius: 999, color: tk.accent, border:`1px solid ${alpha(tk.accent,"38")}`, boxShadow: tk.shadowSm, whiteSpace:"nowrap"}}>{label}</div>}
+      {label && line(14)}
+      <ArrowHead vertical={vertical}/>
+    </div>
+  );
+};
 
 export const S=({title,children,c=tk.accent})=>(
   <div style={{marginBottom:40}}>
     <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20, borderBottom:`1px solid ${tk.border}`, paddingBottom: 12}}>
-      <div style={{width:4,height:24,background:c,borderRadius:2,boxShadow:`0 0 12px ${c}40`}}/>
-      <h3 style={{color: tk.textBright, fontFamily:tk.sans, fontSize:18, fontWeight:700, letterSpacing:"0.02em", margin:0}}>{title}</h3>
+      <div style={{width:4,height:24,background:c,borderRadius:2,boxShadow:`0 0 12px ${alpha(c,"40")}`}}/>
+      <h3 style={{color: tk.textBright, fontFamily:tk.sans, fontSize:"var(--fs-xl)", fontWeight:700, letterSpacing:"0.02em", margin:0}}>{title}</h3>
     </div>
     {children}
   </div>
@@ -125,23 +128,23 @@ export const Q=({q,a,d="medium",code,deep})=>{
   const cl={easy:tk.cyan,medium:tk.amber,hard:tk.rose,must:tk.violet};
   const lb={easy:"EASY",medium:"MED",hard:"HARD",must:"MUST"};
   return(
-    <div style={{border:`1px solid ${o?cl[d]+"60":tk.border}`,borderRadius:8,marginBottom:10,overflow:"hidden",transition:"all .2s ease",boxShadow:o?`0 4px 12px ${cl[d]}10`:"0 2px 4px rgba(0,0,0,0.2)"}}>
-      <div onClick={()=>setO(!o)} style={{padding:"14px 18px",cursor:"pointer",display:"flex",alignItems:"flex-start",gap:12,background:o?"#111111":tk.bg2,transition:"background .15s"}}>
-        <span style={{fontSize:10,padding:"4px 8px",borderRadius:4,background:cl[d]+"22",color:cl[d],fontFamily:tk.mono,flexShrink:0,marginTop:2,fontWeight:800,letterSpacing:".06em"}}>{lb[d]}</span>
-        <span style={{color:o?tk.textBright:tk.text,fontFamily:tk.sans,fontSize:14.5,fontWeight:o?600:400,flex:1,lineHeight:1.5,transition:"color .15s"}}>{q}</span>
-        <span style={{color:cl[d],flexShrink:0,fontSize:16,fontFamily:tk.mono,opacity:.7,transform:o?"rotate(90deg)":"none",transition:"transform .2s"}}>▸</span>
+    <div style={{border:`1px solid ${o?alpha(cl[d],"60"):tk.border}`,borderRadius:8,marginBottom:10,overflow:"hidden",transition:"all .2s ease",boxShadow:o?`0 4px 12px ${alpha(cl[d],"10")}`:tk.shadowSm}}>
+      <div onClick={()=>setO(!o)} style={{padding:"14px 18px",cursor:"pointer",display:"flex",alignItems:"flex-start",gap:12,background:o?tk.bg3:tk.bg2,transition:"background .15s"}}>
+        <span style={{fontSize:"var(--fs-caption)",padding:"4px 8px",borderRadius:4,background:alpha(cl[d],"22"),color:cl[d],fontFamily:tk.mono,flexShrink:0,marginTop:2,fontWeight:800,letterSpacing:".06em"}}>{lb[d]}</span>
+        <span style={{color:o?tk.textBright:tk.text,fontFamily:tk.sans,fontSize:"var(--fs-base)",fontWeight:o?600:400,flex:1,lineHeight:1.5,transition:"color .15s"}}>{q}</span>
+        <span style={{color:cl[d],flexShrink:0,fontSize:"var(--fs-lg)",fontFamily:tk.mono,opacity:.7,transform:o?"rotate(90deg)":"none",transition:"transform .2s"}}>▸</span>
       </div>
       {o&&<div style={{padding:"18px 20px 24px",borderTop:`1px solid ${tk.border}`,background:tk.bg}}>
-        <div style={{color:tk.textDim,fontSize:14.5,lineHeight:1.8,fontFamily:tk.sans,whiteSpace:"pre-wrap"}}>{a}</div>
+        <div style={{color:tk.textDim,fontSize:"var(--fs-base)",lineHeight:1.8,fontFamily:tk.sans,whiteSpace:"pre-wrap"}}>{a}</div>
         {code&&<C code={code}/>}
         {deep&&nav&&(
           <button onClick={()=>nav.goToGuide(deep.g,deep.a)}
-            style={{marginTop:14,display:"inline-flex",alignItems:"center",gap:7,background:"#10b98112",
-              border:`1px solid #10b98140`,borderRadius:6,color:"#10b981",cursor:"pointer",
-              padding:"7px 12px",fontSize:12.5,fontFamily:tk.sans,fontWeight:600,transition:"all .15s"}}
-            onMouseOver={e=>{e.currentTarget.style.background="#10b98122";}}
-            onMouseOut={e=>{e.currentTarget.style.background="#10b98112";}}>
-            <span style={{fontFamily:tk.mono,fontSize:10,opacity:.8}}>LEARN ↗</span>
+            style={{marginTop:14,display:"inline-flex",alignItems:"center",gap:7,background:alpha(tk.emerald,"12"),
+              border:`1px solid ${alpha(tk.emerald,"40")}`,borderRadius:6,color:tk.emerald,cursor:"pointer",
+              padding:"7px 12px",fontSize:"var(--fs-sm)",fontFamily:tk.sans,fontWeight:600,transition:"all .15s"}}
+            onMouseOver={e=>{e.currentTarget.style.background=alpha(tk.emerald,"22");}}
+            onMouseOut={e=>{e.currentTarget.style.background=alpha(tk.emerald,"12");}}>
+            <span style={{fontFamily:tk.mono,fontSize:"var(--fs-caption)",opacity:.8}}>LEARN ↗</span>
             deep dive in {deep.t}
           </button>
         )}
@@ -151,20 +154,20 @@ export const Q=({q,a,d="medium",code,deep})=>{
 };
 
 export const B=({type="info",children})=>{
-  const s={info:{bg:"#111827",b:tk.blue,i:"ℹ"},warn:{bg:"#271c19",b:tk.amber,i:"⚠"},tip:{bg:"#062817",b:tk.accent,i:"✦"},danger:{bg:"#2a0a0a",b:tk.red,i:"▲"},interview:{bg:"#1d1033",b:tk.violet,i:"◎"}}[type];
+  const s={info:{bg:tk.calloutInfo,b:tk.blue,i:"ℹ"},warn:{bg:tk.calloutWarn,b:tk.amber,i:"⚠"},tip:{bg:tk.calloutTip,b:tk.emerald,i:"✦"},danger:{bg:tk.calloutDanger,b:tk.red,i:"▲"},interview:{bg:tk.calloutInterview,b:tk.violet,i:"◎"}}[type];
   return(
-    <div style={{background:s.bg,border:`1px solid ${s.b}40`,borderLeft:`4px solid ${s.b}`,borderRadius:6,padding:"16px 20px",margin:"16px 0",fontSize:14.5,color:tk.text,fontFamily:tk.sans,lineHeight:1.7}}>
-      <span style={{marginRight:12,color:s.b,fontSize:16}}>{s.i}</span>{children}
+    <div style={{background:s.bg,border:`1px solid ${alpha(s.b,"40")}`,borderLeft:`4px solid ${s.b}`,borderRadius:6,padding:"16px 20px",margin:"16px 0",fontSize:"var(--fs-base)",color:tk.text,fontFamily:tk.sans,lineHeight:1.7}}>
+      <span style={{marginRight:12,color:s.b,fontSize:"var(--fs-lg)"}}>{s.i}</span>{children}
     </div>
   );
 };
 
-export const P=({children})=><p style={{color:tk.text,lineHeight:1.8,fontSize:15,fontFamily:tk.sans,marginBottom:16,margin:"0 0 16px"}}>{children}</p>;
+export const P=({children})=><p style={{color:tk.text,lineHeight:1.8,fontSize:"var(--fs-lg)",fontFamily:tk.sans,marginBottom:16,margin:"0 0 16px"}}>{children}</p>;
 
 /* ─── Three-tab mental model: LEARN → REVISE → PRACTICE ─── */
 export const TabBanner=({mode,setMode})=>{
   const steps=[
-    {key:"library", verb:"LEARN",    tab:"Library", color:"#10b981"},
+    {key:"library", verb:"LEARN",    tab:"Library", color:tk.emerald},
     {key:"compiler",verb:"REVISE",   tab:"Prep",    color:tk.accent},
     {key:"dsa",     verb:"PRACTICE", tab:"DSA",     color:tk.violet},
   ];
@@ -176,8 +179,8 @@ export const TabBanner=({mode,setMode})=>{
   const active=steps.find(s=>s.key===mode)||steps[1];
   return(
     <div style={{display:"flex",alignItems:"center",gap:16,flexWrap:"wrap",
-      background:`linear-gradient(135deg, ${active.color}0E, transparent)`,
-      border:`1px solid ${active.color}33`,borderLeft:`3px solid ${active.color}`,
+      background:`linear-gradient(135deg, ${alpha(active.color,"0E")}, transparent)`,
+      border:`1px solid ${alpha(active.color,"33")}`,borderLeft:`3px solid ${active.color}`,
       borderRadius:8,padding:"9px 16px",margin:"0 0 22px"}}>
       <div style={{display:"flex",alignItems:"center",gap:7,flexShrink:0}}>
         {steps.map((s,i)=>{
@@ -187,20 +190,20 @@ export const TabBanner=({mode,setMode})=>{
               <button onClick={()=>!isActive&&setMode(s.key)} title={isActive?undefined:`Go to ${s.tab}`}
                 style={{display:"flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:6,
                   cursor:isActive?"default":"pointer",transition:"all .15s",
-                  background:isActive?s.color+"22":"transparent",
-                  border:`1px solid ${isActive?s.color+"88":tk.border}`,
-                  color:isActive?s.color:tk.textDim,fontFamily:tk.mono,fontSize:10.5,fontWeight:800,letterSpacing:".06em"}}
-                onMouseOver={e=>{if(!isActive){e.currentTarget.style.borderColor=s.color+"66";e.currentTarget.style.color=s.color;}}}
+                  background:isActive?alpha(s.color,"22"):"transparent",
+                  border:`1px solid ${isActive?alpha(s.color,"88"):tk.border}`,
+                  color:isActive?s.color:tk.textDim,fontFamily:tk.mono,fontSize:"var(--fs-xs)",fontWeight:800,letterSpacing:".06em"}}
+                onMouseOver={e=>{if(!isActive){e.currentTarget.style.borderColor=alpha(s.color,"66");e.currentTarget.style.color=s.color;}}}
                 onMouseOut={e=>{if(!isActive){e.currentTarget.style.borderColor=tk.border;e.currentTarget.style.color=tk.textDim;}}}>
                 <span>{s.verb}</span>
-                <span style={{opacity:.6,fontSize:9,fontWeight:600}}>{s.tab}</span>
+                <span style={{opacity:.6,fontSize:"var(--fs-caption)",fontWeight:600}}>{s.tab}</span>
               </button>
-              {i<steps.length-1&&<span style={{color:tk.border,fontSize:12}}>→</span>}
+              {i<steps.length-1&&<span style={{color:tk.border,fontSize:"var(--fs-sm)"}}>→</span>}
             </div>
           );
         })}
       </div>
-      <div style={{color:tk.textDim,fontSize:12.5,fontFamily:tk.sans,lineHeight:1.5,flex:1,minWidth:240}}>
+      <div style={{color:tk.textDim,fontSize:"var(--fs-sm)",fontFamily:tk.sans,lineHeight:1.5,flex:1,minWidth:240}}>
         {taglines[mode]}
       </div>
     </div>
@@ -210,26 +213,26 @@ export const TabBanner=({mode,setMode})=>{
 export const G=({items,children,cols=1,gap=12})=>(
   <div style={{display:"grid",gridTemplateColumns:`repeat(${cols},1fr)`,gap:gap,margin:"12px 0"}}>
     {children ? children : (items && items.map((it,i)=>(
-      <div key={i} style={{background:tk.bg2,border:`1px solid ${tk.border}`,borderRadius:8,padding:"16px 20px",boxShadow:"0 2px 8px rgba(0,0,0,0.15)"}}>
-        <div style={{color:tk.cyan,fontFamily:tk.mono,fontSize:13,fontWeight:700,marginBottom:8,letterSpacing:".02em"}}>{it.t}</div>
-        <div style={{color:tk.textDim,fontSize:14,lineHeight:1.6,fontFamily:tk.sans}}>{it.d}</div>
+      <div key={i} style={{background:tk.bg2,border:`1px solid ${tk.border}`,borderRadius:8,padding:"16px 20px",boxShadow:tk.shadowSm}}>
+        <div style={{color:tk.cyan,fontFamily:tk.mono,fontSize:"var(--fs-md)",fontWeight:700,marginBottom:8,letterSpacing:".02em"}}>{it.t}</div>
+        <div style={{color:tk.textDim,fontSize:"var(--fs-base)",lineHeight:1.6,fontFamily:tk.sans}}>{it.d}</div>
       </div>
     )))}
   </div>
 );
 
 const RQA=({items})=>items.map((it,i)=>(
-  <div key={i} style={{background:tk.bg2,border:`1px solid ${tk.border}`,borderRadius:8,padding:"16px 20px",marginBottom:12,boxShadow:"0 2px 4px rgba(0,0,0,0.1)"}}>
-    <div style={{color:tk.amber,fontFamily:tk.sans,fontSize:14,marginBottom:8,fontWeight:600}}>Q: {it.q}</div>
-    <div style={{color:tk.text,fontSize:14.5,lineHeight:1.75,fontFamily:tk.sans}}>A: {it.a}</div>
+  <div key={i} style={{background:tk.bg2,border:`1px solid ${tk.border}`,borderRadius:8,padding:"16px 20px",marginBottom:12,boxShadow:tk.shadowSm}}>
+    <div style={{color:tk.amber,fontFamily:tk.sans,fontSize:"var(--fs-base)",marginBottom:8,fontWeight:600}}>Q: {it.q}</div>
+    <div style={{color:tk.text,fontSize:"var(--fs-base)",lineHeight:1.75,fontFamily:tk.sans}}>A: {it.a}</div>
   </div>
 ));
 
 const Table=({headers,rows})=>(
   <div style={{overflowX:"auto",margin:"20px 0", borderRadius:8, border:`1px solid ${tk.border}`}}>
-    <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,fontFamily:tk.sans}}>
-      <thead style={{background:tk.bg2}}><tr>{headers.map((h,i)=><th key={i} style={{textAlign:"left",padding:"12px 16px",borderBottom:`1px solid ${tk.borderLight}`,color:tk.textBright,fontFamily:tk.mono,fontSize:11,fontWeight:700,letterSpacing:".05em",textTransform:"uppercase"}}>{h}</th>)}</tr></thead>
-      <tbody>{rows.map((row,i)=><tr key={i} style={{background:i%2?tk.bg:"#0f0f0f", transition:"background 0.1s", cursor: "default"}} onMouseOver={(e)=>e.currentTarget.style.background=tk.bg3} onMouseOut={(e)=>e.currentTarget.style.background=i%2?tk.bg:"#0f0f0f"}>{row.map((cell,j)=><td key={j} style={{padding:"12px 16px",borderBottom:`1px solid ${tk.border}`,color:tk.text,verticalAlign:"top",lineHeight:1.6}}>{cell}</td>)}</tr>)}</tbody>
+    <table style={{width:"100%",borderCollapse:"collapse",fontSize:"var(--fs-md)",fontFamily:tk.sans}}>
+      <thead style={{background:tk.bg2}}><tr>{headers.map((h,i)=><th key={i} style={{textAlign:"left",padding:"12px 16px",borderBottom:`1px solid ${tk.borderLight}`,color:tk.textBright,fontFamily:tk.mono,fontSize:"var(--fs-xs)",fontWeight:700,letterSpacing:".05em",textTransform:"uppercase"}}>{h}</th>)}</tr></thead>
+      <tbody>{rows.map((row,i)=><tr key={i} style={{background:i%2?tk.bg:tk.bgAlt, transition:"background 0.1s", cursor: "default"}} onMouseOver={(e)=>e.currentTarget.style.background=tk.bg3} onMouseOut={(e)=>e.currentTarget.style.background=i%2?tk.bg:tk.bgAlt}>{row.map((cell,j)=><td key={j} style={{padding:"12px 16px",borderBottom:`1px solid ${tk.border}`,color:tk.text,verticalAlign:"top",lineHeight:1.6}}>{cell}</td>)}</tr>)}</tbody>
     </table>
   </div>
 );
@@ -292,19 +295,19 @@ export const NavTile=({title,sub,meta,color=tk.accent,onClick})=>(
     onMouseOver={e=>{e.currentTarget.style.background=tk.bg3;e.currentTarget.style.borderColor=color;e.currentTarget.style.borderLeftColor=color;e.currentTarget.style.transform="translateY(-2px)";}}
     onMouseOut={e=>{e.currentTarget.style.background=tk.bg2;e.currentTarget.style.borderColor=tk.border;e.currentTarget.style.borderLeftColor=color;e.currentTarget.style.transform="none";}}>
     <div style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:8}}>
-      <span style={{color:tk.textBright,fontWeight:700,fontSize:15,fontFamily:tk.sans}}>{title}</span>
-      {meta&&<span style={{color,fontFamily:tk.mono,fontSize:10,fontWeight:700,flexShrink:0,letterSpacing:".04em"}}>{meta}</span>}
+      <span style={{color:tk.textBright,fontWeight:700,fontSize:"var(--fs-lg)",fontFamily:tk.sans}}>{title}</span>
+      {meta&&<span style={{color,fontFamily:tk.mono,fontSize:"var(--fs-caption)",fontWeight:700,flexShrink:0,letterSpacing:".04em"}}>{meta}</span>}
     </div>
-    {sub&&<span style={{color:tk.textDim,fontSize:13,lineHeight:1.55,fontFamily:tk.sans}}>{sub}</span>}
+    {sub&&<span style={{color:tk.textDim,fontSize:"var(--fs-md)",lineHeight:1.55,fontFamily:tk.sans}}>{sub}</span>}
   </button>
 );
 
 const Chip=({children,color=tk.accent,onClick,title})=>(
-  <button onClick={onClick} title={title} style={{cursor:"pointer",background:color+"14",font:"inherit",
-    border:`1px solid ${color}3a`,borderRadius:6,color,fontFamily:tk.mono,fontSize:11,fontWeight:600,
+  <button onClick={onClick} title={title} style={{cursor:"pointer",background:alpha(color,"14"),font:"inherit",
+    border:`1px solid ${alpha(color,"3a")}`,borderRadius:6,color,fontFamily:tk.mono,fontSize:"var(--fs-xs)",fontWeight:600,
     padding:"4px 9px",transition:"all .12s",whiteSpace:"nowrap"}}
-    onMouseOver={e=>{e.currentTarget.style.background=color+"28";e.currentTarget.style.borderColor=color+"77";}}
-    onMouseOut={e=>{e.currentTarget.style.background=color+"14";e.currentTarget.style.borderColor=color+"3a";}}>
+    onMouseOver={e=>{e.currentTarget.style.background=alpha(color,"28");e.currentTarget.style.borderColor=alpha(color,"77");}}
+    onMouseOut={e=>{e.currentTarget.style.background=alpha(color,"14");e.currentTarget.style.borderColor=alpha(color,"3a");}}>
     {children}
   </button>
 );
@@ -322,7 +325,7 @@ assess:()=>{
   const goD=(t)=>nav.goToDsa&&nav.goToDsa(t);
   const setM=(m)=>nav.setMode&&nav.setMode(m);
 
-  const LIB="#10b981", PREP=tk.accent, DSA=tk.violet;
+  const LIB=tk.emerald, PREP=tk.accent, DSA=tk.violet;
 
   // num → short guide title (the 16 Library deep-dives)
   const GUIDES={
@@ -343,7 +346,7 @@ assess:()=>{
   const DsaChip=(t)=><Chip key={"d"+t} color={DSA} onClick={()=>goD(t)}>{DL[t]||t}</Chip>;
   const Row=({label,color,children})=>(
     <div style={{display:"flex",gap:8,alignItems:"baseline",flexWrap:"wrap",marginTop:8}}>
-      <span style={{fontFamily:tk.mono,fontSize:9,fontWeight:800,letterSpacing:".12em",color,minWidth:62,flexShrink:0}}>{label}</span>
+      <span style={{fontFamily:tk.mono,fontSize:"var(--fs-caption)",fontWeight:800,letterSpacing:".12em",color,minWidth:62,flexShrink:0}}>{label}</span>
       <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{children}</div>
     </div>
   );
@@ -386,10 +389,10 @@ assess:()=>{
 
   return(
   <div>
-    <div style={{background:`linear-gradient(135deg,${tk.bg2},#0a1a2e)`,border:`1px solid ${tk.accent}44`,borderRadius:14,padding:28,marginBottom:28}}>
-      <div style={{fontFamily:tk.mono,color:tk.accent,fontSize:11,letterSpacing:".1em",marginBottom:8}}>◎ COMMAND CENTER · COMPILER PREP</div>
-      <h2 style={{color:tk.textBright,fontFamily:tk.sans,margin:"0 0 8px",fontSize:24,fontWeight:800}}>A free, deep prep system for compiler-engineer interviews</h2>
-      <p style={{color:tk.textDim,margin:0,fontSize:14,fontFamily:tk.sans,lineHeight:1.6}}>
+    <div style={{background:`linear-gradient(135deg,${tk.bg2},${tk.heroTint})`,border:`1px solid ${alpha(tk.accent,"44")}`,borderRadius:14,padding:28,marginBottom:28}}>
+      <div style={{fontFamily:tk.mono,color:tk.accent,fontSize:"var(--fs-xs)",letterSpacing:".1em",marginBottom:8}}>◎ COMMAND CENTER · COMPILER PREP</div>
+      <h2 style={{color:tk.textBright,fontFamily:tk.sans,margin:"0 0 8px",fontSize:"var(--fs-2xl)",fontWeight:800}}>A free, deep prep system for compiler-engineer interviews</h2>
+      <p style={{color:tk.textDim,margin:0,fontSize:"var(--fs-base)",fontFamily:tk.sans,lineHeight:1.6}}>
         <strong style={{color:LIB}}>Learn</strong> the theory → <strong style={{color:PREP}}>revise</strong> it as rapid Q&amp;A → <strong style={{color:DSA}}>practice</strong> under pressure.
         <br/>16 deep-dive guides · 29 Prep modules · 120+ Q&amp;A · 97 DSA problems — everything below is clickable.
       </p>
@@ -408,8 +411,8 @@ assess:()=>{
       <div style={{display:"flex",flexDirection:"column",gap:12}}>
         {PATHS.map((p,i)=>(
           <div key={i} style={{background:tk.bg2,border:`1px solid ${tk.border}`,borderLeft:`3px solid ${p.color}`,borderRadius:10,padding:"15px 18px"}}>
-            <div style={{color:tk.textBright,fontWeight:700,fontSize:14.5,fontFamily:tk.sans,marginBottom:4}}>{p.name}</div>
-            <div style={{color:tk.textDim,fontSize:13,lineHeight:1.55,fontFamily:tk.sans}}>{p.why}</div>
+            <div style={{color:tk.textBright,fontWeight:700,fontSize:"var(--fs-base)",fontFamily:tk.sans,marginBottom:4}}>{p.name}</div>
+            <div style={{color:tk.textDim,fontSize:"var(--fs-md)",lineHeight:1.55,fontFamily:tk.sans}}>{p.why}</div>
             <Row label="LEARN" color={LIB}>{p.guides.map(GuideChip)}</Row>
             <Row label="REVISE" color={PREP}>{p.modules.map(ModChip)}</Row>
             <Row label="PRACTICE" color={DSA}>{p.dsa.map(DsaChip)}</Row>
@@ -421,13 +424,13 @@ assess:()=>{
     <S title="The complete 5-day plan" c={tk.red}>
       <B type="danger">Each day pairs <strong style={{color:LIB}}>Learn</strong> (guides) + <strong style={{color:PREP}}>Revise</strong> (Prep modules) + <strong style={{color:DSA}}>Practice</strong> (DSA). Work in 2-hour blocks and rehearse answers OUT LOUD — reading is ~30% as effective as speaking. Fewer days? Compress: Day&nbsp;1+2 → core, Day&nbsp;3 → your language/optos, Day&nbsp;4 → your domain, Day&nbsp;5 → mock. Night before = recall only (no new material).</B>
       {PLAN.map((d,i)=>(
-        <div key={i} style={{border:`1px solid ${d.color}28`,borderRadius:10,overflow:"hidden",marginBottom:12}}>
-          <div style={{background:d.color+"10",padding:"10px 16px",borderBottom:`1px solid ${d.color}18`,display:"flex",alignItems:"baseline",gap:10,flexWrap:"wrap"}}>
-            <span style={{color:d.color,fontFamily:tk.mono,fontWeight:800,fontSize:13}}>{d.day}</span>
-            <span style={{color:tk.textBright,fontSize:13,fontWeight:600,fontFamily:tk.sans}}>{d.theme}</span>
+        <div key={i} style={{border:`1px solid ${alpha(d.color,"28")}`,borderRadius:10,overflow:"hidden",marginBottom:12}}>
+          <div style={{background:alpha(d.color,"10"),padding:"10px 16px",borderBottom:`1px solid ${alpha(d.color,"18")}`,display:"flex",alignItems:"baseline",gap:10,flexWrap:"wrap"}}>
+            <span style={{color:d.color,fontFamily:tk.mono,fontWeight:800,fontSize:"var(--fs-md)"}}>{d.day}</span>
+            <span style={{color:tk.textBright,fontSize:"var(--fs-md)",fontWeight:600,fontFamily:tk.sans}}>{d.theme}</span>
           </div>
           <div style={{padding:"12px 16px"}}>
-            <div style={{color:tk.text,fontSize:13,lineHeight:1.6,fontFamily:tk.sans,marginBottom:4}}>{d.focus}</div>
+            <div style={{color:tk.text,fontSize:"var(--fs-md)",lineHeight:1.6,fontFamily:tk.sans,marginBottom:4}}>{d.focus}</div>
             <Row label="LEARN" color={LIB}>{d.learn.map(GuideChip)}</Row>
             <Row label="REVISE" color={PREP}>{d.revise.map(ModChip)}</Row>
             <Row label="PRACTICE" color={DSA}>{d.practice.map(DsaChip)}</Row>
@@ -442,8 +445,8 @@ assess:()=>{
       <div style={{marginBottom:18}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
           <span style={{width:8,height:8,borderRadius:2,background:LIB,display:"inline-block"}}/>
-          <span style={{color:LIB,fontFamily:tk.mono,fontSize:11,fontWeight:800,letterSpacing:".1em"}}>LIBRARY · LEARN</span>
-          <span style={{color:tk.textDim,fontSize:11}}>16 deep-dive guides</span>
+          <span style={{color:LIB,fontFamily:tk.mono,fontSize:"var(--fs-xs)",fontWeight:800,letterSpacing:".1em"}}>LIBRARY · LEARN</span>
+          <span style={{color:tk.textDim,fontSize:"var(--fs-xs)"}}>16 deep-dive guides</span>
         </div>
         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{Object.keys(GUIDES).map(GuideChip)}</div>
       </div>
@@ -451,8 +454,8 @@ assess:()=>{
       <div style={{marginBottom:18}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
           <span style={{width:8,height:8,borderRadius:2,background:PREP,display:"inline-block"}}/>
-          <span style={{color:PREP,fontFamily:tk.mono,fontSize:11,fontWeight:800,letterSpacing:".1em"}}>PREP · REVISE</span>
-          <span style={{color:tk.textDim,fontSize:11}}>29 Q&amp;A modules</span>
+          <span style={{color:PREP,fontFamily:tk.mono,fontSize:"var(--fs-xs)",fontWeight:800,letterSpacing:".1em"}}>PREP · REVISE</span>
+          <span style={{color:tk.textDim,fontSize:"var(--fs-xs)"}}>29 Q&amp;A modules</span>
         </div>
         {GROUPS.filter(g=>g.label!=="STRATEGY").map(g=>(
           <Row key={g.label} label={g.label} color={PREP}>{g.items.map(it=>ModChip(it.id))}</Row>
@@ -462,8 +465,8 @@ assess:()=>{
       <div>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
           <span style={{width:8,height:8,borderRadius:2,background:DSA,display:"inline-block"}}/>
-          <span style={{color:DSA,fontFamily:tk.mono,fontSize:11,fontWeight:800,letterSpacing:".1em"}}>DSA · PRACTICE</span>
-          <span style={{color:tk.textDim,fontSize:11}}>97 problems · 15 patterns · 12 C++ concepts</span>
+          <span style={{color:DSA,fontFamily:tk.mono,fontSize:"var(--fs-xs)",fontWeight:800,letterSpacing:".1em"}}>DSA · PRACTICE</span>
+          <span style={{color:tk.textDim,fontSize:"var(--fs-xs)"}}>97 problems · 15 patterns · 12 C++ concepts</span>
         </div>
         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{Object.keys(DL).map(DsaChip)}</div>
       </div>
@@ -475,10 +478,10 @@ assess:()=>{
         <div style={{width:48,height:48,borderRadius:10,flexShrink:0,
           background:`linear-gradient(135deg,${tk.accent},${tk.violet})`,
           display:"flex",alignItems:"center",justifyContent:"center",
-          color:"#fff",fontWeight:800,fontSize:17,fontFamily:tk.sans,letterSpacing:".02em"}}>AT</div>
+          color:"#fff",fontWeight:800,fontSize:"var(--fs-xl)",fontFamily:tk.sans,letterSpacing:".02em"}}>AT</div>
         <div style={{flex:1,minWidth:240}}>
-          <div style={{color:tk.textBright,fontWeight:700,fontSize:16,fontFamily:tk.sans}}>Aditya Trivedi</div>
-          <div style={{color:tk.textDim,fontSize:13.5,lineHeight:1.65,fontFamily:tk.sans,margin:"5px 0 14px"}}>
+          <div style={{color:tk.textBright,fontWeight:700,fontSize:"var(--fs-lg)",fontFamily:tk.sans}}>Aditya Trivedi</div>
+          <div style={{color:tk.textDim,fontSize:"var(--fs-md)",lineHeight:1.65,fontFamily:tk.sans,margin:"5px 0 14px"}}>
             Compiler engineer. I built <strong style={{color:tk.text}}>Compiler Prep</strong> as a free, open resource — the guide I wish I'd had while prepping for compiler-engineering interviews. Feedback, issues and PRs are very welcome.
           </div>
           <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
@@ -489,10 +492,10 @@ assess:()=>{
               <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer"
                 style={{display:"inline-flex",alignItems:"center",gap:7,textDecoration:"none",
                   background:tk.bg,border:`1px solid ${tk.border}`,borderRadius:8,
-                  padding:"7px 13px",fontSize:12.5,fontWeight:600,fontFamily:tk.sans,color:l.c,transition:"all .15s"}}
+                  padding:"7px 13px",fontSize:"var(--fs-sm)",fontWeight:600,fontFamily:tk.sans,color:l.c,transition:"all .15s"}}
                 onMouseOver={e=>{e.currentTarget.style.borderColor=l.c;e.currentTarget.style.background=tk.bg3;}}
                 onMouseOut={e=>{e.currentTarget.style.borderColor=tk.border;e.currentTarget.style.background=tk.bg;}}>
-                {l.label} <span style={{fontFamily:tk.mono,fontSize:11,opacity:.7}}>↗</span>
+                {l.label} <span style={{fontFamily:tk.mono,fontSize:"var(--fs-xs)",opacity:.7}}>↗</span>
               </a>
             ))}
           </div>
@@ -515,7 +518,7 @@ ssa:()=>(
     
     <Diagram title="Def-Use Chains: Non-SSA vs SSA" horizontal>
       <div style={{flex:1, minWidth:250, display:"flex", flexDirection:"column", alignItems:"center"}}>
-        <div style={{color:tk.textDim, marginBottom:8, fontFamily:tk.mono, fontSize:12, letterSpacing:1}}>NON-SSA (Ambiguous)</div>
+        <div style={{color:tk.textDim, marginBottom:8, fontFamily:tk.mono, fontSize:"var(--fs-sm)", letterSpacing:1}}>NON-SSA (Ambiguous)</div>
         <Node label="x = 5" color={tk.red}/>
         <Arrow />
         <Node label="if (cond) { x = x+1 } else { x = x*2 }" color={tk.amber}/>
@@ -523,7 +526,7 @@ ssa:()=>(
         <Node label="y = x" desc="Which 'x' is this? Requires analysis" color={tk.red}/>
       </div>
       <div style={{flex:1, minWidth:250, display:"flex", flexDirection:"column", alignItems:"center"}}>
-        <div style={{color:tk.textDim, marginBottom:8, fontFamily:tk.mono, fontSize:12, letterSpacing:1}}>SSA (Exact, O(1))</div>
+        <div style={{color:tk.textDim, marginBottom:8, fontFamily:tk.mono, fontSize:"var(--fs-sm)", letterSpacing:1}}>SSA (Exact, O(1))</div>
         <Node label="x₁ = 5" color={tk.accent}/>
         <Arrow />
         <Node label="if (cond) { x₂ = x₁+1 } else { x₃ = x₁*2 }" color={tk.amber}/>
@@ -559,7 +562,7 @@ ssa:()=>(
       <Arrow label="br i1 (i₁ < n)" />
       <Node label="[body]" desc="sum₂ = sum₁ + a[i₁] | i₂ = i₁ + 1" color={tk.amber} />
       <Arrow label="back-edge (latch)" />
-      <div style={{color:tk.textDim, fontSize:12, marginTop:-8, fontStyle:"italic"}}>...loops back to [header]...</div>
+      <div style={{color:tk.textDim, fontSize:"var(--fs-sm)", marginTop:-8, fontStyle:"italic"}}>...loops back to [header]...</div>
     </Diagram>
   </S>
 
@@ -2157,12 +2160,12 @@ function GlobalSearch({open,onClose,nav}){
     }
     for(const g of LIBRARY_INDEX){
       if(g.title.toLowerCase().includes(query))
-        out.push({kind:"Library",color:"#10b981",label:g.title,sub:`Guide ${g.num} · open`,run:()=>nav.goToGuide(g.num)});
+        out.push({kind:"Library",color:tk.emerald,label:g.title,sub:`Guide ${g.num} · open`,run:()=>nav.goToGuide(g.num)});
       let c=0;
       for(const h of g.headings){
         if(c>=3) break;
         if(h.text.toLowerCase().includes(query)){
-          out.push({kind:"Library",color:"#10b981",label:h.text,sub:g.title,run:()=>nav.goToGuide(g.num,h.id)});
+          out.push({kind:"Library",color:tk.emerald,label:h.text,sub:g.title,run:()=>nav.goToGuide(g.num,h.id)});
           c++;
         }
       }
@@ -2190,27 +2193,27 @@ function GlobalSearch({open,onClose,nav}){
   };
 
   return(
-    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(0,0,0,0.66)",backdropFilter:"blur(2px)",display:"flex",justifyContent:"center",alignItems:"flex-start",paddingTop:"11vh"}}>
-      <div onClick={e=>e.stopPropagation()} onKeyDown={onKey} style={{width:"min(92vw,640px)",background:tk.bg2,border:`1px solid ${tk.borderLight}`,borderRadius:12,boxShadow:"0 24px 80px rgba(0,0,0,0.6)",overflow:"hidden"}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:1000,background:tk.overlay,backdropFilter:"blur(2px)",display:"flex",justifyContent:"center",alignItems:"flex-start",paddingTop:"11vh"}}>
+      <div onClick={e=>e.stopPropagation()} onKeyDown={onKey} style={{width:"min(92vw,640px)",background:tk.bg2,border:`1px solid ${tk.borderLight}`,borderRadius:12,boxShadow:tk.shadowLg,overflow:"hidden"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,padding:"14px 18px",borderBottom:`1px solid ${tk.border}`}}>
-          <span style={{color:tk.textDim,fontSize:18}}>⌕</span>
+          <span style={{color:tk.textDim,fontSize:"var(--fs-xl)"}}>⌕</span>
           <input ref={inputRef} value={q} onChange={e=>setQ(e.target.value)} placeholder="Search guides, Prep Q&A, DSA problems…"
-            style={{flex:1,background:"transparent",border:"none",outline:"none",color:tk.text,fontSize:16,fontFamily:tk.sans}}/>
-          <span style={{fontSize:10,color:tk.textDim,fontFamily:tk.mono,border:`1px solid ${tk.border}`,borderRadius:4,padding:"2px 6px"}}>ESC</span>
+            style={{flex:1,background:"transparent",border:"none",outline:"none",color:tk.text,fontSize:"var(--fs-lg)",fontFamily:tk.sans}}/>
+          <span style={{fontSize:"var(--fs-caption)",color:tk.textDim,fontFamily:tk.mono,border:`1px solid ${tk.border}`,borderRadius:4,padding:"2px 6px"}}>ESC</span>
         </div>
         <div style={{maxHeight:"60vh",overflowY:"auto",padding:8}}>
-          {q.trim().length<2 && <div style={{padding:"24px 16px",color:tk.textDim,fontSize:13,fontFamily:tk.sans,textAlign:"center"}}>Type to search across <span style={{color:"#10b981"}}>Library</span> · <span style={{color:tk.accent}}>Prep Q&A</span> · <span style={{color:tk.violet}}>DSA</span></div>}
-          {q.trim().length>=2 && results.length===0 && <div style={{padding:"24px 16px",color:tk.textDim,fontSize:13,textAlign:"center"}}>No matches for "{q}".</div>}
+          {q.trim().length<2 && <div style={{padding:"24px 16px",color:tk.textDim,fontSize:"var(--fs-md)",fontFamily:tk.sans,textAlign:"center"}}>Type to search across <span style={{color:tk.emerald}}>Library</span> · <span style={{color:tk.accent}}>Prep Q&A</span> · <span style={{color:tk.violet}}>DSA</span></div>}
+          {q.trim().length>=2 && results.length===0 && <div style={{padding:"24px 16px",color:tk.textDim,fontSize:"var(--fs-md)",textAlign:"center"}}>No matches for "{q}".</div>}
           {results.map((r,i)=>(
             <div key={i} onMouseEnter={()=>setSel(i)} onClick={()=>activate(r)}
               style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:8,cursor:"pointer",
                 background:i===sel?tk.bg3:"transparent",border:`1px solid ${i===sel?tk.border:"transparent"}`}}>
-              <span style={{fontSize:9,fontWeight:800,fontFamily:tk.mono,color:r.color,background:r.color+"22",borderRadius:4,padding:"3px 0",flexShrink:0,width:56,textAlign:"center"}}>{r.kind.toUpperCase()}</span>
+              <span style={{fontSize:"var(--fs-caption)",fontWeight:800,fontFamily:tk.mono,color:r.color,background:alpha(r.color,"22"),borderRadius:4,padding:"3px 0",flexShrink:0,width:56,textAlign:"center"}}>{r.kind.toUpperCase()}</span>
               <div style={{minWidth:0,flex:1}}>
-                <div style={{fontSize:13.5,color:tk.text,fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.label}</div>
-                <div style={{fontSize:11,color:tk.textDim,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.sub}</div>
+                <div style={{fontSize:"var(--fs-md)",color:tk.text,fontWeight:500,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.label}</div>
+                <div style={{fontSize:"var(--fs-xs)",color:tk.textDim,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{r.sub}</div>
               </div>
-              <span style={{color:tk.textDim,fontSize:12,flexShrink:0}}>↵</span>
+              <span style={{color:tk.textDim,fontSize:"var(--fs-sm)",flexShrink:0}}>↵</span>
             </div>
           ))}
         </div>
@@ -2261,50 +2264,53 @@ export default function App(){
         />
         <nav className={`library-sidebar ${appSidebarOpen ? 'open' : ''}`}>
           <div style={{padding:"20px 16px 12px",borderBottom:`1px solid ${tk.border}`,flexShrink:0}}>
-            <div style={{fontFamily:tk.mono,color:tk.accent,fontSize:11,letterSpacing:".12em",fontWeight:800}}>COMPILER PREP</div>
-            <div style={{color:tk.textDim,fontSize:10,fontFamily:tk.mono,marginTop:3, marginBottom:16}}>Learn → Revise → Practice · 29 modules</div>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+              <div style={{fontFamily:tk.mono,color:tk.accent,fontSize:"var(--fs-xs)",letterSpacing:".12em",fontWeight:800}}>COMPILER PREP</div>
+              <ThemeToggle style={{width:28,height:28,boxShadow:"none",background:"transparent",border:`1px solid ${tk.border}`}}/>
+            </div>
+            <div style={{color:tk.textDim,fontSize:"var(--fs-caption)",fontFamily:tk.mono,marginTop:3, marginBottom:16}}>Learn → Revise → Practice · 29 modules</div>
 
             <div style={{display:"flex", background:tk.bg, borderRadius:6, padding:2, border:`1px solid ${tk.border}`}}>
-              <div onClick={()=>setMode("compiler")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:10, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="compiler"?tk.accentDim:"transparent", color:mode==="compiler"?tk.accent:tk.textDim, fontWeight:mode==="compiler"?800:400}}>PREP</div>
-              <div onClick={()=>setMode("dsa")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:10, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="dsa"?tk.violet+"22":"transparent", color:mode==="dsa"?tk.violet:tk.textDim, fontWeight:mode==="dsa"?800:400}}>DSA</div>
-              <div onClick={()=>setMode("library")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:10, fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="library"?"#10b98122":"transparent", color:mode==="library"?"#10b981":tk.textDim, fontWeight:mode==="library"?800:400}}>LIBRARY</div>
+              <div onClick={()=>setMode("compiler")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:"var(--fs-caption)", fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="compiler"?tk.accentDim:"transparent", color:mode==="compiler"?tk.accent:tk.textDim, fontWeight:mode==="compiler"?800:400}}>PREP</div>
+              <div onClick={()=>setMode("dsa")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:"var(--fs-caption)", fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="dsa"?alpha(tk.violet,"22"):"transparent", color:mode==="dsa"?tk.violet:tk.textDim, fontWeight:mode==="dsa"?800:400}}>DSA</div>
+              <div onClick={()=>setMode("library")} style={{flex:1, textAlign:"center", padding:"6px 0", fontSize:"var(--fs-caption)", fontFamily:tk.mono, cursor:"pointer", borderRadius:4, background:mode==="library"?alpha(tk.emerald,"22"):"transparent", color:mode==="library"?tk.emerald:tk.textDim, fontWeight:mode==="library"?800:400}}>LIBRARY</div>
             </div>
-            <button onClick={()=>setSearchOpen(true)} style={{marginTop:12, width:"100%", display:"flex", alignItems:"center", gap:8, background:tk.bg, border:`1px solid ${tk.border}`, borderRadius:6, color:tk.textDim, cursor:"pointer", padding:"7px 10px", fontSize:12, fontFamily:tk.sans, transition:"all .15s"}}
+            <button onClick={()=>setSearchOpen(true)} style={{marginTop:12, width:"100%", display:"flex", alignItems:"center", gap:8, background:tk.bg, border:`1px solid ${tk.border}`, borderRadius:6, color:tk.textDim, cursor:"pointer", padding:"7px 10px", fontSize:"var(--fs-sm)", fontFamily:tk.sans, transition:"all .15s"}}
               onMouseOver={e=>{e.currentTarget.style.borderColor=tk.borderLight; e.currentTarget.style.color=tk.text;}}
               onMouseOut={e=>{e.currentTarget.style.borderColor=tk.border; e.currentTarget.style.color=tk.textDim;}}>
-              <span style={{fontSize:13}}>⌕</span> Search everything
-              <span style={{marginLeft:"auto", fontSize:9, fontFamily:tk.mono, border:`1px solid ${tk.border}`, borderRadius:4, padding:"1px 5px"}}>⌘K</span>
+              <span style={{fontSize:"var(--fs-md)"}}>⌕</span> Search everything
+              <span style={{marginLeft:"auto", fontSize:"var(--fs-caption)", fontFamily:tk.mono, border:`1px solid ${tk.border}`, borderRadius:4, padding:"1px 5px"}}>⌘K</span>
             </button>
           </div>
           <div style={{flex:1, overflowY:"auto", minHeight:0}}>
           {GROUPS.map(g=>(
-            <div key={g.label} style={{borderBottom:`1px solid ${tk.border}08`}}>
+            <div key={g.label} style={{borderBottom:`1px solid ${alpha(tk.border,"08")}`}}>
               <div onClick={()=>toggle(g.label)} style={{padding:"10px 16px",cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span style={{fontFamily:tk.mono,fontSize:9,color:tk.textDim,letterSpacing:".14em",fontWeight:700}}>{g.label}</span>
-                <span style={{color:tk.textDim,fontSize:10,fontFamily:tk.mono,transform:collapsed[g.label]?"rotate(-90deg)":"none",transition:"transform .15s"}}>▾</span>
+                <span style={{fontFamily:tk.mono,fontSize:"var(--fs-caption)",color:tk.textDim,letterSpacing:".14em",fontWeight:700}}>{g.label}</span>
+                <span style={{color:tk.textDim,fontSize:"var(--fs-caption)",fontFamily:tk.mono,transform:collapsed[g.label]?"rotate(-90deg)":"none",transition:"transform .15s"}}>▾</span>
               </div>
               {!collapsed[g.label]&&g.items.map(it=>(
                 <div key={it.id} onClick={()=>{setActive(it.id); setAppSidebarOpen(false);}}
                   style={{padding:"7px 16px 7px 20px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,
-                    background:active===it.id?tk.accent+"12":"transparent",
+                    background:active===it.id?alpha(tk.accent,"12"):"transparent",
                     borderLeft:active===it.id?`2px solid ${tk.accent}`:"2px solid transparent",
                     transition:"all .12s"}}>
-                  <span style={{fontFamily:tk.mono,fontSize:12,color:active===it.id?tk.accent:tk.textDim,width:20,textAlign:"center",flexShrink:0}}>{it.icon}</span>
-                  <span style={{fontSize:12,color:active===it.id?tk.textBright:tk.text,fontFamily:tk.sans,lineHeight:1.3}}>{it.label}</span>
+                  <span style={{fontFamily:tk.mono,fontSize:"var(--fs-sm)",color:active===it.id?tk.accent:tk.textDim,width:20,textAlign:"center",flexShrink:0}}>{it.icon}</span>
+                  <span style={{fontSize:"var(--fs-sm)",color:active===it.id?tk.textBright:tk.text,fontFamily:tk.sans,lineHeight:1.3}}>{it.label}</span>
                 </div>
               ))}
             </div>
           ))}
           </div>
           <div style={{flexShrink:0,borderTop:`1px solid ${tk.border}`,padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
-            <span style={{fontSize:10,color:tk.textDim,fontFamily:tk.sans}}>by <span style={{color:tk.text,fontWeight:600}}>Aditya Trivedi</span></span>
+            <span style={{fontSize:"var(--fs-caption)",color:tk.textDim,fontFamily:tk.sans}}>by <span style={{color:tk.text,fontWeight:600}}>Aditya Trivedi</span></span>
             <span style={{display:"flex",gap:6}}>
               <a href="https://github.com/adit4443ya" target="_blank" rel="noopener noreferrer" title="GitHub"
-                style={{color:tk.textDim,fontSize:10,fontFamily:tk.mono,textDecoration:"none",border:`1px solid ${tk.border}`,borderRadius:4,padding:"2px 7px",transition:"all .15s"}}
+                style={{color:tk.textDim,fontSize:"var(--fs-caption)",fontFamily:tk.mono,textDecoration:"none",border:`1px solid ${tk.border}`,borderRadius:4,padding:"2px 7px",transition:"all .15s"}}
                 onMouseOver={e=>{e.currentTarget.style.color=tk.text;e.currentTarget.style.borderColor=tk.borderLight;}}
                 onMouseOut={e=>{e.currentTarget.style.color=tk.textDim;e.currentTarget.style.borderColor=tk.border;}}>GitHub ↗</a>
               <a href="https://www.linkedin.com/in/adit4443ya" target="_blank" rel="noopener noreferrer" title="LinkedIn"
-                style={{color:tk.textDim,fontSize:10,fontFamily:tk.mono,textDecoration:"none",border:`1px solid ${tk.border}`,borderRadius:4,padding:"2px 7px",transition:"all .15s"}}
+                style={{color:tk.textDim,fontSize:"var(--fs-caption)",fontFamily:tk.mono,textDecoration:"none",border:`1px solid ${tk.border}`,borderRadius:4,padding:"2px 7px",transition:"all .15s"}}
                 onMouseOver={e=>{e.currentTarget.style.color=tk.accent;e.currentTarget.style.borderColor=tk.accent;}}
                 onMouseOut={e=>{e.currentTarget.style.color=tk.textDim;e.currentTarget.style.borderColor=tk.border;}}>LinkedIn ↗</a>
             </span>
@@ -2316,7 +2322,7 @@ export default function App(){
       {/* ─── CONTENT ─── */}
       <main ref={mainRef} className="library-main app-main-content" style={{
         padding:mode==="compiler" ? "28px 36px 60px" : "0",
-        maxWidth:mode==="compiler" ? 880 : "100%",
+        maxWidth:mode==="compiler" ? 920 : "100%",
         margin:mode==="compiler" ? "0 auto" : "0",
         overflow:mode==="library" ? "hidden" : "auto"
       }}>
@@ -2332,16 +2338,19 @@ export default function App(){
         )}
       </main>
 
-      {/* ─── Global search: floating trigger (all tabs) + overlay ─── */}
-      <button onClick={()=>setSearchOpen(true)} title="Search everything (⌘K)"
-        style={{position:"fixed", bottom:20, right:20, zIndex:90, display:"flex", alignItems:"center", gap:8,
-          background:tk.bg2, border:`1px solid ${tk.borderLight}`, borderRadius:999, color:tk.textDim, cursor:"pointer",
-          padding:"9px 16px", fontSize:12.5, fontFamily:tk.sans, boxShadow:"0 6px 24px rgba(0,0,0,0.45)", transition:"all .15s"}}
-        onMouseOver={e=>{e.currentTarget.style.color=tk.textBright; e.currentTarget.style.borderColor=tk.accent;}}
-        onMouseOut={e=>{e.currentTarget.style.color=tk.textDim; e.currentTarget.style.borderColor=tk.borderLight;}}>
-        <span style={{fontSize:14}}>⌕</span> Search
-        <span style={{fontSize:9, fontFamily:tk.mono, border:`1px solid ${tk.border}`, borderRadius:4, padding:"1px 5px"}}>⌘K</span>
-      </button>
+      {/* ─── Floating controls (all tabs): theme toggle + global search ─── */}
+      <div style={{position:"fixed", bottom:20, right:20, zIndex:90, display:"flex", alignItems:"center", gap:10}}>
+        <ThemeToggle/>
+        <button onClick={()=>setSearchOpen(true)} title="Search everything (⌘K)"
+          style={{display:"flex", alignItems:"center", gap:8,
+            background:tk.bg2, border:`1px solid ${tk.borderLight}`, borderRadius:999, color:tk.textDim, cursor:"pointer",
+            padding:"9px 16px", fontSize:"var(--fs-sm)", fontFamily:tk.sans, boxShadow:tk.shadowLg, transition:"all .15s"}}
+          onMouseOver={e=>{e.currentTarget.style.color=tk.textBright; e.currentTarget.style.borderColor=tk.accent;}}
+          onMouseOut={e=>{e.currentTarget.style.color=tk.textDim; e.currentTarget.style.borderColor=tk.borderLight;}}>
+          <span style={{fontSize:"var(--fs-base)"}}>⌕</span> Search
+          <span style={{fontSize:"var(--fs-caption)", fontFamily:tk.mono, border:`1px solid ${tk.border}`, borderRadius:4, padding:"1px 5px"}}>⌘K</span>
+        </button>
+      </div>
       <GlobalSearch open={searchOpen} onClose={()=>setSearchOpen(false)} nav={nav}/>
     </div>
     </NavCtx.Provider>
